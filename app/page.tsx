@@ -1,12 +1,13 @@
 import { Box, Flex, Text, VStack, HStack, Button, Input } from '@chakra-ui/react';
+import RightSidebar from './components/RightSideBar';
 
 export default function Home() {
   return (
     <Box bg="background" color="text" minH="100vh">
       {/* Header */}
-      <Box bg="secondary" px={6} py={4}>
+      <Box bg="secondary" px={{ base: 4, md: 6 }} py={4}>
         <Flex justify="space-between" align="center">
-          <Text fontSize="2xl" fontWeight="bold">
+          <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold">
             HackerFeed
           </Text>
           <Input
@@ -15,6 +16,7 @@ export default function Home() {
             bg="muted"
             borderColor="border"
             _placeholder={{ color: 'text' }}
+            display={{ base: 'none', md: 'block' }}
           />
           <Button variant="solid" colorScheme="primary">
             Tweet
@@ -22,9 +24,16 @@ export default function Home() {
         </Flex>
       </Box>
 
-      <Flex>
+      <Flex direction={{ base: 'column', md: 'row' }}>
         {/* Sidebar */}
-        <Box as="nav" bg="muted" p={4} w="20%" minH="100vh">
+        <Box
+          as="nav"
+          bg="muted"
+          p={4}
+          w={{ base: 'full', md: '20%' }}
+          minH={{ base: 'auto', md: '100vh' }}
+          display={{ base: 'none', md: 'block' }}
+        >
           <VStack spacing={4} align="start">
             <Button variant="ghost" w="full">
               Home
@@ -88,9 +97,28 @@ export default function Home() {
           </VStack>
         </Box>
 
-        {/* Footer */}
-        <Box as="footer" bg="secondary" p={4} textAlign="center">
-          <Text>&copy; 2024 HackerFeed. All rights reserved.</Text>
+        {/* Right Sidebar */}
+        <RightSidebar />
+
+        {/* Footer Navigation for Mobile */}
+        <Box
+          as="nav"
+          position="fixed"
+          bottom="0"
+          left="0"
+          right="0"
+          bg="secondary"
+          p={2}
+          borderTop="1px solid"
+          borderColor="border"
+          display={{ base: 'block', md: 'none' }}
+        >
+          <HStack justify="space-around">
+            <Button variant="ghost">Home</Button>
+            <Button variant="ghost">Explore</Button>
+            <Button variant="ghost">Notifications</Button>
+            <Button variant="ghost">Messages</Button>
+          </HStack>
         </Box>
       </Flex>
     </Box>

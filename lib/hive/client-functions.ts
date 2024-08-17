@@ -1,6 +1,5 @@
 'use client';
 import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainSDK, Login, Post, Transfer, Vote, WitnessVote } from "keychain-sdk";
-import { VideoPart } from "../models/user";
 import HiveClient from "./hiveclient";
 
 interface HiveKeychainResponse {
@@ -127,7 +126,7 @@ export async function transferWithKeychain(username: string, destination: string
     console.log({ error });
   }
 }
-export async function updateProfile(username: string, name: string, about: string, location: string, coverImageUrl: string, avatarUrl: string, website: string, ethAddress: string, videoParts: VideoPart[], level: number, staticXp?: number, cumulativeXp?: number) {
+export async function updateProfile(username: string, name: string, about: string, location: string, coverImageUrl: string, avatarUrl: string, website: string, level: number, staticXp?: number, cumulativeXp?: number) {
   try {
     const keychain = new KeychainSDK(window);
 
@@ -143,15 +142,15 @@ export async function updateProfile(username: string, name: string, about: strin
       }
     };
 
-    const extMetadata = {
-      extensions: {
-        eth_address: ethAddress,
-        video_parts: videoParts,
-        level: level,
-        staticXp: staticXp,
-        cumulativeXp: cumulativeXp
-      }
-    }
+    // const extMetadata = {
+    //   extensions: {
+    //     eth_address: ethAddress,
+    //     video_parts: videoParts,
+    //     level: level,
+    //     staticXp: staticXp,
+    //     cumulativeXp: cumulativeXp
+    //   }
+    // }
 
     const formParamsAsObject = {
       data: {
@@ -161,7 +160,7 @@ export async function updateProfile(username: string, name: string, about: strin
             'account_update2',
             {
               account: username,
-              json_metadata: JSON.stringify(extMetadata),
+              // json_metadata: JSON.stringify(extMetadata),
               posting_json_metadata: JSON.stringify(profileMetadata),
               extensions: []
             }
