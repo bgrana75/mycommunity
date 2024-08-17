@@ -5,11 +5,13 @@ import { ChakraProvider } from '@chakra-ui/react'
 import { forestTheme } from './themes/forest'
 import { blueSkyTheme } from './themes/bluesky'
 import { hackerTheme } from './themes/hacker'
+import { nounsDaoTheme } from './themes/nounish'
 
 const themeMap = {
   forest: forestTheme,
   bluesky: blueSkyTheme,
   hacker: hackerTheme,
+  nounish: nounsDaoTheme,
 }
 
 type ThemeName = keyof typeof themeMap;
