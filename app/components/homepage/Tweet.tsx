@@ -1,15 +1,21 @@
 // components/homepage/Tweet.tsx
 import { Box, Text, HStack, Button } from '@chakra-ui/react';
-
-export default function Tweet() {
+import { Comment } from '@hiveio/dhive';
+import ReactMarkdown from 'react-markdown';
+import remarkGfm from 'remark-gfm';
+import rehypeRaw from 'rehype-raw';
+const Tweet = ({ comment }: { comment: Comment }) => {
     return (
-        <Box bg="muted" p={4} borderRadius="md">
+        <Box bg="muted" p={4} m={2} borderRadius="md">
             <Text fontWeight="bold" mb={2}>
-                HackerUser
+                {comment.author}
             </Text>
-            <Text>
-                Just hacked into the mainframe! #HackerLife #Code
-            </Text>
+            <ReactMarkdown
+                remarkPlugins={[remarkGfm]}
+                rehypePlugins={[rehypeRaw]}
+            >
+                {comment.body}
+            </ReactMarkdown>
             <HStack justify="space-between" mt={3}>
                 <Button variant="ghost">Like</Button>
                 <Button variant="ghost">Comment</Button>
@@ -18,3 +24,5 @@ export default function Tweet() {
         </Box>
     );
 }
+
+export default Tweet;
