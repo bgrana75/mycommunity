@@ -1,15 +1,19 @@
 // components/homepage/Tweet.tsx
-import { Box, Text, HStack, Button } from '@chakra-ui/react';
+import { Box, Text, HStack, Button, Avatar } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
+
 const Tweet = ({ comment }: { comment: Comment }) => {
     return (
-        <Box bg="muted" p={4} m={2} borderRadius="md">
-            <Text fontWeight="bold" mb={2}>
-                {comment.author}
-            </Text>
+        <Box bg="muted" p={4} mt={1} mb={1} borderRadius="md">
+            <HStack mb={2}>
+                <Avatar size="sm" name={comment.author} />
+                <Text fontWeight="bold" mb={2}>
+                    {comment.author}
+                </Text>
+            </HStack>
             <ReactMarkdown
                 remarkPlugins={[remarkGfm]}
                 rehypePlugins={[rehypeRaw]}

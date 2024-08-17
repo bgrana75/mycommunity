@@ -1,8 +1,10 @@
 // components/TweetList.tsx
+'use client';
 import React from 'react';
 import { Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
 import { useComments } from '@/hooks/comments';
 import Tweet from './Tweet';
+
 interface TweetListProps {
     author: string;
     permlink: string;
@@ -30,12 +32,10 @@ export default function TweetList({ author, permlink }: TweetListProps) {
     }
 
     return (
-        <VStack spacing={4} align="stretch">
-            <Container maxW="container.sm">
-                {comments.map((comment: any) => (
-                    <Tweet key={comment.permlink} comment={comment} />
-                ))}
-            </Container>
+        <VStack spacing={2} align="stretch">
+            {comments.map((comment: any) => (
+                <Tweet key={comment.permlink} comment={comment} />
+            ))}
         </VStack>
     );
 }

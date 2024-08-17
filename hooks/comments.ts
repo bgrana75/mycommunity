@@ -1,7 +1,11 @@
+'use client'
 import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useState } from "react"
 import { Comment } from "@hiveio/dhive"
 
+interface ExtendedComment extends Comment {
+    replies?: ExtendedComment[]
+}
 
 export interface ActiveVote {
     percent: number
@@ -24,9 +28,8 @@ export async function fetchComments(
         ])) as Comment[];
 
         if (recursive) {
-            const fetchReplies = async (comment: Comment): Promise<Comment> => {
+            const fetchReplies = async (comment: ExtendedComment): Promise<ExtendedComment> => {
                 if (comment.children && comment.children > 0) {
-                    //@ts-ignore
                     comment.replies = await fetchComments(comment.author, comment.permlink, true);
                 }
                 return comment;

@@ -1,11 +1,11 @@
 // components/homepage/TweetComposer.tsx
 import React from 'react';
-import { Box, Input, HStack, Button } from '@chakra-ui/react';
+import { Box, Input, HStack, Button, Textarea } from '@chakra-ui/react';
 
 export default function TweetComposer() {
     return (
-        <Box bg="muted" p={4} borderRadius="md">
-            <Input
+        <Box bg="muted" p={4} borderRadius="md" mb={3}>
+            <Textarea
                 placeholder="What's happening?"
                 bg="background"
                 borderColor="border"
