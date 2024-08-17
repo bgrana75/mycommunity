@@ -7,7 +7,8 @@ export default function RightSidebar() {
         <Box
             bg="muted"
             p={4}
-            w={{ base: 'full', md: '20%' }}
+            m={0}
+            w={{ base: 'full', md: '30%' }}
             minH={{ base: 'auto', md: '100vh' }}
             display={{ base: 'none', lg: 'block' }} // Visible only on large screens
         >

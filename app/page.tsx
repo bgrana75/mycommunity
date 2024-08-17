@@ -1,31 +1,26 @@
+// app/page.tsx
 'use client';
-import { Box, Flex, useDisclosure } from '@chakra-ui/react';
-import Header from './components/homepage/Header';
-import Sidebar from './components/homepage/Sidebar';
-import MainFeed from './components/homepage/MainFeed';
-import RightSidebar from './components/homepage/RightSideBar';
-import FooterNavigation from './components/homepage/FooterNavigation';
-import LoginModal from './components/modal/LoginModal';
-import { useState } from 'react';
-export default function Home() {
-  const [isOpen, setIsOpen] = useState(false);
 
-  const onOpen = () => setIsOpen(true);
-  const onClose = () => setIsOpen(false);
+import { Box, Container, Flex } from '@chakra-ui/react';
+import TweetList from './components/homepage/TweetList';
+import TweetComposer from './components/homepage/TweetComposer';
+import RightSidebar from './components/homepage/RightSideBar';
+
+export default function Home() {
+  const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'canna-curate';
+  const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || '4onk12-the-cannabis-community-of-the-hive-block-chain';
 
   return (
     <Box bg="background" color="text" minH="100vh">
-      <Header onLoginClick={onOpen} />
-
       <Flex direction={{ base: 'column', md: 'row' }}>
-        <Sidebar />
-        <MainFeed />
+        <Box flex="1" p={4}>
+          <Container maxW="container.sm">
+            <TweetComposer />
+            <TweetList author={thread_author} permlink={thread_permlink} />
+          </Container>
+        </Box>
         <RightSidebar />
       </Flex>
-
-      <FooterNavigation />
-
-      <LoginModal isOpen={isOpen} onClose={onClose} />
     </Box>
   );
 }
