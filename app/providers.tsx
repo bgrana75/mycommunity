@@ -14,7 +14,7 @@ const themeMap = {
 
 type ThemeName = keyof typeof themeMap;
 
-const themeName = (process.env.NEXT_PUBLIC_THEME as ThemeName) || 'forest';
+const themeName = (process.env.NEXT_PUBLIC_THEME as ThemeName) || 'hacker';
 const selectedTheme = themeMap[themeName];
 
 export function Providers({ children }: { children: React.ReactNode }) {
