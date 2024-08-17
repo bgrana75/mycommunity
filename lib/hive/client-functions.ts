@@ -78,7 +78,7 @@ export async function commentWithKeychain(formParamsAsObject: any): Promise<Hive
 }
 export async function loginWithKeychain(username: string) {
   try {
-    const memo = `${username} signed up with skatehive app at ${Date.now()}`
+    const memo = `${username} signed up with MyCommunity app at ${Date.now()}`
     const keychain = new KeychainSDK(window);
     undefined
     const formParamsAsObject = {
