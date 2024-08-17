@@ -1,13 +1,11 @@
 import HiveClient from "@/lib/hive/hiveclient"
 import { useEffect, useState } from "react"
-import { Account } from "@hiveio/dhive";
+import { ExtendedAccount } from "@hiveio/dhive";
 
 interface HiveAccountMetadataProps {
   [key: string]: any
 }
-interface HiveAccount extends Account {
-  witness_votes: string[];
-  reputation?: number | string
+export interface HiveAccount extends ExtendedAccount {
   metadata?: HiveAccountMetadataProps
 }
 
