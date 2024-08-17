@@ -1,7 +1,6 @@
 // components/homepage/Header.tsx
 import React from 'react';
 import { Box, Flex, Text, Input, Button } from '@chakra-ui/react';
-
 interface HeaderProps {
     onLoginClick?: () => void;
 }
