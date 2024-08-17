@@ -3,6 +3,7 @@ import { Box, VStack, Button } from '@chakra-ui/react';
 import Link from 'next/link';
 
 export default function Sidebar() {
+    const isBusiness = process.env.NEXT_PUBLIC_SITE_TYPE === 'business';
     return (
         <Box
             as="nav"
@@ -18,6 +19,13 @@ export default function Sidebar() {
                         Home
                     </Button>
                 </Link>
+                {isBusiness && (
+                    <Link href="/buy" passHref>
+                        <Button as="a" variant="ghost" w="full">
+                            Store
+                        </Button>
+                    </Link>
+                )}
                 <Link href="/explore" passHref>
                     <Button as="a" variant="ghost" w="full">
                         Explore
