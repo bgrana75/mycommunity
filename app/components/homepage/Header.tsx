@@ -1,11 +1,21 @@
 // components/homepage/Header.tsx
 import React from 'react';
-import { Box, Flex, Text, Input, Button } from '@chakra-ui/react';
+import { Box, Flex, Text, Input, Button, useColorMode } from '@chakra-ui/react';
+
+import { useState } from 'react'
+import { useAioha, AiohaModal } from '@aioha/react-ui'
+import { KeyTypes } from '@aioha/aioha'
+import '@aioha/react-ui/dist/build.css'
+
 interface HeaderProps {
     onLoginClick?: () => void;
 }
 
 export default function Header({ onLoginClick }: HeaderProps) {
+    const { colorMode } = useColorMode()
+    const [modalDisplayed, setModalDisplayed] = useState(false)
+    const { user } = useAioha()
+
     const CommunityName = process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'My Community';
     return (
         <Box bg="secondary" px={{ base: 4, md: 6 }} py={4}>
@@ -21,9 +31,20 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     _placeholder={{ color: 'text' }}
                     display={{ base: 'none', md: 'block' }}
                 />
-                <Button variant="solid" colorScheme="primary" onClick={onLoginClick}>
-                    Login
-                </Button>
+                    <Button onClick={() => setModalDisplayed(true)}>
+                        {user ?? 'Login'}
+                    </Button>
+                    <div className={colorMode}>
+                        <AiohaModal
+                        displayed={modalDisplayed}
+                        loginOptions={{
+                            msg: 'Login',
+                            keyType: KeyTypes.Posting
+                        }}
+                        onLogin={console.log}
+                        onClose={setModalDisplayed}
+                        />
+                    </div>
             </Flex>
         </Box>
     );

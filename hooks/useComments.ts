@@ -7,7 +7,7 @@ interface ExtendedComment extends Comment {
     replies?: ExtendedComment[]
 }
 
-export interface ActiveVote {
+interface ActiveVote {
     percent: number
     reputation: number
     rshares: number
@@ -16,7 +16,7 @@ export interface ActiveVote {
     weight: number
 }
 
-export async function fetchComments(
+async function fetchComments(
     author: string,
     permlink: string,
     recursive: boolean = false

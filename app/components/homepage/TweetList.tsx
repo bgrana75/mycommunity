@@ -2,7 +2,7 @@
 'use client';
 import React from 'react';
 import { Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
-import { useComments } from '@/hooks/comments';
+import { useComments } from '@/hooks/useComments';
 import Tweet from './Tweet';
 
 interface TweetListProps {

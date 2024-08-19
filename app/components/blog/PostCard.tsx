@@ -1,16 +1,18 @@
 // components/PostCard.tsx
 import { Box, Image, Text } from '@chakra-ui/react';
 import React from 'react';
-import { Post } from '@/app/types/Posts';
+import { Discussion } from '@hiveio/dhive';
+//import { Post } from '@/app/types/Posts';
 // I have created a type for the posts in the app/types/Posts.ts file. but may be we can get from dhive or keychain sdk
 
 interface PostCardProps {
-    post: Post;
+    post: Discussion;
 }
 
 export default function PostCard({ post }: PostCardProps) {
     const { title, author, body, json_metadata, created } = post;
-    const imageUrl = json_metadata?.image?.[0]; // Get the first image from the metadata
+    const metadata = JSON.parse(json_metadata)
+    const imageUrl = metadata?.image?.[0]; // Get the first image from the metadata
 
     return (
         <Box
