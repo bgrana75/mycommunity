@@ -29,6 +29,9 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     _placeholder={{ color: 'text' }}
                     display={{ base: 'none', md: 'block' }}
                 />
+                <Button variant="solid" colorScheme="primary" onClick={onLoginClick}>
+                    Login
+                </Button>
 
             </Flex>
         </Box>
