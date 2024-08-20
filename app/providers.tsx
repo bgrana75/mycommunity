@@ -7,14 +7,12 @@ import { blueSkyTheme } from './themes/bluesky'
 import { hackerTheme } from './themes/hacker'
 import { nounsDaoTheme } from './themes/nounish'
 
-import { initAioha } from '@aioha/aioha'
+import { Aioha } from '@aioha/aioha'
 import { AiohaProvider } from '@aioha/react-ui'
 
-const aioha = initAioha({
-  hiveauth: {
-    name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'MyCommunity',
-    description: ''
-  }})
+import { useEffect } from 'react'
+
+const aioha =  new Aioha()
 
 const themeMap = {
   forest: forestTheme,
@@ -29,6 +27,16 @@ const themeName = (process.env.NEXT_PUBLIC_THEME as ThemeName) || 'hacker';
 const selectedTheme = themeMap[themeName];
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  useEffect(() => {
+    aioha.registerKeychain()
+    aioha.registerLedger()
+    aioha.registerPeakVault()
+    aioha.registerHiveAuth({
+      name: process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'MyCommunity',
+      description: ''
+    })
+    aioha.loadAuth()
+  })
   return (
   <ChakraProvider theme={selectedTheme}>
     <AiohaProvider aioha={aioha}>

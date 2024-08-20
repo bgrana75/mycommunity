@@ -44,7 +44,7 @@ export default function LoginModal({ isOpen, onClose }: LoginModalProps) {
             //console.log('Logging in with username:', username);
             const login = await loginWithKeychain(username);
             //console.log(login?.login.success)
-            if (login?.login.success) localStorage.setItem(username, username)
+            if (login?.login.success) localStorage.setItem('username', username)
         } else {
             alert('Hive Keychain is not installed!');
         }
