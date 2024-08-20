@@ -1,20 +1,18 @@
 // components/homepage/TweetComposer.tsx
 import React from 'react';
 import { Box, Input, HStack, Button, Textarea } from '@chakra-ui/react';
-import { useAioha } from '@aioha/react-ui'
 import { useRef } from 'react';
 
 const parent_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
 const parent_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
 
 export default function TweetComposer() {
-    const { aioha, user, provider } = useAioha()
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
 
     async function handleComment() {
 
         console.log(parent_permlink)
-        console.log(aioha.getCurrentUser())
+        //console.log(aioha.getCurrentUser())
 
         const permlink = new Date()
         .toISOString()
@@ -24,8 +22,7 @@ export default function TweetComposer() {
         const commentBody = postBodyRef.current?.value
 
         if (commentBody) {
-            const comment = await aioha.comment(parent_author, parent_permlink, permlink, 'cast', commentBody, { app: 'mycommunity' })
-            console.log(comment)
+
         }
         
     }
