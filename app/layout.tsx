@@ -1,6 +1,5 @@
 // app/layout.tsx
-'use client';
-
+'use client'
 import { Box, Flex } from '@chakra-ui/react';
 import Header from './components/homepage/Header';
 import Sidebar from './components/homepage/Sidebar';
