@@ -24,7 +24,7 @@ export default function TweetComposer() {
         const commentBody = postBodyRef.current?.value
 
         if (commentBody) {
-            const comment = await aioha.comment(parent_author, parent_permlink, permlink, 'cast', commentBody, { app: 'mycommunity' })
+            const comment = await aioha.comment(parent_author, parent_permlink, permlink, '', commentBody, { app: 'mycommunity' })
             console.log(comment)
         }
         
