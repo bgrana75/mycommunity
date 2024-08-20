@@ -2,6 +2,9 @@
 import React from 'react';
 import { Box, Input, HStack, Button, Textarea } from '@chakra-ui/react';
 import { useRef } from 'react';
+import { Aioha } from '@aioha/aioha';
+
+const aioha = new Aioha()
 
 const parent_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
 const parent_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
