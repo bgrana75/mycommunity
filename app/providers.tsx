@@ -39,9 +39,9 @@ export function Providers({ children }: { children: React.ReactNode }) {
   })
   return (
   <ChakraProvider theme={selectedTheme}>
-
+    <AiohaProvider aioha={aioha}>
       {children}
-
+    </AiohaProvider>
   </ChakraProvider>
   )
 }
