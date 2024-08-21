@@ -1,4 +1,4 @@
-import { Box, Text, HStack, Button, Avatar, Link, Flex } from '@chakra-ui/react';
+import { Box, Text, HStack, Button, Avatar, Link } from '@chakra-ui/react';
 import { Comment, Discussion } from '@hiveio/dhive';
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
@@ -7,14 +7,11 @@ import DOMPurify from 'dompurify';
 import { useComments } from '@/hooks/useComments';
 import { FaHeart, FaRegComment, FaRegHeart, FaShare } from "react-icons/fa";
 
-interface TweetProps {
+interface ConversationProps {
     comment: Comment,
-    onOpen: () => void;
-    setReply: (comment: Comment) => void;
-    setConversation: (conversation: Comment) => void;
 }
 
-const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
+const Conversation = ({ comment, }: ConversationProps ) => {
     // Sanitize the comment body to remove any invalid HTML tags or attributes
     const sanitizedBody = DOMPurify.sanitize(comment.body);
     console.log(comment, 'comment');
@@ -22,12 +19,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
     console.log(replies.comments.length, 'replies');
 
     function handleReplyModal() {
-        setReply(comment)
-        onOpen()
-    }
 
-    function handleConversation() {
-        setConversation(comment)
     }
 
     return (
@@ -46,14 +38,11 @@ const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
             </ReactMarkdown>
             <HStack justify="space-between" mt={3}>
                 <Button leftIcon={<FaRegHeart />} variant="ghost">{comment.net_votes}</Button>
-                <HStack>
-                    <FaRegComment onClick={handleReplyModal} cursor="pointer" />
-                    <Text onClick={handleConversation} cursor="pointer" fontWeight="bold" >{replies.comments.length}</Text>
-                </HStack>
+                <Button leftIcon={<FaRegComment />} variant="ghost" onClick={handleReplyModal}>{replies.comments.length}</Button>
                 <Button leftIcon={<FaShare />} variant="ghost"></Button>
             </HStack>
         </Box>
     );
 }
 
-export default Tweet;
+export default Conversation;
