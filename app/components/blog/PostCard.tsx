@@ -1,9 +1,9 @@
-// components/PostCard.tsx
-import { Box, Container, Image, Text } from '@chakra-ui/react';
-import React from 'react';
+import { Box, Image, Text } from '@chakra-ui/react';
+import React, { useState, useEffect } from 'react';
 import { Discussion } from '@hiveio/dhive';
-//import { Post } from '@/app/types/Posts';
-// I have created a type for the posts in the app/types/Posts.ts file. but may be we can get from dhive or keychain sdk
+import { Swiper, SwiperSlide } from 'swiper/react';
+import { Navigation, Pagination } from 'swiper/modules';
+import 'swiper/swiper-bundle.css';
 
 interface PostCardProps {
     post: Discussion;
@@ -11,8 +11,21 @@ interface PostCardProps {
 
 export default function PostCard({ post }: PostCardProps) {
     const { title, author, body, json_metadata, created } = post;
-    const metadata = JSON.parse(json_metadata)
-    const imageUrl = metadata?.image?.[0]; // Get the first image from the metadata
+    const metadata = JSON.parse(json_metadata);
+    const [imageUrls, setImageUrls] = useState<string[]>([]);
+
+    useEffect(() => {
+        const images = extractImagesFromBody(body);
+        if (images && images.length > 0) {
+            setImageUrls(images);
+        }
+    }, [body]);
+
+    function extractImagesFromBody(body: string): string[] {
+        const regex = /!\[.*?\]\((.*?)\)/g;
+        const matches = Array.from(body.matchAll(regex)) as RegExpExecArray[];
+        return matches.map(match => match[1]);
+    }
 
     return (
         <Box
@@ -22,17 +35,31 @@ export default function PostCard({ post }: PostCardProps) {
             bg="muted"
             p={4}
         >
-            <Box
-                bg="primary"
-                h={40}
-                w="100%"
-                mb={4}
-                borderRadius={4}
-            >
-                {imageUrl &&
-                    <Image src={imageUrl} alt={title} borderRadius="md" mb={4} objectFit="cover" w="100%" h="100%" />
-                }
-            </Box>
+            {imageUrls.length > 0 && (
+                <Swiper
+                    spaceBetween={10}
+                    slidesPerView={1}
+                    pagination={{ clickable: true }}
+                    navigation={true}
+                    modules={[Navigation, Pagination]}
+                >
+                    {imageUrls.map((url, index) => (
+                        <SwiperSlide key={index}>
+                            <Box h="200px" w="100%">
+                                <Image
+                                    src={url}
+                                    alt={title}
+                                    borderRadius="md"
+                                    mb={4}
+                                    objectFit="cover"
+                                    w="100%"
+                                    h="100%"
+                                />
+                            </Box>
+                        </SwiperSlide>
+                    ))}
+                </Swiper>
+            )}
             <Text noOfLines={2} fontWeight="bold" fontSize="lg" mb={2}>
                 {title}
             </Text>

@@ -1,5 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
-
+import { swiperStyles } from './swiperStyles';
 export const nounsDaoTheme = extendTheme({
     colors: {
         background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
@@ -105,6 +105,11 @@ export const nounsDaoTheme = extendTheme({
         inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.06)',
         none: 'none',
         'dark-lg': 'rgba(0, 0, 0, 0.4) 0px 10px 15px -3px, rgba(0, 0, 0, 0.3) 0px 4px 6px -2px',
+    },
+    styles: {
+        global: {
+            ...swiperStyles, // Apply Swiper styles globally
+        },
     },
     components: {
         Button: {

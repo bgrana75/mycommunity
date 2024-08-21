@@ -1,4 +1,5 @@
 import { extendTheme } from '@chakra-ui/react';
+import { swiperStyles } from './swiperStyles';
 
 export const forestTheme = extendTheme({
     colors: {

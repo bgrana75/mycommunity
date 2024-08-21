@@ -18,7 +18,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileCoverImage, setProfileCoverImage] = useState<string>('');
   const [profileWebsite, setProfileWebsite] = useState<string>('');
-  const [query, setQuery] = useState("created")
+  const [query, setQuery] = useState("blog")
   const tag = [{ tag: username, limit: 20 }]
   const { posts, setQueryCategory, setDiscussionQuery } = usePosts(query, tag)
   console.log(posts)
@@ -63,7 +63,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   }
 
   return (
-    <Box p={4} bg="background" color="text" maxW="container.md" mx="auto" >
+    <Box color="text" maxW="container.md" mx="auto" >
       <Box position="relative" height="200px">
         <Container id='cover' maxW="container.md" p={0} borderRadius="md" overflow="hidden" position="relative" height="100%">
           <Image
