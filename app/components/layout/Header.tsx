@@ -30,18 +30,18 @@ export default function Header() {
                 <Button onClick={() => setModalDisplayed(true)}>
                     {user ?? 'Login'}
                 </Button>
-                <div className={colorMode}>
-                    <AiohaModal
-                        displayed={modalDisplayed}
-                        loginOptions={{
-                            msg: 'Login',
-                            keyType: KeyTypes.Posting
-                        }}
-                        onLogin={console.log}
-                        onClose={setModalDisplayed}
-                    />
-                </div>
             </Flex>
+            <div className={colorMode}>
+                <AiohaModal
+                    displayed={modalDisplayed}
+                    loginOptions={{
+                        msg: 'Login',
+                        keyType: KeyTypes.Posting
+                    }}
+                    onLogin={console.log}
+                    onClose={setModalDisplayed}
+                />
+            </div>
         </Box>
     );
 }
