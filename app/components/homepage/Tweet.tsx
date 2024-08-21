@@ -1,9 +1,6 @@
 import { Box, Text, HStack, Button, Avatar, Link, Flex } from '@chakra-ui/react';
 import { Comment, Discussion } from '@hiveio/dhive';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import DOMPurify from 'dompurify';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 import { useComments } from '@/hooks/useComments';
 import { FaHeart, FaRegComment, FaRegHeart, FaShare } from "react-icons/fa";
 
@@ -15,11 +12,8 @@ interface TweetProps {
 }
 
 const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
-    // Sanitize the comment body to remove any invalid HTML tags or attributes
-    const sanitizedBody = DOMPurify.sanitize(comment.body);
-    console.log(comment, 'comment');
+
     const replies = useComments(comment.author, comment.permlink);
-    console.log(replies.comments.length, 'replies');
 
     function handleReplyModal() {
         setReply(comment)
@@ -38,12 +32,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
                     {comment.author}
                 </Link>
             </HStack>
-            <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-            >
-                {sanitizedBody}
-            </ReactMarkdown>
+                <MarkdownRenderer>{comment.body}</MarkdownRenderer>
             <HStack justify="space-between" mt={3}>
                 <Button leftIcon={<FaRegHeart />} variant="ghost">{comment.net_votes}</Button>
                 <HStack>

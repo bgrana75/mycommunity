@@ -52,7 +52,7 @@ export default function TweetReplyModal({ isOpen, onClose, comment }: TweetReply
     return (
         <Modal isOpen={isOpen} onClose={onClose}>
             <ModalOverlay bg="rgba(0, 0, 0, 0.6)" backdropFilter="blur(10px)" />
-            <ModalContent>
+            <ModalContent bg="background" color="text">
                 <ModalHeader>
                 <HStack mb={2}>
                 <Avatar size="sm" name={comment.author} />
