@@ -7,11 +7,7 @@ import { useAioha, AiohaModal } from '@aioha/react-ui'
 import { KeyTypes } from '@aioha/aioha'
 import '@aioha/react-ui/dist/build.css'
 
-interface HeaderProps {
-    onLoginClick?: () => void;
-}
-
-export default function Header({ onLoginClick }: HeaderProps) {
+export default function Header() {
     const { colorMode } = useColorMode()
     const [modalDisplayed, setModalDisplayed] = useState(false)
     const { user } = useAioha()

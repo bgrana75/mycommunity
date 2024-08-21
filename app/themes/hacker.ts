@@ -2,6 +2,8 @@ import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
 
 export const hackerTheme = extendTheme({
+    initialColorMode: 'dark', // set 'light' or 'dark' as the default color mode
+    useSystemColorMode: false,
     colors: {
         background: '#0f0f0f', // Black background, typical of hacker aesthetics
         text: '#00FF00', // Bright green text, reminiscent of terminal output

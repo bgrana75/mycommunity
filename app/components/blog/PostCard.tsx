@@ -54,6 +54,7 @@ export default function PostCard({ post }: PostCardProps) {
                                     objectFit="cover"
                                     w="100%"
                                     h="100%"
+
                                 />
                             </Box>
                         </SwiperSlide>
