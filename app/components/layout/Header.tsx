@@ -31,11 +31,11 @@ export default function Header({ onLoginClick }: HeaderProps) {
                     _placeholder={{ color: 'text' }}
                     display={{ base: 'none', md: 'block' }}
                 />
-                    <Button onClick={() => setModalDisplayed(true)}>
-                        {user ?? 'Login'}
-                    </Button>
-                    <div className={colorMode}>
-                        <AiohaModal
+                <Button onClick={() => setModalDisplayed(true)}>
+                    {user ?? 'Login'}
+                </Button>
+                <div className={colorMode}>
+                    <AiohaModal
                         displayed={modalDisplayed}
                         loginOptions={{
                             msg: 'Login',
@@ -43,8 +43,8 @@ export default function Header({ onLoginClick }: HeaderProps) {
                         }}
                         onLogin={console.log}
                         onClose={setModalDisplayed}
-                        />
-                    </div>
+                    />
+                </div>
             </Flex>
         </Box>
     );

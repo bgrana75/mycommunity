@@ -4,7 +4,7 @@
 import { Box, Container, Flex } from '@chakra-ui/react';
 import TweetList from './components/homepage/TweetList';
 import TweetComposer from './components/homepage/TweetComposer';
-import RightSidebar from './components/homepage/RightSideBar';
+import RightSidebar from './components/layout/RightSideBar';
 
 export default function Home() {
   const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'canna-curate';

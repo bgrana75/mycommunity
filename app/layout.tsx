@@ -1,9 +1,9 @@
 // app/layout.tsx
 'use client'
 import { Box, Flex } from '@chakra-ui/react';
-import Header from './components/homepage/Header';
-import Sidebar from './components/homepage/Sidebar';
-import FooterNavigation from './components/homepage/FooterNavigation';
+import Header from './components/layout/Header';
+import Sidebar from './components/layout/Sidebar';
+import FooterNavigation from './components/layout/FooterNavigation';
 import LoginModal from './components/modal/LoginModal';
 import { useState } from 'react';
 import { Providers } from './providers';
