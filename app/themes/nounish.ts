@@ -2,7 +2,7 @@ import { extendTheme } from '@chakra-ui/react';
 
 export const nounsDaoTheme = extendTheme({
     colors: {
-        background: '#fff5f7',  // Light pink background
+        background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
         text: '#333333',  // Dark gray text
         primary: '#333333',
         secondary: '#ffcc00',  // Nouns yellow

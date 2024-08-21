@@ -1,5 +1,5 @@
 // components/PostCard.tsx
-import { Box, Image, Text } from '@chakra-ui/react';
+import { Box, Container, Image, Text } from '@chakra-ui/react';
 import React from 'react';
 import { Discussion } from '@hiveio/dhive';
 //import { Post } from '@/app/types/Posts';
@@ -22,14 +22,23 @@ export default function PostCard({ post }: PostCardProps) {
             bg="muted"
             p={4}
         >
-            {imageUrl && <Image src={imageUrl} alt={title} borderRadius="md" mb={4} />}
-            <Text fontWeight="bold" fontSize="lg" mb={2}>
+            <Box
+                bg="primary"
+                h={40}
+                w="100%"
+                mb={4}
+                borderRadius={4}
+            >
+                {imageUrl &&
+                    <Image src={imageUrl} alt={title} borderRadius="md" mb={4} objectFit="cover" w="100%" h="100%" />
+                }
+            </Box>
+            <Text noOfLines={2} fontWeight="bold" fontSize="lg" mb={2}>
                 {title}
             </Text>
             <Text fontSize="sm" color="gray.500" mb={2}>
                 By @{author} on {new Date(created).toLocaleDateString()}
             </Text>
-            <Text noOfLines={3}>{body}</Text>
         </Box>
     );
 }
