@@ -27,8 +27,10 @@ const Tweet = ({ comment, onOpen, setReply, setConversation }: TweetProps ) => {
     return (
         <Box bg="muted" p={4} mt={1} mb={1} borderRadius="md">
             <HStack mb={2}>
-                <Avatar size="sm" name={comment.author} />
-                <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
+                <Link href={`/author/${comment.author}`} fontWeight="bold" mb={2}>
+                    <Avatar size="sm" name={comment.author} />
+                </Link>
+                <Link href={`/author/${comment.author}`} fontWeight="bold" mb={2}>
                     {comment.author}
                 </Link>
             </HStack>

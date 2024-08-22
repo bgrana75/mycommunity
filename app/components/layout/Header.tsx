@@ -27,21 +27,21 @@ export default function Header() {
                     _placeholder={{ color: 'text' }}
                     display={{ base: 'none', md: 'block' }}
                 />
-                    <Button onClick={() => setModalDisplayed(true)}>
-                        {user ?? 'Login'}
-                    </Button>
-                    <div className={colorMode}>
-                        <AiohaModal
-                        displayed={modalDisplayed}
-                        loginOptions={{
-                            msg: 'Login',
-                            keyType: KeyTypes.Posting
-                        }}
-                        onLogin={console.log}
-                        onClose={setModalDisplayed}
-                        />
-                    </div>
+                <Button onClick={() => setModalDisplayed(true)}>
+                    {user ?? 'Login'}
+                </Button>
             </Flex>
+            <div className={colorMode}>
+                <AiohaModal
+                    displayed={modalDisplayed}
+                    loginOptions={{
+                        msg: 'Login',
+                        keyType: KeyTypes.Posting
+                    }}
+                    onLogin={console.log}
+                    onClose={setModalDisplayed}
+                />
+            </div>
         </Box>
     );
 }

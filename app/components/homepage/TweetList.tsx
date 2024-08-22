@@ -42,12 +42,12 @@ export default function TweetList({ author, permlink, setConversation }: TweetLi
 
     return (
         <>
-        <VStack spacing={2} align="stretch">
-            {comments.map((comment: any) => (
-                <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
-            ))}
-        </VStack>
-        <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} />
+            <VStack spacing={2} align="stretch">
+                {comments.map((comment: any) => (
+                    <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
+                ))}
+            </VStack>
+            <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} />
         </>
     );
 }

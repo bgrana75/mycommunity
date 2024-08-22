@@ -2,6 +2,9 @@
 import React, { useState, useEffect } from 'react';
 import { Box, Heading, Text, VStack, Spinner, Alert, AlertIcon, Image, Container } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
+import { FaGlobe } from 'react-icons/fa';
+import usePosts from '@/hooks/usePosts';
+import PostGrid from '@/app/components/blog/PostGrid';
 
 interface ProfilePageProps {
   params: {
@@ -10,16 +13,22 @@ interface ProfilePageProps {
 }
 
 export default function ProfilePage({ params }: ProfilePageProps) {
-  const { hiveAccount, isLoading, error } = useHiveAccount(params.username);
+  const username = String(params.username);
+  const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileCoverImage, setProfileCoverImage] = useState<string>('');
-
+  const [profileWebsite, setProfileWebsite] = useState<string>('');
+  const [query, setQuery] = useState("blog")
+  const tag = [{ tag: username, limit: 20 }]
+  const { posts, setQueryCategory, setDiscussionQuery } = usePosts(query, tag)
+  console.log(posts)
   useEffect(() => {
     if (hiveAccount && hiveAccount.json_metadata) {
       try {
         const profileMetadata = JSON.parse(hiveAccount.posting_json_metadata);
         setProfileImage(profileMetadata.profile?.profile_image || '');
         setProfileCoverImage(profileMetadata.profile?.cover_image || '');
+        setProfileWebsite(profileMetadata.profile?.website || '');
       } catch (err) {
         console.error('Failed to parse profile metadata', err);
       }
@@ -54,7 +63,7 @@ export default function ProfilePage({ params }: ProfilePageProps) {
   }
 
   return (
-    <Box p={4} bg="background" color="text" maxW="container.md" mx="auto" border="1px solid" borderColor="border" borderRadius="md" shadow="md">
+    <Box color="text" maxW="container.md" mx="auto" >
       <Box position="relative" height="200px">
         <Container id='cover' maxW="container.md" p={0} borderRadius="md" overflow="hidden" position="relative" height="100%">
           <Image
@@ -79,18 +88,17 @@ export default function ProfilePage({ params }: ProfilePageProps) {
           border="4px solid white"
         />
       </Box>
-
-      <VStack spacing={4} align="start" mt={8}>
+      <VStack spacing={2} align="start" mt={8}>
         <Heading as="h1" size="2xl">{hiveAccount.name}</Heading>
-        {hiveAccount.json_metadata && (
-          <Container textOverflow={'ellipsis'}>
-            <Box mt={4} p={4} border="1px solid" borderColor="border" borderRadius="md">
-              <Heading as="h3" size="lg" mb={2}>Metadata</Heading>
-              <Text textOverflow={'ellipsis'}>{JSON.stringify(hiveAccount.metadata, null, 2)}</Text>
-            </Box>
-          </Container>
-        )}
+        <FaGlobe onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
       </VStack>
+      <Container maxW="container.lg">
+        {posts ? (
+          <PostGrid posts={posts} columns={3} />
+        ) : (
+          <></>
+        )}
+      </Container>
     </Box>
   );
 }

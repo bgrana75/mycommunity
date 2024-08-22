@@ -4,7 +4,8 @@
 import { Box, Container, Flex } from '@chakra-ui/react';
 import TweetList from './components/homepage/TweetList';
 import TweetComposer from './components/homepage/TweetComposer';
-import RightSidebar from './components/homepage/RightSideBar';
+
+import RightSidebar from './components/layout/RightSideBar';
 import { useEffect, useState } from 'react';
 import { Comment } from '@hiveio/dhive';
 import Conversation from './components/homepage/Conversation';
