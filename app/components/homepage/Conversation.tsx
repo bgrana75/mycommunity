@@ -1,23 +1,39 @@
-import { Box, Text, HStack, Button, Avatar, Link, Divider, IconButton } from '@chakra-ui/react';
+import { Box, Text, HStack, Button, Avatar, Divider, VStack, Spinner } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
-import { MarkdownRenderer } from '../MarkdownRenderer';
 import { useComments } from '@/hooks/useComments';
-import { FaHeart, FaRegComment, FaRegHeart, FaShare, FaArrowLeft } from "react-icons/fa";
 import { ArrowBackIcon } from "@chakra-ui/icons";
+import Tweet from './Tweet';
+
 interface ConversationProps {
     comment: Comment;
+    setConversation: (conversation: Comment | undefined) => void;
+    onOpen: () => void;
+    setReply: (reply: Comment) => void;
 }
 
-const Conversation = ({ comment }: ConversationProps) => {
+const Conversation = ({ comment, setConversation, onOpen, setReply }: ConversationProps) => {
 
-    const replies = useComments(comment.author, comment.permlink);
+    console.log(comment)
+    const { comments, isLoading, error } = useComments(comment.author, comment.permlink, true);
+    const replies = comments
+    console.dir(replies)
 
     function handleReplyModal() {
-        // Handle the reply modal logic here
+        setReply(comment);
+        onOpen();
     }
 
     function onBackClick() {
+        setConversation(undefined)
+    }
 
+    if (isLoading) {
+        return (
+            <Box textAlign="center" mt={4}>
+                <Spinner size="xl" />
+                <Text>Loading tweets...</Text>
+            </Box>
+        );
     }
 
     return (
@@ -26,20 +42,9 @@ const Conversation = ({ comment }: ConversationProps) => {
                 <Button onClick={onBackClick} variant="ghost" leftIcon={<ArrowBackIcon />}></Button>
                 <Text fontSize="lg" fontWeight="bold">Conversation</Text>
             </HStack>
-            <HStack mb={2}>
-                <Avatar size="sm" name={comment.author} />
-                <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
-                    {comment.author}
-                </Link>
-            </HStack>
-            <MarkdownRenderer>{comment.body}</MarkdownRenderer>
-            <HStack justify="space-between" mt={3}>
-                <Button leftIcon={<FaRegHeart />} variant="ghost">{comment.net_votes}</Button>
-                <Button leftIcon={<FaRegComment />} variant="ghost" onClick={handleReplyModal}>{replies.comments.length}</Button>
-                <Button leftIcon={<FaShare />} variant="ghost"></Button>
-            </HStack>
+            <Tweet comment={comment} onOpen={onOpen} setReply={setReply} />
             <Divider my={4} />
-            <HStack justify="space-between" mt={3}>
+            <HStack justify="space-between" mt={3} onClick={handleReplyModal}>
                 <HStack>
                     <Avatar size="sm" name="Your Name" />
                     <Text>Tweet your reply</Text>
@@ -49,6 +54,11 @@ const Conversation = ({ comment }: ConversationProps) => {
                 </Button>
             </HStack>
             <Divider my={4} />
+            <VStack spacing={2} align="stretch">
+            {replies.map((reply: any) => (
+                    <Tweet key={reply.permlink} comment={reply} onOpen={onOpen} setReply={setReply} />
+            ))}
+            </VStack>
         </Box>
     );
 }

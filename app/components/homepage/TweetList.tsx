@@ -4,24 +4,19 @@ import React from 'react';
 import { Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
 import { useComments } from '@/hooks/useComments';
 import Tweet from './Tweet';
-import TweetReplyModal from './TweetReplyModal';
-import { useState } from 'react';
 import { Comment } from '@hiveio/dhive';
 
 interface TweetListProps {
     author: string;
     permlink: string;
     setConversation: (conversation: Comment) => void;
+    onOpen: () => void;
+    setReply: (reply: Comment) => void;
 }
 
 
-export default function TweetList({ author, permlink, setConversation }: TweetListProps) {
-    const { comments, isLoading, error } = useComments(author, permlink, true);
-    const [reply, setReply] = useState<Comment>();
-    const [isOpen, setIsOpen] = useState(false);
-    const onOpen = () => setIsOpen(true);
-    const onClose = () => setIsOpen(false);
-
+export default function TweetList({ author, permlink, setConversation, onOpen, setReply }: TweetListProps) {
+    const { comments, isLoading, error } = useComments(author, permlink);
 
     if (isLoading) {
         return (
@@ -47,7 +42,6 @@ export default function TweetList({ author, permlink, setConversation }: TweetLi
                     <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
                 ))}
             </VStack>
-            <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} />
         </>
     );
 }

@@ -3,7 +3,16 @@ import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useState } from "react"
 import { Comment } from "@hiveio/dhive"
 
-interface ExtendedComment extends Comment {
+interface ActiveVote {
+    percent: number;
+    reputation: number;
+    rshares: number;
+    time: string;
+    voter: string;
+    weight: number;
+}
+export interface ExtendedComment extends Comment {
+    active_votes?: ActiveVote[]
     replies?: ExtendedComment[]
 }
 
