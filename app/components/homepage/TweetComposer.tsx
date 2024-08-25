@@ -77,11 +77,16 @@ export default function TweetComposer({ pa, pp }: TweetComposerProps) {
     
             const validUrls = uploadedImages.filter(Boolean);
             console.log(validUrls, 'validurls')
+
+            if (validUrls.length > 0) {
+                const imageMarkup = validUrls.map(url => `![image](${url})`).join('\n');
+                commentBody += `\n\n${imageMarkup}`;
+            }
         }
 
         if (commentBody) {
-            //const comment = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'mycommunity' });
-            //console.log(comment);
+            const comment = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'mycommunity' });
+            console.log(comment);
         }
     }
 
