@@ -15,16 +15,16 @@ export default function FooterNavigation() {
             display={{ base: 'block', md: 'none' }}
         >
             <HStack justify="space-around">
-                <Button as={Link} href="/" variant="ghost">
+                <Button variant="ghost">
                     Home
                 </Button>
-                <Button as={Link} href="/explore" variant="ghost">
+                <Button variant="ghost">
                     Explore
                 </Button>
-                <Button as={Link} href="/notifications" variant="ghost">
+                <Button variant="ghost">
                     Notifications
                 </Button>
-                <Button as={Link} href="/messages" variant="ghost">
+                <Button variant="ghost">
                     Messages
                 </Button>
             </HStack>
