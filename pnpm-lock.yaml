@@ -14,6 +14,9 @@ importers:
       '@aioha/react-ui':
         specifier: ^1.4.1
         version: 1.4.1(@aioha/aioha@1.5.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+      '@chakra-ui/icons':
+        specifier: ^2.1.1
+        version: 2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@chakra-ui/react':
         specifier: ^2.8.2
         version: 2.8.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(framer-motion@11.3.28(@emotion/is-prop-valid@1.3.0)(react-dom@18.3.1(react@18.3.1))(react@18.3.1))(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
@@ -61,7 +64,7 @@ importers:
         version: 4.0.0
       swiper:
         specifier: ^11.1.9
-        version: 11.1.9
+        version: 11.1.10
     devDependencies:
       '@types/dompurify':
         specifier: ^3.0.5
@@ -75,9 +78,6 @@ importers:
       '@types/react-dom':
         specifier: ^18
         version: 18.3.0
-      '@types/react-slick':
-        specifier: ^0.23.13
-        version: 0.23.13
       eslint:
         specifier: ^8
         version: 8.57.0
@@ -278,6 +278,12 @@ packages:
 
   '@chakra-ui/icon@3.2.0':
     resolution: {integrity: sha512-xxjGLvlX2Ys4H0iHrI16t74rG9EBcpFvJ3Y3B7KMQTrnW34Kf7Da/UC8J67Gtx85mTHW020ml85SVPKORWNNKQ==}
+    peerDependencies:
+      '@chakra-ui/system': '>=2.0.0'
+      react: '>=18'
+
+  '@chakra-ui/icons@2.1.1':
+    resolution: {integrity: sha512-3p30hdo4LlRZTT5CwoAJq3G9fHI0wDc0pBaMHj4SUn0yomO+RcDRlzhdXqdr5cVnzax44sqXJVnf3oQG0eI+4g==}
     peerDependencies:
       '@chakra-ui/system': '>=2.0.0'
       react: '>=18'
@@ -929,9 +935,6 @@ packages:
 
   '@types/react-dom@18.3.0':
     resolution: {integrity: sha512-EhwApuTmMBmXuFOikhQLIBUn6uFg81SwLMOAUgodJF14SOBOCMdU04gDoYi0WOJJHD144TL32z4yDqCW3dnkQg==}
-
-  '@types/react-slick@0.23.13':
-    resolution: {integrity: sha512-bNZfDhe/L8t5OQzIyhrRhBr/61pfBcWaYJoq6UDqFtv5LMwfg4NsVDD2J8N01JqdAdxLjOt66OZEp6PX+dGs/A==}
 
   '@types/react@18.3.4':
     resolution: {integrity: sha512-J7W30FTdfCxDDjmfRM+/JqLHBIyl7xUIp9kwK637FGmY7+mkSFSe6L4jpZzhj5QMfLssSDP4/i75AKkrdC7/Jw==}
@@ -2881,8 +2884,8 @@ packages:
     resolution: {integrity: sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==}
     engines: {node: '>= 0.4'}
 
-  swiper@11.1.9:
-    resolution: {integrity: sha512-rflu8zvfGa3x1v/aeSufk4zRJffhOQowyvtJlp46sUBnOqAuk1Rdv5Ldj0AWWBV595iZ+ZMk7VB35ZRtRUomtA==}
+  swiper@11.1.10:
+    resolution: {integrity: sha512-pAVM6vCb6bumj2B9aSh67l3wP1j5YR8dPQM1YhQKMpnBc33vs+RpyVz6NZYZl/ZopCBSYbbWK5nvESwbmU0QXQ==}
     engines: {node: '>= 4.7.0'}
 
   tailwindcss@3.4.10:
@@ -3388,6 +3391,12 @@ snapshots:
   '@chakra-ui/icon@3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@chakra-ui/shared-utils': 2.0.5
+      '@chakra-ui/system': 2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1)
+      react: 18.3.1
+
+  '@chakra-ui/icons@2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1))(react@18.3.1)':
+    dependencies:
+      '@chakra-ui/icon': 3.2.0(@chakra-ui/system@2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1))(react@18.3.1)
       '@chakra-ui/system': 2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1)
       react: 18.3.1
 
@@ -4276,10 +4285,6 @@ snapshots:
   '@types/prop-types@15.7.12': {}
 
   '@types/react-dom@18.3.0':
-    dependencies:
-      '@types/react': 18.3.4
-
-  '@types/react-slick@0.23.13':
     dependencies:
       '@types/react': 18.3.4
 
@@ -6802,7 +6807,7 @@ snapshots:
 
   supports-preserve-symlinks-flag@1.0.0: {}
 
-  swiper@11.1.9: {}
+  swiper@11.1.10: {}
 
   tailwindcss@3.4.10:
     dependencies:

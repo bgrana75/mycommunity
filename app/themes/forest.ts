@@ -3,13 +3,13 @@ import { swiperStyles } from './swiperStyles';
 
 export const forestTheme = extendTheme({
     colors: {
-        background: '#228B22', // Forest green background
-        text: '#F0E68C', // Khaki text color
-        primary: '#006400', // Dark green for primary actions
-        secondary: '#8FBC8F', // Dark sea green for secondary elements
-        accent: '#556B2F', // Dark olive green for accents
-        muted: '#98FB98', // Pale green for muted elements
-        border: '#2E8B57', // Sea green for borders
+        background: '#1C4532', // Forest green background
+        text: '#F0FFF4', // Khaki text color
+        primary: '#9AE6B4', // Dark green for primary actions
+        secondary: '#22543D', // Dark sea green for secondary elements
+        accent: '#48BB78', // Dark olive green for accents
+        muted: '#276749', // Pale green for muted elements
+        border: '#C6F6D5', // Sea green for borders
         error: '#B22222', // Firebrick red for errors
         success: '#32CD32', // Lime green for success messages
         warning: '#DAA520', // Goldenrod for warnings

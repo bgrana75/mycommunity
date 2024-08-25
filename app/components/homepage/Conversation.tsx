@@ -1,46 +1,64 @@
-import { Box, Text, HStack, Button, Avatar, Link } from '@chakra-ui/react';
-import { Comment, Discussion } from '@hiveio/dhive';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import DOMPurify from 'dompurify';
+import { Box, Text, HStack, Button, Avatar, Divider, VStack, Spinner } from '@chakra-ui/react';
+import { Comment } from '@hiveio/dhive';
 import { useComments } from '@/hooks/useComments';
-import { FaHeart, FaRegComment, FaRegHeart, FaShare } from "react-icons/fa";
+import { ArrowBackIcon } from "@chakra-ui/icons";
+import Tweet from './Tweet';
 
 interface ConversationProps {
-    comment: Comment,
+    comment: Comment;
+    setConversation: (conversation: Comment | undefined) => void;
+    onOpen: () => void;
+    setReply: (reply: Comment) => void;
 }
 
-const Conversation = ({ comment, }: ConversationProps ) => {
-    // Sanitize the comment body to remove any invalid HTML tags or attributes
-    const sanitizedBody = DOMPurify.sanitize(comment.body);
-    console.log(comment, 'comment');
-    const replies = useComments(comment.author, comment.permlink);
-    console.log(replies.comments.length, 'replies');
+const Conversation = ({ comment, setConversation, onOpen, setReply }: ConversationProps) => {
+
+    console.log(comment)
+    const { comments, isLoading, error } = useComments(comment.author, comment.permlink, true);
+    const replies = comments
+    console.dir(replies)
 
     function handleReplyModal() {
+        setReply(comment);
+        onOpen();
+    }
 
+    function onBackClick() {
+        setConversation(undefined)
+    }
+
+    if (isLoading) {
+        return (
+            <Box textAlign="center" mt={4}>
+                <Spinner size="xl" />
+                <Text>Loading tweets...</Text>
+            </Box>
+        );
     }
 
     return (
         <Box bg="muted" p={4} mt={1} mb={1} borderRadius="md">
-            <HStack mb={2}>
-                <Avatar size="sm" name={comment.author} />
-                <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
-                    {comment.author}
-                </Link>
+            <HStack mb={4} spacing={2}>
+                <Button onClick={onBackClick} variant="ghost" leftIcon={<ArrowBackIcon />}></Button>
+                <Text fontSize="lg" fontWeight="bold">Conversation</Text>
             </HStack>
-            <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw]}
-            >
-                {sanitizedBody}
-            </ReactMarkdown>
-            <HStack justify="space-between" mt={3}>
-                <Button leftIcon={<FaRegHeart />} variant="ghost">{comment.net_votes}</Button>
-                <Button leftIcon={<FaRegComment />} variant="ghost" onClick={handleReplyModal}>{replies.comments.length}</Button>
-                <Button leftIcon={<FaShare />} variant="ghost"></Button>
+            <Tweet comment={comment} onOpen={onOpen} setReply={setReply} />
+            <Divider my={4} />
+            <HStack justify="space-between" mt={3} onClick={handleReplyModal}>
+                <HStack>
+                    <Avatar size="sm" name="Your Name" />
+                    <Text>Tweet your reply</Text>
+                </HStack>
+                <Button variant="solid" colorScheme="primary" onClick={handleReplyModal}>
+                    Reply
+                </Button>
             </HStack>
+            <Divider my={4} />
+            <VStack spacing={2} align="stretch">
+            {replies.map((reply: any) => (
+                    <Tweet key={reply.permlink} comment={reply} onOpen={onOpen} setReply={setReply} />
+            ))}
+            </VStack>
         </Box>
     );
 }
