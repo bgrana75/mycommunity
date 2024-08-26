@@ -35,6 +35,11 @@ export default function TweetList({ author, permlink, setConversation, onOpen, s
         );
     }
 
+    // Sort comments by date using comment.created
+    comments.sort((a: any, b: any) => {
+        return new Date(b.created).getTime() - new Date(a.created).getTime();
+    });
+
     return (
         <>
             <VStack spacing={2} align="stretch">

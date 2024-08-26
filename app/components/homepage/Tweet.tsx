@@ -46,7 +46,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 </HStack>
                 <MarkdownRenderer>{comment.body}</MarkdownRenderer>
                 <HStack justify="space-between" mt={3}>
-                    <Button leftIcon={voted ? ( <FaHeart /> ) : ( <FaRegHeart /> )} variant="ghost" onClick={handleVote} >
+                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleVote} >
                         {comment.active_votes?.length}
                     </Button>
                     <HStack>
