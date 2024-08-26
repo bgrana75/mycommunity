@@ -1,7 +1,6 @@
 // components/TweetList.tsx
-'use client';
-import React from 'react';
-import { Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
+import React, { useState } from 'react';
+import { Box, Spinner, VStack, Text } from '@chakra-ui/react';
 import { useComments } from '@/hooks/useComments';
 import Tweet from './Tweet';
 import { Comment } from '@hiveio/dhive';
@@ -12,10 +11,10 @@ interface TweetListProps {
     setConversation: (conversation: Comment) => void;
     onOpen: () => void;
     setReply: (reply: Comment) => void;
+    newComment: Comment | null; // Add this prop
 }
 
-
-export default function TweetList({ author, permlink, setConversation, onOpen, setReply }: TweetListProps) {
+export default function TweetList({ author, permlink, setConversation, onOpen, setReply, newComment }: TweetListProps) {
     const { comments, isLoading, error } = useComments(author, permlink);
 
     if (isLoading) {
@@ -41,12 +40,19 @@ export default function TweetList({ author, permlink, setConversation, onOpen, s
     });
 
     return (
-        <>
-            <VStack spacing={2} align="stretch">
-                {comments.map((comment: any) => (
-                    <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
-                ))}
-            </VStack>
-        </>
+        <VStack spacing={2} align="stretch">
+            {newComment && (
+                <Tweet
+                    key={newComment.permlink}
+                    comment={newComment}
+                    onOpen={onOpen}
+                    setReply={setReply}
+                    setConversation={setConversation}
+                />
+            )}
+            {comments.map((comment: any) => (
+                <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
+            ))}
+        </VStack>
     );
 }

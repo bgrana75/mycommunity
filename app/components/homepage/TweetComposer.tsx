@@ -7,6 +7,9 @@ import { IGif } from '@giphy/js-types';
 import { CloseIcon } from '@chakra-ui/icons';
 import { signImageHash } from '@/lib/hive/server-functions';
 import crypto from 'crypto';
+import { FaImage } from 'react-icons/fa';
+import { MdGif } from 'react-icons/md';
+import { Comment } from '@hiveio/dhive';
 
 const parent_author_default = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
 const parent_permlink_default = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
@@ -14,37 +17,10 @@ const parent_permlink_default = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-s
 interface TweetComposerProps {
     pa?: string;
     pp?: string;
+    onNewComment: (newComment: Partial<Comment>) => void;
 }
-const getFileSignature = (file: File): Promise<string> => {
-    return new Promise<string>(async (resolve, reject) => {
-        const reader = new FileReader();
 
-        reader.onload = async () => {
-            if (reader.result) {
-                const content = Buffer.from(reader.result as ArrayBuffer);
-                const hash = crypto.createHash('sha256')
-                    .update('ImageSigningChallenge')
-                    .update(content)
-                    .digest('hex');
-                try {
-                    const signature = await signImageHash(hash);
-                    resolve(signature);
-                } catch (error) {
-                    console.error('Error signing the hash:', error);
-                    reject(error);
-                }
-            } else {
-                reject(new Error('Failed to read file.'));
-            }
-        };
-        reader.onerror = () => {
-            reject(new Error('Error reading file.'));
-        };
-        reader.readAsArrayBuffer(file);
-    });
-};
-
-const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
+const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) => {
     const { aioha } = useAioha();
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
     const [images, setImages] = useState<File[]>([]);
@@ -52,6 +28,35 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
     const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState(0);
+
+    const getFileSignature = (file: File): Promise<string> => {
+        return new Promise<string>(async (resolve, reject) => {
+            const reader = new FileReader();
+
+            reader.onload = async () => {
+                if (reader.result) {
+                    const content = Buffer.from(reader.result as ArrayBuffer);
+                    const hash = crypto.createHash('sha256')
+                        .update('ImageSigningChallenge')
+                        .update(content)
+                        .digest('hex');
+                    try {
+                        const signature = await signImageHash(hash);
+                        resolve(signature);
+                    } catch (error) {
+                        console.error('Error signing the hash:', error);
+                        reject(error);
+                    }
+                } else {
+                    reject(new Error('Failed to read file.'));
+                }
+            };
+            reader.onerror = () => {
+                reject(new Error('Error reading file.'));
+            };
+            reader.readAsArrayBuffer(file);
+        });
+    };
 
     async function uploadImage(file: File, signature: string, index: number): Promise<string> {
         const formData = new FormData();
@@ -68,8 +73,6 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
         }
 
         const result = await response.json();
-
-        // Update progress
         setUploadProgress((prevProgress) => prevProgress + (100 / images.length));
 
         return result.url;
@@ -104,7 +107,6 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
             }));
 
             const validUrls = uploadedImages.filter(Boolean);
-            console.log(validUrls, 'validurls');
 
             if (validUrls.length > 0) {
                 const imageMarkup = validUrls.map((url: string | null) => `![image](${url?.toString() || ''})`).join('\n');
@@ -116,12 +118,22 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
             commentBody += `\n\n![gif](${selectedGif.images.downsized_medium.url})`;
         }
 
-        console.log(commentBody);
-
         if (commentBody) {
             try {
-                const comment = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'mycommunity' });
-                console.log(comment);
+                const commentResponse = await aioha.comment(pa, pp, permlink, '', commentBody, { app: 'mycommunity' });
+                if (commentResponse.success) {
+                    postBodyRef.current!.value = '';
+                    setImages([]);
+                    setSelectedGif(null);
+
+                    const newComment: Partial<Comment> = {
+                        author: pa, // Assuming `pa` is the current user's author name
+                        permlink: permlink,
+                        body: commentBody,
+                    };
+
+                    onNewComment(newComment); // Pass the actual Comment data
+                }
             } finally {
                 setIsLoading(false);
                 setUploadProgress(0);
@@ -129,30 +141,13 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
         }
     }
 
-    const handleUploadImages = (newImages: File[]) => {
-        setImages((prevImages) => [...prevImages, ...newImages]);
-    };
-
-    const handleRemoveImage = (index: number) => {
-        setImages((prevImages) => prevImages.filter((_, i) => i !== index));
-    };
-
-    const handleRemoveGif = () => {
-        setSelectedGif(null);
-    };
-
-    const handleGifSelect = (gif: IGif, e: React.SyntheticEvent<HTMLElement>) => {
-        e.preventDefault();
-        setSelectedGif(gif);
-        setGiphyModalOpen(false);
-    };
-
     return (
-        <Box bg="muted" p={4} borderRadius="md" mb={3}>
+        <Box bg="muted" p={4} borderRadius="base" mb={3}>
             <Textarea
                 placeholder="What's happening?"
                 bg="background"
                 borderColor="border"
+                borderRadius={'base'}
                 mb={3}
                 ref={postBodyRef}
                 _placeholder={{ color: 'text' }}
@@ -160,11 +155,13 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
             />
             <HStack justify="space-between" mb={3}>
                 <HStack>
-                    <Button as="label" variant="ghost" isDisabled={isLoading}>
-                        Image
-                        <ImageUploader images={images} onUpload={handleUploadImages} onRemove={handleRemoveImage} />
+                    <Button _hover={{ borderColor: 'border', border: '1px solid' }} _active={{ borderColor: 'border' }} as="label" variant="ghost" isDisabled={isLoading}>
+                        <FaImage size={22} />
+                        <ImageUploader images={images} onUpload={setImages} onRemove={(index) => setImages(prevImages => prevImages.filter((_, i) => i !== index))} />
                     </Button>
-                    <Button variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>Add GIF</Button>
+                    <Button _hover={{ borderColor: 'border', border: '1px solid' }} _active={{ borderColor: 'border' }} variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>
+                        <MdGif size={48} />
+                    </Button>
                 </HStack>
                 <Button variant="solid" colorScheme="primary" onClick={handleComment} isDisabled={isLoading}>
                     {isLoading ? <Spinner size="sm" /> : 'Tweet'}
@@ -182,7 +179,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
                             position="absolute"
                             top="0"
                             right="0"
-                            onClick={() => handleRemoveImage(index)}
+                            onClick={() => setImages(prevImages => prevImages.filter((_, i) => i !== index))}
                             isDisabled={isLoading}
                         />
                     </Box>
@@ -197,7 +194,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
                             position="absolute"
                             top="0"
                             right="0"
-                            onClick={handleRemoveGif}
+                            onClick={() => setSelectedGif(null)}
                             isDisabled={isLoading}
                         />
                     </Box>
@@ -206,11 +203,15 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp }) => {
             {isGiphyModalOpen && (
                 <GiphySelector
                     apiKey={process.env.GIPHY_API_KEY || 'qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV'}
-                    onSelect={handleGifSelect}
+                    onSelect={(gif, e) => {
+                        e.preventDefault();
+                        setSelectedGif(gif);
+                        setGiphyModalOpen(false);
+                    }}
                 />
             )}
         </Box>
     );
 };
 
-export default TweetComposer;
+export default TweetComposer; // Corrected: Ensure proper export statement

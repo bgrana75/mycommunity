@@ -23,10 +23,8 @@ const ImageUploader: React.FC<ImageUploaderProps> = ({ onUpload, onRemove, image
     };
 
     return (
-        <Box>
-            <Button variant="ghost" onClick={triggerFileInput}>
-                Add Image
-            </Button>
+        <Box onClick={triggerFileInput}>
+
             <Input
                 ref={inputRef}
                 type="file"
