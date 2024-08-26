@@ -11,14 +11,16 @@ import { Aioha } from '@aioha/aioha'
 import { AiohaProvider } from '@aioha/react-ui'
 
 import { useEffect } from 'react'
+import { windows95Theme } from './themes/windows95'
 
-const aioha =  new Aioha()
+const aioha = new Aioha()
 
 const themeMap = {
   forest: forestTheme,
   bluesky: blueSkyTheme,
   hacker: hackerTheme,
   nounish: nounsDaoTheme,
+  windows95: windows95Theme
 }
 
 type ThemeName = keyof typeof themeMap;
@@ -38,10 +40,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
     aioha.loadAuth()
   })
   return (
-  <ChakraProvider theme={selectedTheme}>
-    <AiohaProvider aioha={aioha}>
-      {children}
-    </AiohaProvider>
-  </ChakraProvider>
+    <ChakraProvider theme={selectedTheme}>
+      <AiohaProvider aioha={aioha}>
+        {children}
+      </AiohaProvider>
+    </ChakraProvider>
   )
 }

@@ -1,10 +1,9 @@
 import { Box, Text, HStack, Button, Avatar, Link, VStack } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
 import { MarkdownRenderer } from '../MarkdownRenderer';
-import { ExtendedComment, useComments } from '@/hooks/useComments';
+import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
-
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -15,12 +14,11 @@ interface TweetProps {
 }
 
 const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetProps) => {
+    const { aioha, user } = useAioha();
+    const voted = comment.active_votes?.some(item => item.voter === user);
 
-    const { aioha, user, provider } = useAioha()
+    const replies = comment.replies;
 
-    const voted = comment.active_votes?.some(item => item.voter === user)
-
-    const replies = comment.replies
     function handleReplyModal() {
         setReply(comment);
         onOpen();
@@ -31,13 +29,21 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     }
 
     async function handleVote() {
-        const vote = await aioha.vote(comment.author, comment.permlink, 500)
-        console.log(vote)
+        const vote = await aioha.vote(comment.author, comment.permlink, 500);
+        console.log(vote);
     }
 
     return (
         <Box pl={level > 0 ? 4 : 0} ml={level > 0 ? 8 : 0}>
-            <Box bg="muted" p={4} mt={1} mb={1} borderRadius="md">
+            <Box
+                bg="muted"
+                p={4}
+                mt={1}
+                mb={1}
+                border="1px solid"
+                borderColor="border"
+                borderRadius="base"  // This will apply the borderRadius from your theme
+            >
                 <HStack mb={2}>
                     <Avatar size="sm" name={comment.author} />
                     <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
@@ -46,7 +52,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 </HStack>
                 <MarkdownRenderer>{comment.body}</MarkdownRenderer>
                 <HStack justify="space-between" mt={3}>
-                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleVote} >
+                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleVote}>
                         {comment.active_votes?.length}
                     </Button>
                     <HStack>

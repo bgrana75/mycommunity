@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
-import { Input, Center, Spinner } from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
+import { Input, Center, Spinner, InputGroup, InputRightElement } from '@chakra-ui/react';
 import { Grid } from '@giphy/react-components';
-import { GiphyFetch } from '@giphy/js-fetch-api';
+import { GiphyFetch, GifsResult } from '@giphy/js-fetch-api';
 import { IGif } from '@giphy/js-types';
+import { FaSearch } from 'react-icons/fa';
 
 interface GiphySelectorProps {
     apiKey: string;
@@ -12,45 +13,62 @@ interface GiphySelectorProps {
 const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
     const gf = new GiphyFetch(apiKey);
     const [searchTerm, setSearchTerm] = useState('skateboard funny');
-    const [gifs, setGifs] = useState<IGif[]>([]);
     const [isLoading, setIsLoading] = useState(false);
+    const [key, setKey] = useState(0); // Add a key state to force re-render
 
-    useEffect(() => {
-        const fetchGifs = async () => {
-            setIsLoading(true);
-            const { data } = searchTerm
-                ? await gf.search(searchTerm, { limit: 10 })
-                : await gf.trending({ limit: 10 });
-            setGifs(data);
-            setIsLoading(false);
-        };
-
-        fetchGifs();
-    }, [searchTerm]);
+    const fetchGifs = async (offset: number): Promise<GifsResult> => {
+        setIsLoading(true);
+        const result = searchTerm
+            ? await gf.search(searchTerm, { offset, limit: 10 })
+            : await gf.trending({ offset, limit: 10 });
+        setIsLoading(false);
+        return result;
+    };
 
     const handleSearchTermChange = (value: string) => {
         setSearchTerm(value);
     };
 
-    // Custom handler to prevent default behavior
-    const handleGifClick = (gif: IGif, e: React.SyntheticEvent<HTMLElement>) => {
-        e.persist(); // Persist the event
-        onSelect(gif, e); // Call the onSelect with synthetic event
+    const handleSearchIconClick = () => {
+        fetchGifs(0); // Fetch GIFs from the start when the search icon is clicked
+        setKey(key + 1); // Increment the key to force re-render of the Grid component
     };
+
+    const handleGifClick = (gif: IGif, e: React.SyntheticEvent<HTMLElement>) => {
+        onSelect(gif, e);
+    };
+
+    useEffect(() => {
+        fetchGifs(0);
+        setKey(key + 1); // Increment the key to force re-render of the Grid component
+    }
+        , [searchTerm]);
 
     return (
         <>
-            <Input
-                placeholder="Type to search..."
-                onChange={(e) => handleSearchTermChange(e.target.value)}
-                m={4}
-            />
-            {isLoading && <Spinner />}
-            <Center>
+            <InputGroup>
+                <InputRightElement>
+                    {isLoading ? <Spinner /> : <FaSearch cursor="pointer" onClick={handleSearchIconClick} />}
+                </InputRightElement>
+                <Input
+                    pr="4.5rem"
+                    placeholder="Type to search..."
+                    value={searchTerm}
+                    onChange={(e) => handleSearchTermChange(e.target.value)}
+                    onKeyPress={(e) => {
+                        if (e.key === 'Enter') {
+                            fetchGifs(0); // Allows pressing Enter to search
+                            setKey(key + 1); // Increment the key to force re-render of the Grid component
+                        }
+                    }}
+                />
+            </InputGroup>
+            <Center mt={4}>
                 <Grid
+                    key={key} // Use the key prop to force re-rendering when the search term changes
                     width={450}
                     columns={3}
-                    fetchGifs={(offset: any) => gf.search(searchTerm, { offset, limit: 10 })}
+                    fetchGifs={fetchGifs} // Use the fetchGifs function to get GIFs based on the current search term
                     onGifClick={handleGifClick}
                 />
             </Center>

@@ -12,11 +12,8 @@ interface ConversationProps {
 }
 
 const Conversation = ({ comment, setConversation, onOpen, setReply }: ConversationProps) => {
-
-    console.log(comment)
     const { comments, isLoading, error } = useComments(comment.author, comment.permlink, true);
     const replies = comments
-    console.dir(replies)
 
     function handleReplyModal() {
         setReply(comment);
@@ -55,9 +52,9 @@ const Conversation = ({ comment, setConversation, onOpen, setReply }: Conversati
             </HStack>
             <Divider my={4} />
             <VStack spacing={2} align="stretch">
-            {replies.map((reply: any) => (
+                {replies.map((reply: any) => (
                     <Tweet key={reply.permlink} comment={reply} onOpen={onOpen} setReply={setReply} />
-            ))}
+                ))}
             </VStack>
         </Box>
     );
