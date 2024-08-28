@@ -37,4 +37,19 @@ export const dummyProducts: Product[] = [
         stock: 20,
         rating: 3.5,
     },
+    {
+        id: 4,
+        name: 'New Skatehive Collection',
+        description: 'A new collection of skateboards and accessories.',
+        price: 49.99,
+        imageUrls: [
+            'https://ipfs.skatehive.app/ipfs/QmawcKutmy4oSJ2As4yHRF8GatHcLTq9W6qF93skgBJDpg',
+            'https://ipfs.skatehive.app/ipfs/QmTqGMXMFoFq5FJUjHJQ4H16aRnu2afxx2d7KbmVnh5Kb4',
+            'https://ipfs.skatehive.app/ipfs/QmNbrkKyc2z3scJ8ZYAAP8dtmKmmexpoQtzRYYUZTqmtAQ',
+            'https://ipfs.skatehive.app/ipfs/QmQJLEZMw4T9npVnAmX7UmZdbkLShtuhCMZNVYkSagRabg'
+        ],
+        category: 'Merch',
+        stock: 15,
+        rating: 4.7,
+    },
 ];
