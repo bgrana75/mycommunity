@@ -1,7 +1,7 @@
 // components/TweetList.tsx
 'use client';
 import React from 'react';
-import { Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
+import { Button, Box, Spinner, VStack, Text, Container } from '@chakra-ui/react';
 import { useComments } from '@/hooks/useComments';
 import Tweet from './Tweet';
 
@@ -12,7 +12,7 @@ interface TweetListProps {
 
 
 export default function TweetList({ author, permlink }: TweetListProps) {
-    const { comments, isLoading, error } = useComments(author, permlink);
+    const { comments, isLoading, error, loadMoreComments } = useComments(author, permlink);
 
     if (isLoading) {
         return (
@@ -31,11 +31,20 @@ export default function TweetList({ author, permlink }: TweetListProps) {
         );
     }
 
-    return (
-        <VStack spacing={2} align="stretch">
-            {comments.map((comment: any) => (
-                <Tweet key={comment.permlink} comment={comment} />
-            ))}
-        </VStack>
-    );
+    //if (!isLoading) {
+        return (
+            <>
+            <Text align="right">Sort comments by rewards</Text>
+            <Text align="right">Sort comments by newest</Text>
+            <Text align="right">Sort comments by oldest</Text>
+            <VStack spacing={2} align="stretch">
+                {comments.map((comment: any) => (
+                    <Tweet key={comment.permlink} comment={comment} />
+                ))}
+                
+                <Button onClick={loadMoreComments}>Load More Comments</Button>
+            </VStack>
+            </>
+        );
+    //}
 }

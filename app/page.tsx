@@ -7,8 +7,8 @@ import TweetComposer from './components/homepage/TweetComposer';
 import RightSidebar from './components/homepage/RightSideBar';
 
 export default function Home() {
-  const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'canna-curate';
-  const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || '4onk12-the-cannabis-community-of-the-hive-block-chain';
+  const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'skatedev';
+  const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 're-skatedev-sidr6t';
 
   return (
     <Box bg="background" color="text" minH="100vh">
