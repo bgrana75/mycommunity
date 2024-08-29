@@ -43,8 +43,6 @@ var paramsFetchTweetsByRoot = {
     start: [
         'skatedev',
         'test-post-for-new-community',   
-        // 'xvlad',
-        // 'nxvsjarvmp',   
         lastChildAuthor,
         lastChildPermLink,
     ],
@@ -54,10 +52,8 @@ var paramsFetchTweetsByRoot = {
 
 var paramsFetchTweetsByLink = {
     start: [
-        'skatedev',
-        're-skatedev-sidr6t',        
-        //lastChildAuthor,
-        //lastChildPermLink,
+        lastChildAuthor,
+        lastChildPermLink,
     ],
     limit: 500,
     order: "by_permlink",
@@ -65,8 +61,8 @@ var paramsFetchTweetsByLink = {
 
 var paramsFetchTweetsByParent = {
     start: [
-        'skatedev',
-        'test-post-for-new-community',    
+        lastChildAuthor,
+        lastChildPermLink,   
         lastChildAuthor,
         lastChildPermLink,
     ],
@@ -74,7 +70,7 @@ var paramsFetchTweetsByParent = {
     order: "by_parent",
 };
 
-var paramsFetchTweets = paramsFetchTweetsByRoot;
+var paramsFetchTweets:any;
 
 function organizeComments(comments: Comment[]): Comment[] {
     // First, sort the comments by depth and creation date
@@ -93,6 +89,7 @@ function organizeComments(comments: Comment[]): Comment[] {
 
     comments.forEach(comment => {
         if (comment.depth === 1) {
+        //if (comment.depth === 1) {
             // Add depth 1 comments directly to the organized array
             organizedComments.push(comment);
             commentMap.set(comment.permlink, []);
@@ -123,7 +120,7 @@ const arraysAreEqual = (arr1: any[], arr2: any[]): boolean => {
 };
 
 const loadComments = async (): Promise<Comment[]> => {
-    if (!arraysAreEqual(lastStartParameter, paramsFetchTweets.start)) {
+    
         lastStartParameter = [...paramsFetchTweets.start]; // Salva o novo estado de 'start'
         
         const commentsResponse = await HiveClient.call(
@@ -134,12 +131,15 @@ const loadComments = async (): Promise<Comment[]> => {
 
         //console.log(commentsResponse.comments);
         return commentsResponse.comments;
-    }
+    
+    //if (!arraysAreEqual(lastStartParameter, paramsFetchTweets.start)) {
+    //}
 
-    return []; // Retorna vazio se a solicitação já foi feita
+    //return []; // Retorna vazio se a solicitação já foi feita
 };
 
-const fetchAllComments = async (): Promise<void> => {
+/*
+const fetchAllComments = async (): Promise<any> => {
     let hasMoreComments = true;
 
     do {
@@ -148,17 +148,21 @@ const fetchAllComments = async (): Promise<void> => {
         if (comments.length > 0) {
             // Remove o último comentário carregado anteriormente, se houver
             if (allLoadedComments.length > 0) {
-                //allLoadedComments.pop();
+                allLoadedComments.pop();
             }
             allLoadedComments = allLoadedComments.concat(comments);
 
             const lastComment = comments[comments.length - 1];
             lastChildAuthor = lastComment.author;
             lastChildPermLink = lastComment.permlink;
+            paramsFetchTweets.start[2] = lastChildAuthor;
+            paramsFetchTweets.start[3] = lastChildPermLink;
+
             hasMoreComments = true;
             console.log("Carregando Comentarios... ", allLoadedComments.length);
         } else {
             hasMoreComments = false; // Para o loop se não houver mais comentários
+            console.log("100% Comentarios... ", allLoadedComments.length);
         }
     } while (hasMoreComments);
 
@@ -171,24 +175,68 @@ const fetchAllComments = async (): Promise<void> => {
     
     //allLoadedComments.reverse();
 
-    allLoadedComments = organizeComments(allLoadedComments);
+    // allLoadedComments = organizeComments(allLoadedComments);
 
     // console.log("Comentários ordenados:", allLoadedComments.length);
     // console.log("Comentario mais novo:" + allLoadedComments[length-1]);
     // console.log(allLoadedComments);
     
     //console.log(allLoadedComments[3]);
-};
+//};
+
 
 async function fetchComments(page: number, pageSize: number): Promise<Comment[]> {
-    if (allLoadedComments.length === 0) {
-        await fetchAllComments(); // Garante que todos os comentários sejam carregados antes de continuar
-    }
+    // if (allLoadedComments.length === 0) {
+    //    await fetchAllComments(); // Garante que todos os comentários sejam carregados antes de continuar
+    // }
+    
+    let hasMoreComments = true;
 
-    // Paginação: Retorna um slice dos comentários para a página atual
-    const startIndex = (page - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    return allLoadedComments.slice(startIndex, endIndex);
+    // do {
+        if (!arraysAreEqual(lastStartParameter, paramsFetchTweets.start)) {
+        
+            //const comments = await loadComments(); // Espera a resposta antes de continuar
+            loadComments().then( (comments) => {
+
+
+
+            if (comments.length > 0) {
+                // Remove o último comentário carregado anteriormente, se houver
+                if (allLoadedComments.length > 0) {
+                    allLoadedComments.pop();
+                }
+                allLoadedComments = allLoadedComments.concat(comments);
+
+                const lastComment = comments[comments.length - 1];
+                lastChildAuthor = lastComment.author;
+                lastChildPermLink = lastComment.permlink;
+                
+                //Alera parametros SEARCH, desbloqueia nova consulta 
+                paramsFetchTweets.start[2] = lastChildAuthor;
+                paramsFetchTweets.start[3] = lastChildPermLink;
+
+                hasMoreComments = true;
+                console.log("Carregando Comentarios... ", allLoadedComments.length);
+
+                loadComments();
+            } else {
+                hasMoreComments = false; // Para o loop se não houver mais comentários
+                console.log("100% Comentarios... ", allLoadedComments.length);
+            }
+
+
+        // }
+    // } while (hasMoreComments);
+
+        allLoadedComments = organizeComments(allLoadedComments);
+
+        // Paginação: Retorna um slice dos comentários para a página atual
+        const startIndex = (page - 1) * pageSize;
+        const endIndex = startIndex + pageSize;
+
+        return allLoadedComments.slice(startIndex, endIndex);
+
+    });
 }
 
 export function useComments(
@@ -200,24 +248,18 @@ export function useComments(
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [page, setPage] = useState(1);
-    const pageSize = 50;
+    const pageSize = 10;
 
-    /*
+    paramsFetchTweets = paramsFetchTweetsByRoot;
     if (author && permlink) {
-        paramsFetchTweets = {
-            start: [ author, permlink, '', '', ],
-            limit: 500,
-            order: "by_root",
-        };
-    }*/
+        paramsFetchTweets.start = [ author, permlink, '', '', ];
+    }
 
     const fetchAndUpdateComments = useCallback(async () => {
         setIsLoading(true);
         try {
             const fetchedComments = await fetchComments(page, pageSize);
-            const organizedComments = organizeComments(fetchedComments);
-
-            setComments((prevComments) => [...prevComments, ...organizedComments]);
+            setComments((prevComments) => [...prevComments, ...fetchedComments]);
             setIsLoading(false);
         } catch (err: any) {
             setError(err.message ? err.message : "Error loading comments");
