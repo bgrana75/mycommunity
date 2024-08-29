@@ -4,6 +4,8 @@ import { MarkdownRenderer } from '../MarkdownRenderer';
 import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
+import useHiveAccount from '@/hooks/useHiveAccount';
+import { useState } from 'react';
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -15,7 +17,8 @@ interface TweetProps {
 
 const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetProps) => {
     const { aioha, user } = useAioha();
-    const voted = comment.active_votes?.some(item => item.voter === user);
+    const userAccount = useHiveAccount(comment.author)
+    const [voted, setVoted] = useState(comment.active_votes?.some(item => item.voter === user))
 
     const replies = comment.replies;
 
@@ -30,7 +33,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
 
     async function handleVote() {
         const vote = await aioha.vote(comment.author, comment.permlink, 500);
-        console.log(vote);
+        setVoted(vote.success)
     }
 
     return (
@@ -45,7 +48,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 borderRadius="base"  // This will apply the borderRadius from your theme
             >
                 <HStack mb={2}>
-                    <Avatar size="sm" name={comment.author} />
+                    <Avatar size="sm" name={comment.author} src={userAccount.hiveAccount?.metadata?.profile.profile_image} />
                     <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
                         {comment.author}
                     </Link>

@@ -1,6 +1,8 @@
 'use client';
 import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainSDK, Login, Post, Transfer, Vote, WitnessVote } from "keychain-sdk";
 import HiveClient from "./hiveclient";
+import crypto from 'crypto';
+import { signImageHash } from "./server-functions";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -243,5 +245,73 @@ export async function witnessVoteWithKeychain(username: string, witness: string)
   } catch (error) {
     console.log({ error });
   }
+}
 
+export function getFileSignature (file: File): Promise<string> {
+  return new Promise<string>(async (resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = async () => {
+          if (reader.result) {
+              const content = Buffer.from(reader.result as ArrayBuffer);
+              const hash = crypto.createHash('sha256')
+                  .update('ImageSigningChallenge')
+                  .update(content)
+                  .digest('hex');
+              try {
+                  const signature = await signImageHash(hash);
+                  resolve(signature);
+              } catch (error) {
+                  console.error('Error signing the hash:', error);
+                  reject(error);
+              }
+          } else {
+              reject(new Error('Failed to read file.'));
+          }
+      };
+      reader.onerror = () => {
+          reject(new Error('Error reading file.'));
+      };
+      reader.readAsArrayBuffer(file);
+  });
+}
+
+export async function uploadImage(file: File, signature: string, index: number, setUploadProgress: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
+
+  const signatureUser = process.env.HIVE_USER
+
+  const formData = new FormData();
+        formData.append("file", file, file.name);
+
+        return new Promise((resolve, reject) => {
+            const xhr = new XMLHttpRequest();
+
+            xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
+
+            xhr.upload.onprogress = (event) => {
+                if (event.lengthComputable) {
+                    const progress = (event.loaded / event.total) * 100;
+                    setUploadProgress((prevProgress: number[]) => {
+                        const updatedProgress = [...prevProgress];
+                        updatedProgress[index] = progress;
+                        return updatedProgress;
+                    });
+                }
+            };
+
+            xhr.onload = () => {
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    resolve(response.url);
+                } else {
+                    reject(new Error('Failed to upload image'));
+                }
+            };
+
+            xhr.onerror = () => {
+                reject(new Error('Failed to upload image'));
+            };
+
+            xhr.send(formData);
+        });
 }
