@@ -4,7 +4,7 @@ import { Box, Flex } from '@chakra-ui/react';
 import Header from './components/homepage/Header';
 import Sidebar from './components/homepage/Sidebar';
 import FooterNavigation from './components/homepage/FooterNavigation';
-import LoginModal from './components/modal/LoginModal';
+//import LoginModal from './components/modal/LoginModal';
 import { useState } from 'react';
 import { Providers } from './providers';
 
@@ -30,7 +30,7 @@ export default function RootLayout({
               </Box>
             </Flex>
             <FooterNavigation />
-            <LoginModal isOpen={isOpen} onClose={onClose} />
+            {/* <LoginModal isOpen={isOpen} onClose={onClose} /> */}
           </Box>
         </Providers>
       </body>
