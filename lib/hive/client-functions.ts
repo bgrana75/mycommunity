@@ -278,14 +278,13 @@ export function getFileSignature (file: File): Promise<string> {
 
 export async function uploadImage(file: File, signature: string, index: number, setUploadProgress: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
 
-  const signatureUser = process.env.HIVE_USER
+  const signatureUser = process.env.NEXT_PUBLIC_HIVE_USER
 
   const formData = new FormData();
         formData.append("file", file, file.name);
 
         return new Promise((resolve, reject) => {
             const xhr = new XMLHttpRequest();
-
             xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
 
             xhr.upload.onprogress = (event) => {

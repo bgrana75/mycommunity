@@ -1,7 +1,7 @@
 'use client'
 import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useState } from "react"
-import { Comment, DisqussionQuery } from "@hiveio/dhive"
+import { Comment } from "@hiveio/dhive"
 
 interface ActiveVote {
     percent: number;
@@ -25,12 +25,29 @@ interface ActiveVote {
     weight: number
 }
 
+export interface ListCommentsParams {
+    start: []
+    limit: number
+    order: string
+}
+
 async function fetchComments(
     author: string,
     permlink: string,
     recursive: boolean = false
 ): Promise<Comment[]> {
     try {
+        /*
+        const params = {
+            start: [author, permlink, "", ""],
+            limit: 10,
+            order: "by_parent"
+          };
+          
+        const temp = await HiveClient.call("database_api", "list_comments", params);
+        console.log(temp.comments)
+        const comments = temp.comments
+        */
 
         const comments = (await HiveClient.database.call("get_content_replies", [
             author,
