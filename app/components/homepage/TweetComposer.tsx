@@ -10,6 +10,8 @@ import { MdGif } from 'react-icons/md';
 import { Comment } from '@hiveio/dhive';
 import { getFileSignature, uploadImage } from '@/lib/hive/client-functions';
 
+// comment
+
 const parent_author_default = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
 const parent_permlink_default = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
 
