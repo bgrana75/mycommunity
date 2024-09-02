@@ -5,11 +5,10 @@ import GiphySelector from './GiphySelector';
 import ImageUploader from './ImageUploader';
 import { IGif } from '@giphy/js-types';
 import { CloseIcon } from '@chakra-ui/icons';
-import { signImageHash } from '@/lib/hive/server-functions';
-import crypto from 'crypto';
 import { FaImage } from 'react-icons/fa';
 import { MdGif } from 'react-icons/md';
 import { Comment } from '@hiveio/dhive';
+import { getFileSignature, uploadImage } from '@/lib/hive/client-functions';
 
 const parent_author_default = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
 const parent_permlink_default = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
@@ -21,66 +20,17 @@ interface TweetComposerProps {
 }
 
 const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) => {
-    const { aioha } = useAioha();
+    const { user, aioha } = useAioha();
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
     const [images, setImages] = useState<File[]>([]);
     const [selectedGif, setSelectedGif] = useState<IGif | null>(null);
     const [isGiphyModalOpen, setGiphyModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
-    const [uploadProgress, setUploadProgress] = useState(0);
-
-    const getFileSignature = (file: File): Promise<string> => {
-        return new Promise<string>(async (resolve, reject) => {
-            const reader = new FileReader();
-
-            reader.onload = async () => {
-                if (reader.result) {
-                    const content = Buffer.from(reader.result as ArrayBuffer);
-                    const hash = crypto.createHash('sha256')
-                        .update('ImageSigningChallenge')
-                        .update(content)
-                        .digest('hex');
-                    try {
-                        const signature = await signImageHash(hash);
-                        resolve(signature);
-                    } catch (error) {
-                        console.error('Error signing the hash:', error);
-                        reject(error);
-                    }
-                } else {
-                    reject(new Error('Failed to read file.'));
-                }
-            };
-            reader.onerror = () => {
-                reject(new Error('Error reading file.'));
-            };
-            reader.readAsArrayBuffer(file);
-        });
-    };
-
-    async function uploadImage(file: File, signature: string, index: number): Promise<string> {
-        const formData = new FormData();
-        formData.append("file", file, file.name);
-        formData.append("signature", signature);
-
-        const response = await fetch('https://images.hive.blog/skatedev/' + signature, {
-            method: 'POST',
-            body: formData,
-        });
-
-        if (!response.ok) {
-            throw new Error('Failed to upload image');
-        }
-
-        const result = await response.json();
-        setUploadProgress((prevProgress) => prevProgress + (100 / images.length));
-
-        return result.url;
-    }
+    const [uploadProgress, setUploadProgress] = useState<number[]>([]);
 
     async function handleComment() {
         setIsLoading(true);
-        setUploadProgress(0);
+        setUploadProgress([]);
 
         if (!pa || !pp) {
             pa = parent_author_default;
@@ -96,9 +46,9 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
 
         if (images.length > 0) {
             const uploadedImages = await Promise.all(images.map(async (image, index) => {
-                const content = await getFileSignature(image);
+                const signature = await getFileSignature(image);
                 try {
-                    const uploadUrl = await uploadImage(image, content, index);
+                    const uploadUrl = await uploadImage(image, signature, index, setUploadProgress);
                     return uploadUrl;
                 } catch (error) {
                     console.error('Error uploading image:', error);
@@ -127,7 +77,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
                     setSelectedGif(null);
 
                     const newComment: Partial<Comment> = {
-                        author: pa, // Assuming `pa` is the current user's author name
+                        author: user, // Assuming `pa` is the current user's author name
                         permlink: permlink,
                         body: commentBody,
                     };
@@ -136,7 +86,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
                 }
             } finally {
                 setIsLoading(false);
-                setUploadProgress(0);
+                setUploadProgress([]);
             }
         }
     }
@@ -167,7 +117,6 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
                     {isLoading ? <Spinner size="sm" /> : 'Tweet'}
                 </Button>
             </HStack>
-            {isLoading && <Progress value={uploadProgress} size="xs" colorScheme="primary" mb={3} />}
             <Wrap spacing={4}>
                 {images.map((image, index) => (
                     <Box key={index} position="relative">
@@ -182,6 +131,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
                             onClick={() => setImages(prevImages => prevImages.filter((_, i) => i !== index))}
                             isDisabled={isLoading}
                         />
+                        <Progress value={uploadProgress[index]} size="xs" colorScheme="green" mt={2} />
                     </Box>
                 ))}
                 {selectedGif && (
@@ -214,4 +164,4 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
     );
 };
 
-export default TweetComposer; // Corrected: Ensure proper export statement
+export default TweetComposer; 
