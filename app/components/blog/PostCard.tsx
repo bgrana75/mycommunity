@@ -10,13 +10,9 @@ import { useAioha } from '@aioha/react-ui';
 
 interface PostCardProps {
     post: Discussion;
-    mainHashtag: string;
-    likes: number;
-    comments: number;
-    earnings: string;
 }
 
-export default function PostCard({ post, mainHashtag, likes, comments, earnings }: PostCardProps) {
+export default function PostCard({ post }: PostCardProps) {
     const { title, author, body, json_metadata, created } = post;
     const postDate = getPostDate(created);
     const metadata = JSON.parse(json_metadata);
