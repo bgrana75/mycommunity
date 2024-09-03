@@ -16,7 +16,7 @@ export default function Sidebar() {
             as="nav"
             bg="muted"
             p={4}
-            w={{ base: 'full', md: '20%' }}
+            w={{ base: 'full', md: '18%' }}
             minH={{ base: 'auto', md: '100vh' }}
             display={{ base: 'none', md: 'block' }}
         >
@@ -29,8 +29,8 @@ export default function Sidebar() {
                         Store
                     </Button>
                 )}
-                <Button onClick={() => handleNavigation("/explore")} variant="ghost" w="full">
-                    Explore
+                <Button onClick={() => handleNavigation("/blog")} variant="ghost" w="full">
+                    Blog
                 </Button>
 
                 <Button onClick={() => handleNavigation("/profile")} variant="ghost" w="full">
