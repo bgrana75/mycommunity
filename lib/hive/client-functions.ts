@@ -3,6 +3,7 @@ import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainS
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
+import { Discussion } from "@hiveio/dhive";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -313,4 +314,14 @@ export async function uploadImage(file: File, signature: string, index: number, 
 
             xhr.send(formData);
         });
+}
+
+export async function getPost(user: string, postId: string) {
+  const postContent = await HiveClient.database.call('get_content', [
+    user,
+    postId,
+  ]);
+  if (!postContent) throw new Error('Failed to fetch post content');
+
+  return postContent as Discussion;
 }

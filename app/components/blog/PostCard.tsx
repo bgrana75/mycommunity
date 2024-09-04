@@ -1,4 +1,4 @@
-import { Box, Image, Text, Avatar, Flex, Icon, Slider, SliderTrack, SliderFilledTrack, SliderThumb, Button } from '@chakra-ui/react';
+import { Box, Image, Text, Avatar, Flex, Icon, Slider, SliderTrack, SliderFilledTrack, SliderThumb, Button, Link } from '@chakra-ui/react';
 import React, { useState, useEffect } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { Swiper, SwiperSlide } from 'swiper/react';
@@ -7,6 +7,7 @@ import 'swiper/swiper-bundle.css';
 import { FaHeart, FaComment,FaRegHeart } from 'react-icons/fa';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
+import { useRouter } from 'next/navigation';
 
 interface PostCardProps {
     post: Discussion;
@@ -21,7 +22,6 @@ export default function PostCard({ post }: PostCardProps) {
     const [showSlider, setShowSlider] = useState(false);
     const { aioha, user } = useAioha();
     const [voted, setVoted] = useState(post.active_votes?.some(item => item.voter === user))
-
 
     useEffect(() => {
         const images = extractImagesFromBody(body);
@@ -53,7 +53,7 @@ export default function PostCard({ post }: PostCardProps) {
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
                     <Box ml={3}>
                         <Text fontWeight="medium" fontSize="sm">
-                            @{author}
+                            <Link href={`/author/${author}`}>@{author}</Link>
                         </Text>
                         <Text fontSize="sm" color="gray.500">
                             {postDate}
@@ -65,7 +65,7 @@ export default function PostCard({ post }: PostCardProps) {
                 </Text>
             </Flex>
             <Text mt={4} fontWeight="bold" fontSize="lg" textAlign="left">
-                {title}
+                <Link href={`/post/${author}/${post.permlink}`}>{title}</Link>
             </Text>
             {imageUrls.length > 0 && (
                 <Swiper

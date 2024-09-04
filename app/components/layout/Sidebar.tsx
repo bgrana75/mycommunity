@@ -2,7 +2,10 @@
 import React from 'react';
 import { Box, VStack, Button } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
+import { useAioha } from '@aioha/react-ui';
+
 export default function Sidebar() {
+    const { user } = useAioha()
     const router = useRouter();
     const isBusiness = process.env.NEXT_PUBLIC_SITE_TYPE === 'business';
     const handleNavigation = (path: string) => {
@@ -33,7 +36,7 @@ export default function Sidebar() {
                     Blog
                 </Button>
 
-                <Button onClick={() => handleNavigation("/profile")} variant="ghost" w="full">
+                <Button onClick={() => handleNavigation("/author/" + user)} variant="ghost" w="full">
                     Profile
                 </Button>
 
