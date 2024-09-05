@@ -14,7 +14,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
     const { title, author, body, created } = post;
     const postDate = getPostDate(created);
     const { aioha, user } = useAioha();
-    const [sliderValue, setSliderValue] = useState(0);
+    const [sliderValue, setSliderValue] = useState(100);
     const [showSlider, setShowSlider] = useState(false);
     const [voted, setVoted] = useState(post.active_votes?.some(item => item.voter === user));
 
@@ -54,7 +54,6 @@ export default function PostDetails({ post }: PostDetailsProps) {
                     <Box width="100%" mr={2}>
                         <Slider
                             aria-label="slider-ex-1"
-                            defaultValue={100}
                             min={0}
                             max={100}
                             value={sliderValue}
