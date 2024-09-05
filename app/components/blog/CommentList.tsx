@@ -36,7 +36,7 @@ export default function CommentList({ author, permlink }: CommentListProps) {
     });
 
     return (
-        <VStack spacing={2} align="stretch">
+        <VStack spacing={0} align="stretch">
             {comments.map((comment: any) => (
                 <CommentDetail key={comment.permlink} comment={comment} />
             ))}

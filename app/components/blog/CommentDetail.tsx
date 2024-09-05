@@ -25,12 +25,12 @@ export default function CommentDetail ({ comment, level = 0 }: CommentDetailProp
     }
 
     return (
-        <Box pl={level > 0 ? 4 : 0} ml={level > 0 ? 8 : 0}>
+        <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
                 bg="muted"
                 p={4}
-                mt={1}
-                mb={1}
+                mt={2}
+                mb={0}
                 border="1px solid"
                 borderColor="border"
                 borderRadius="base"  // This will apply the borderRadius from your theme
@@ -59,7 +59,7 @@ export default function CommentDetail ({ comment, level = 0 }: CommentDetailProp
             </Box>
             {/* Render replies recursively */}
             {replies && replies.length > 0 && (
-                <VStack spacing={2} align="stretch" mt={2}>
+                <VStack spacing={0} align="stretch" mt={0}>
                     {replies.map((reply: Comment) => (
                         <CommentDetail
                             key={reply.permlink}
