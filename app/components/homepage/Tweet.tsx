@@ -37,7 +37,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     }
 
     return (
-        <Box pl={level > 0 ? 4 : 0} ml={level > 0 ? 8 : 0}>
+        <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
                 bg="muted"
                 p={4}

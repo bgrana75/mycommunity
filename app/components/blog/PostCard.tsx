@@ -18,10 +18,11 @@ export default function PostCard({ post }: PostCardProps) {
     const postDate = getPostDate(created);
     const metadata = JSON.parse(json_metadata);
     const [imageUrls, setImageUrls] = useState<string[]>([]);
-    const [sliderValue, setSliderValue] = useState(0);
+    const [sliderValue, setSliderValue] = useState(100);
     const [showSlider, setShowSlider] = useState(false);
     const { aioha, user } = useAioha();
     const [voted, setVoted] = useState(post.active_votes?.some(item => item.voter === user))
+    const router = useRouter()
 
     useEffect(() => {
         const images = extractImagesFromBody(body);
@@ -46,6 +47,10 @@ export default function PostCard({ post }: PostCardProps) {
         handleHeartClick()
     }
 
+    function viewPost() {
+        router.push('/post/' + author + '/' + post.permlink)
+    }
+
     return (
         <Box borderWidth="1px" borderRadius="lg" overflow="hidden" bg="muted" p={4}>
             <Flex justifyContent="space-between" alignItems="center">
@@ -64,10 +69,11 @@ export default function PostCard({ post }: PostCardProps) {
                    
                 </Text>
             </Flex>
-            <Text mt={4} fontWeight="bold" fontSize="lg" textAlign="left">
-                <Link href={`/post/${author}/${post.permlink}`}>{title}</Link>
+            <Text mt={4} fontWeight="bold" fontSize="lg" textAlign="left" cursor="pointer" onClick={viewPost}>
+                {title}
             </Text>
             {imageUrls.length > 0 && (
+                <Box cursor="pointer">
                 <Swiper
                     spaceBetween={10}
                     slidesPerView={1}
@@ -75,6 +81,7 @@ export default function PostCard({ post }: PostCardProps) {
                     navigation={true}
                     modules={[Navigation, Pagination]}
                     style={{ marginTop: '16px' }}
+                    onClick={viewPost}
                 >
                     {imageUrls.map((url, index) => (
                         <SwiperSlide key={index}>
@@ -91,6 +98,7 @@ export default function PostCard({ post }: PostCardProps) {
                         </SwiperSlide>
                     ))}
                 </Swiper>
+                </Box>
             )}
             {showSlider ? (
                 <Flex mt={4} alignItems="center">

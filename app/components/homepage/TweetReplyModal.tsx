@@ -1,43 +1,38 @@
-import {
-    Box,
-    Button,
-    Modal,
-    ModalBody,
-    ModalContent,
-    ModalFooter,
-    ModalHeader,
-    ModalOverlay,
-    Text,
-    HStack,
-    Avatar,
-    Link,
-} from '@chakra-ui/react';
+import { Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay, HStack, Avatar, Link, IconButton } from '@chakra-ui/react';
 import React from 'react';
 import TweetComposer from './TweetComposer';
 import { Comment } from '@hiveio/dhive';
-import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
-import rehypeRaw from 'rehype-raw';
-import DOMPurify from 'dompurify';
+import { CloseIcon } from '@chakra-ui/icons';
+import { MarkdownRenderer } from '../MarkdownRenderer';
 
 interface TweetReplyModalProps {
     isOpen: boolean;
     onClose: () => void;
     comment?: Comment;
-    onNewReply: (newComment: Partial<Comment>) => void;  // Add this prop
+    onNewReply: (newComment: Partial<Comment>) => void;
 }
 
 export default function TweetReplyModal({ isOpen, onClose, comment, onNewReply }: TweetReplyModalProps) {
-    const sanitizedBody = DOMPurify.sanitize(comment?.body || '');
 
     if (!comment) {
         return <div></div>;
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose}>
+        <Modal isOpen={isOpen} onClose={onClose} size="lg">
             <ModalOverlay bg="rgba(0, 0, 0, 0.6)" backdropFilter="blur(10px)" />
-            <ModalContent bg="background" color="text">
+            <ModalContent bg="background" color="text" position="relative">
+                <IconButton
+                    aria-label="Close"
+                    icon={<CloseIcon />}
+                    onClick={onClose}
+                    position="absolute"
+                    top={2}
+                    right={2}
+                    variant="unstyled"
+                    size="lg"
+                    border="none"
+                />
                 <ModalHeader>
                     <HStack mb={2}>
                         <Avatar size="sm" name={comment.author} />
@@ -45,21 +40,11 @@ export default function TweetReplyModal({ isOpen, onClose, comment, onNewReply }
                             {comment.author}
                         </Link>
                     </HStack>
-                    <ReactMarkdown
-                        remarkPlugins={[remarkGfm]}
-                        rehypePlugins={[rehypeRaw]}
-                    >
-                        {sanitizedBody}
-                    </ReactMarkdown>
+                    <MarkdownRenderer>{comment.body}</MarkdownRenderer>
                 </ModalHeader>
                 <ModalBody>
-                    <TweetComposer pa={comment?.author} pp={comment?.permlink} onNewComment={() => window.alert('woohoo')} />
+                    <TweetComposer pa={comment.author} pp={comment.permlink} onNewComment={onNewReply} post={true} />
                 </ModalBody>
-                <ModalFooter>
-                    <Button variant="ghost" onClick={onClose}>
-                        Cancel
-                    </Button>
-                </ModalFooter>
             </ModalContent>
         </Modal>
     );

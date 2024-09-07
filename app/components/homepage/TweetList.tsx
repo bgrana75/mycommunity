@@ -1,4 +1,3 @@
-// components/TweetList.tsx
 import React, { useState } from 'react';
 import { Box, Spinner, VStack, Text } from '@chakra-ui/react';
 import { useComments } from '@/hooks/useComments';
@@ -12,10 +11,11 @@ interface TweetListProps {
     onOpen: () => void;
     setReply: (reply: Comment) => void;
     newComment: Comment | null; // Add this prop
+    post?: boolean;
 }
 
-export default function TweetList({ author, permlink, setConversation, onOpen, setReply, newComment }: TweetListProps) {
-    const { comments, isLoading, error } = useComments(author, permlink);
+export default function TweetList({ author, permlink, setConversation, onOpen, setReply, newComment, post = false }: TweetListProps) {
+    const { comments, isLoading, error } = useComments(author, permlink, post);
 
     if (isLoading) {
         return (
@@ -34,24 +34,22 @@ export default function TweetList({ author, permlink, setConversation, onOpen, s
         );
     }
 
-    // Sort comments by date using comment.created
-    comments.sort((a: any, b: any) => {
+    comments.sort((a: Comment, b: Comment) => {
         return new Date(b.created).getTime() - new Date(a.created).getTime();
     });
 
+    const updatedComments = newComment ? [newComment, ...comments] : comments;
+
     return (
         <VStack spacing={2} align="stretch">
-            {newComment && (
+            {updatedComments.map((comment: Comment) => (
                 <Tweet
-                    key={newComment.permlink}
-                    comment={newComment}
+                    key={comment.permlink}
+                    comment={comment}
                     onOpen={onOpen}
                     setReply={setReply}
-                    setConversation={setConversation}
+                    {...(!post ? { setConversation } : {})}
                 />
-            )}
-            {comments.map((comment: any) => (
-                <Tweet key={comment.permlink} comment={comment} onOpen={onOpen} setReply={setReply} setConversation={setConversation} />
             ))}
         </VStack>
     );

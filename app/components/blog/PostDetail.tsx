@@ -29,7 +29,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
     }
 
     return (
-        <Box borderWidth="1px" borderRadius="base" overflow="hidden" bg="muted" p={4} w="100%">
+        <Box borderWidth="1px" borderRadius="base" overflow="hidden" bg="muted" mb={3} p={4} w="100%">
             <Text fontSize="2xl" fontWeight="bold" mb={4} textAlign="center">
                 {title}
             </Text>

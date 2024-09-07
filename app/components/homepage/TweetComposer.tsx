@@ -10,18 +10,14 @@ import { MdGif } from 'react-icons/md';
 import { Comment } from '@hiveio/dhive';
 import { getFileSignature, uploadImage } from '@/lib/hive/client-functions';
 
-// comment
-
-const parent_author_default = process.env.NEXT_PUBLIC_THREAD_AUTHOR || "skatedev";
-const parent_permlink_default = process.env.NEXT_PUBLIC_THREAD_PERMLINK || "re-skatedev-sidr6t";
-
 interface TweetComposerProps {
-    pa?: string;
-    pp?: string;
+    pa: string;
+    pp: string;
     onNewComment: (newComment: Partial<Comment>) => void;
+    post?: boolean;
 }
 
-const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) => {
+const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, post = false }) => {
     const { user, aioha } = useAioha();
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
     const [images, setImages] = useState<File[]>([]);
@@ -30,14 +26,11 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
 
+    const buttonText = (post ? "Reply" : "Tweet")
+
     async function handleComment() {
         setIsLoading(true);
         setUploadProgress([]);
-
-        if (!pa || !pp) {
-            pa = parent_author_default;
-            pp = parent_permlink_default;
-        }
 
         const permlink = new Date()
             .toISOString()
@@ -116,7 +109,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment }) =
                     </Button>
                 </HStack>
                 <Button variant="solid" colorScheme="primary" onClick={handleComment} isDisabled={isLoading}>
-                    {isLoading ? <Spinner size="sm" /> : 'Tweet'}
+                    {isLoading ? <Spinner size="sm" /> : buttonText}
                 </Button>
             </HStack>
             <Wrap spacing={4}>

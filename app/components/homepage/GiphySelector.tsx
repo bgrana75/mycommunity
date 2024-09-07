@@ -42,7 +42,7 @@ const GiphySelector: React.FC<GiphySelectorProps> = ({ apiKey, onSelect }) => {
         fetchGifs(0);
         setKey(key + 1); // Increment the key to force re-render of the Grid component
     }
-        , [searchTerm]);
+    ,[searchTerm]);
 
     return (
         <>
