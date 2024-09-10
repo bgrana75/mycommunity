@@ -52,7 +52,7 @@ export default function PostCard({ post }: PostCardProps) {
     }
 
     return (
-        <Box borderWidth="1px" borderRadius="lg" overflow="hidden" bg="muted" p={4}>
+        <Box borderWidth="1px" borderRadius="base" overflow="hidden" bg="muted" p={4}>
             <Flex justifyContent="space-between" alignItems="center">
                 <Flex alignItems="center">
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
@@ -102,7 +102,7 @@ export default function PostCard({ post }: PostCardProps) {
             )}
             {showSlider ? (
                 <Flex mt={4} alignItems="center">
-                    <Box width="150px" mr={2}>
+                    <Box width="100%" mr={2}>
                         <Slider
                             aria-label="slider-ex-1"
                             defaultValue={0}

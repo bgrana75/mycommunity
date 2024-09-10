@@ -31,7 +31,6 @@ export default function TweetReplyModal({ isOpen, onClose, comment, onNewReply }
                     right={2}
                     variant="unstyled"
                     size="lg"
-                    border="none"
                 />
                 <ModalHeader>
                     <HStack mb={2}>

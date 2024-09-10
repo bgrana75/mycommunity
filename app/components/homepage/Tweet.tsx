@@ -1,4 +1,4 @@
-import { Box, Text, HStack, Button, Avatar, Link, VStack } from '@chakra-ui/react';
+import { Box, Text, HStack, Button, Avatar, Link, VStack, Flex, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
 import { MarkdownRenderer } from '../MarkdownRenderer';
 import { ExtendedComment } from '@/hooks/useComments';
@@ -19,8 +19,14 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     const { aioha, user } = useAioha();
     const userAccount = useHiveAccount(comment.author)
     const [voted, setVoted] = useState(comment.active_votes?.some(item => item.voter === user))
+    const [sliderValue, setSliderValue] = useState(5);
+    const [showSlider, setShowSlider] = useState(false);
 
     const replies = comment.replies;
+
+    function handleHeartClick() {
+        setShowSlider(!showSlider);
+    }
 
     function handleReplyModal() {
         setReply(comment);
@@ -32,10 +38,10 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     }
 
     async function handleVote() {
-        const vote = await aioha.vote(comment.author, comment.permlink, 500);
-        setVoted(vote.success)
+        const vote = await aioha.vote(comment.author, comment.permlink, sliderValue * 100);
+        setVoted(vote.success);
+        handleHeartClick();
     }
-
     return (
         <Box pl={level > 0 ? 1 : 0} ml={level > 0 ? 2 : 0}>
             <Box
@@ -54,8 +60,29 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                     </Link>
                 </HStack>
                 <MarkdownRenderer>{comment.body}</MarkdownRenderer>
+                {showSlider ? (
+                <Flex mt={4} alignItems="center">
+                    <Box width="100%" mr={2}>
+                        <Slider
+                            aria-label="slider-ex-1"
+                            min={0}
+                            max={100}
+                            value={sliderValue}
+                            onChange={(val) => setSliderValue(val)}
+                        >
+                            <SliderTrack>
+                                <SliderFilledTrack />
+                            </SliderTrack>
+                            <SliderThumb />
+                        </Slider>
+                    </Box>
+                    <Button size="xs" onClick={handleVote}>&nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;</Button>
+                    <Button size="xs" onClick={handleHeartClick} ml={2}>X</Button>
+
+                </Flex>
+            ) : (
                 <HStack justify="space-between" mt={3}>
-                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleVote}>
+                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleHeartClick}>
                         {comment.active_votes?.length}
                     </Button>
                     <HStack>
@@ -68,6 +95,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                     </HStack>
                     <Button leftIcon={<FaShare />} variant="ghost"></Button>
                 </HStack>
+            )}
             </Box>
             {/* Render replies recursively */}
             {replies && replies.length > 0 && (

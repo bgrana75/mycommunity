@@ -277,7 +277,7 @@ export function getFileSignature (file: File): Promise<string> {
   });
 }
 
-export async function uploadImage(file: File, signature: string, index: number, setUploadProgress: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
+export async function uploadImage(file: File, signature: string, index?: number, setUploadProgress?: React.Dispatch<React.SetStateAction<number[]>>): Promise<string> {
 
   const signatureUser = process.env.NEXT_PUBLIC_HIVE_USER
 
@@ -288,16 +288,18 @@ export async function uploadImage(file: File, signature: string, index: number, 
             const xhr = new XMLHttpRequest();
             xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
 
-            xhr.upload.onprogress = (event) => {
-                if (event.lengthComputable) {
-                    const progress = (event.loaded / event.total) * 100;
-                    setUploadProgress((prevProgress: number[]) => {
-                        const updatedProgress = [...prevProgress];
-                        updatedProgress[index] = progress;
-                        return updatedProgress;
-                    });
-                }
-            };
+            if (index && setUploadProgress) {
+              xhr.upload.onprogress = (event) => {
+                  if (event.lengthComputable) {
+                      const progress = (event.loaded / event.total) * 100;
+                      setUploadProgress((prevProgress: number[]) => {
+                          const updatedProgress = [...prevProgress];
+                          updatedProgress[index] = progress;
+                          return updatedProgress;
+                      });
+                  }
+              }
+            }
 
             xhr.onload = () => {
                 if (xhr.status === 200) {

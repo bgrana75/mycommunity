@@ -27,19 +27,20 @@ export default function Sidebar() {
                 <Button onClick={() => handleNavigation("/")} variant="ghost" w="full">
                     Home
                 </Button>
+                <Button onClick={() => handleNavigation("/blog")} variant="ghost" w="full">
+                    Blog
+                </Button>
+                <Button onClick={() => handleNavigation("/notifications")} variant="ghost" w="full">
+                    Notifications
+                </Button>
+                <Button onClick={() => handleNavigation("/author/" + user)} variant="ghost" w="full">
+                    Profile
+                </Button>
                 {isBusiness && (
                     <Button onClick={() => handleNavigation("/buy")} variant="ghost" w="full">
                         Store
                     </Button>
                 )}
-                <Button onClick={() => handleNavigation("/blog")} variant="ghost" w="full">
-                    Blog
-                </Button>
-
-                <Button onClick={() => handleNavigation("/author/" + user)} variant="ghost" w="full">
-                    Profile
-                </Button>
-
             </VStack>
         </Box>
     );
