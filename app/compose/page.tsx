@@ -1,4 +1,5 @@
 'use client'
+import { useAioha } from '@aioha/react-ui'
 import { Flex, Input, Tag, TagCloseButton, TagLabel, Wrap, WrapItem, Button } from '@chakra-ui/react'
 import dynamic from 'next/dynamic'
 import { useState } from 'react'
@@ -10,6 +11,9 @@ export default function Home() {
   const [title, setTitle] = useState("")
   const [hashtagInput, setHashtagInput] = useState("")
   const [hashtags, setHashtags] = useState<string[]>([])
+
+  const { aioha } = useAioha()
+  const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG || 'blog'
 
   const handleHashtagKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     const { key } = e
@@ -26,13 +30,16 @@ export default function Home() {
     setHashtags(hashtags.filter((_, i) => i !== index))
   }
 
-  const handleSubmit = () => {
+  async function handleSubmit() {
     const postData = {
       title,
       markdown,
       hashtags,
     }
-    console.log('Submitting post data:', postData)
+    const permlink = title.replaceAll(" ", "-")
+    const post = await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'mycommunity' });
+
+    console.log('Submitting post data:', post)
   }
 
   return (
