@@ -9,7 +9,6 @@ import 'swiper/css/navigation';
 import 'swiper/css/pagination';
 import { useState } from 'react';
 import ReactCardFlip from 'react-card-flip';
-import QRCode from 'qrcode.react';
 
 interface ProductCardProps {
     product: Product;
@@ -67,7 +66,6 @@ export default function ProductCard({ product }: ProductCardProps) {
                 <CardBody display="flex" justifyContent="center" alignItems="center">
                     <VStack>
 
-                        <QRCode size={150} value={`hive://commerce/${product.id}`} />
                         <Box m={2} fontSize="lg" fontWeight="bold" color={'text'}>
                             ${discountedPrice.toFixed(2)} HBD
                         </Box>

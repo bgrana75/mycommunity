@@ -38,7 +38,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
                     <Box ml={3}>
                         <Text fontWeight="medium" fontSize="sm">
-                            <Link href={`/author/${author}`}>@{author}</Link>
+                            <Link href={`/@${author}`}>@{author}</Link>
                         </Text>
                         <Text fontSize="sm" color="gray.500">
                             {postDate}

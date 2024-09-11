@@ -7,13 +7,10 @@ import usePosts from '@/hooks/usePosts';
 import PostGrid from '@/app/components/blog/PostGrid';
 
 interface ProfilePageProps {
-  params: {
-    username: string;
-  };
+  username: string;
 }
 
-export default function ProfilePage({ params }: ProfilePageProps) {
-  const username = String(params.username);
+export default function ProfilePage({ username }: ProfilePageProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileCoverImage, setProfileCoverImage] = useState<string>('');

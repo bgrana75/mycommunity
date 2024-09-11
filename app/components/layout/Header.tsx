@@ -1,4 +1,5 @@
 // components/homepage/Header.tsx
+'use client'
 import React from 'react';
 import { Box, Flex, Text, Input, Button, useColorMode } from '@chakra-ui/react';
 
@@ -13,6 +14,7 @@ export default function Header() {
     const { user } = useAioha()
 
     const CommunityName = process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'My Community';
+
     return (
         <Box bg="secondary" px={{ base: 4, md: 6 }} py={4}>
             <Flex justify="space-between" align="center">
@@ -36,7 +38,8 @@ export default function Header() {
                     displayed={modalDisplayed}
                     loginOptions={{
                         msg: 'Login',
-                        keyType: KeyTypes.Posting
+                        keyType: KeyTypes.Posting,
+                        loginTitle: 'Login',
                     }}
                     onLogin={console.log}
                     onClose={setModalDisplayed}

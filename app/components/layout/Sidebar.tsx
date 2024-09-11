@@ -33,7 +33,7 @@ export default function Sidebar() {
                 <Button onClick={() => handleNavigation("/notifications")} variant="ghost" w="full">
                     Notifications
                 </Button>
-                <Button onClick={() => handleNavigation("/author/" + user)} variant="ghost" w="full">
+                <Button onClick={() => handleNavigation("/@" + user)} variant="ghost" w="full">
                     Profile
                 </Button>
                 {isBusiness && (

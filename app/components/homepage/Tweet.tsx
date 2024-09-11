@@ -55,7 +55,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
             >
                 <HStack mb={2}>
                     <Avatar size="sm" name={comment.author} src={userAccount.hiveAccount?.metadata?.profile.profile_image} />
-                    <Link href={`/profile/${comment.author}`} fontWeight="bold" mb={2}>
+                    <Link href={`/@${comment.author}`} fontWeight="bold" mb={2}>
                         {comment.author}
                     </Link>
                 </HStack>

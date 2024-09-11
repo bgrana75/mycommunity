@@ -48,7 +48,7 @@ export default function PostCard({ post }: PostCardProps) {
     }
 
     function viewPost() {
-        router.push('/post/' + author + '/' + post.permlink)
+        router.push('/@' + author + '/' + post.permlink)
     }
 
     return (
@@ -58,7 +58,7 @@ export default function PostCard({ post }: PostCardProps) {
                     <Avatar size="sm" name={author} src={`https://images.hive.blog/u/${author}/avatar/sm`} />
                     <Box ml={3}>
                         <Text fontWeight="medium" fontSize="sm">
-                            <Link href={`/author/${author}`}>@{author}</Link>
+                            <Link href={`/@${author}`}>@{author}</Link>
                         </Text>
                         <Text fontSize="sm" color="gray.500">
                             {postDate}

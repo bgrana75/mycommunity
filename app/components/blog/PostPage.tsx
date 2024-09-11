@@ -2,44 +2,32 @@
 'use client';
 
 import { Box, Container, Flex, Spinner } from '@chakra-ui/react';
-import TweetList from '../../components/homepage/TweetList';
-import TweetComposer from '../../components/homepage/TweetComposer';
-import RightSidebar from '../../components/layout/RightSideBar';
+import TweetList from '../homepage/TweetList';
+import TweetComposer from '../homepage/TweetComposer';
+import RightSidebar from '../layout/RightSideBar';
 import { useEffect, useState } from 'react';
 import { Comment, Discussion } from '@hiveio/dhive'; // Ensure this import is consistent
-import Conversation from '../../components/homepage/Conversation';
-import TweetReplyModal from '../../components/homepage/TweetReplyModal';
+import Conversation from '../homepage/Conversation';
+import TweetReplyModal from '../homepage/TweetReplyModal';
 import { getPost } from '@/lib/hive/client-functions';
-import PostDetails from '@/app/components/blog/PostDetail';
+import PostDetails from '@/app/components/blog/PostDetails';
 
 interface PostPageProps {
-  params: {
-    slug: string | string[];
-  };
+  author: string
+  permlink: string
 }
 
-export default function PostPage({ params }: PostPageProps) {
+export default function PostPage({ author, permlink }: PostPageProps) {
 
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState<Discussion | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [author, setAuthor] = useState<string>();
-  const [permlink, setPermlink] = useState<string>();
   const [conversation, setConversation] = useState<Comment | undefined>();
   const [reply, setReply] = useState<Comment>();
   const [isOpen, setIsOpen] = useState(false);
   const [newComment, setNewComment] = useState<Comment | null>(null); // Define the state
 
   useEffect(() => {
-    if (typeof params.slug === 'string' || !Array.isArray(params.slug)) {
-      setError('Invalid URL');
-      return;
-    }
-
-    const [author, permlink] = params.slug;
-    setAuthor(author);
-    setPermlink(permlink);
-
     async function loadPost() {
       setIsLoading(true);
       try {
@@ -53,7 +41,7 @@ export default function PostPage({ params }: PostPageProps) {
     }
 
     loadPost();
-  }, [params.slug]);
+  }, [author, permlink]);
 
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);

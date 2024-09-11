@@ -31,21 +31,14 @@ export default function Home() {
   }
 
   async function handleSubmit() {
-    const postData = {
-      title,
-      markdown,
-      hashtags,
-    }
     const permlink = title.replaceAll(" ", "-")
-    const post = await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'mycommunity' });
-
-    console.log('Submitting post data:', post)
+    await aioha.comment(null, communityTag, permlink, title, markdown, { tags: hashtags, app: 'mycommunity' });
   }
 
   return (
     <Flex
       width="100%"
-      height="90%" // Allow flex container to grow within its parent
+      height="90%" 
       bgColor="white"
       justify="center"
       p="1"
@@ -76,14 +69,13 @@ export default function Home() {
 
       {/* Hashtag Input */}
       <Input
-        placeholder="Enter hashtags (space to add)"
+        placeholder="Enter hashtags"
         mt="4"
         value={hashtagInput}
         onChange={(e) => setHashtagInput(e.target.value)}
         onKeyDown={handleHashtagKeyDown}
         borderRadius="base"
       />
-
       {/* Display Hashtags as Tags */}
       <Wrap mt="2">
         {hashtags.map((tag, index) => (
@@ -100,8 +92,6 @@ export default function Home() {
           </WrapItem>
         ))}
       </Wrap>
-
-      {/* Submit Button */}
       <Flex mt="1" justify="flex-end">
         <Button
           size="sm" // Make button smaller
