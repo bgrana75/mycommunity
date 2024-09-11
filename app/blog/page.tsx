@@ -1,7 +1,7 @@
 'use client'
 import { Container, IconButton, Flex } from '@chakra-ui/react';
 import { FaTh, FaBars, FaPen } from 'react-icons/fa'; 
-import PostGrid from '../components/blog/PostGrid';
+import PostGrid from '@/components/blog/PostGrid';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation'; 
 import usePosts from '@/hooks/usePosts';

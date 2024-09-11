@@ -2,16 +2,16 @@
 'use client'
 
 import { ChakraProvider } from '@chakra-ui/react'
-import { forestTheme } from './themes/forest'
-import { blueSkyTheme } from './themes/bluesky'
-import { hackerTheme } from './themes/hacker'
-import { nounsDaoTheme } from './themes/nounish'
+import { forestTheme } from '@/themes/forest'
+import { blueSkyTheme } from '@/themes/bluesky'
+import { hackerTheme } from '@/themes/hacker'
+import { nounsDaoTheme } from '@/themes/nounish'
 
 import { Aioha } from '@aioha/aioha'
 import { AiohaProvider } from '@aioha/react-ui'
 
 import { useEffect } from 'react'
-import { windows95Theme } from './themes/windows95'
+import { windows95Theme } from '@/themes/windows95'
 
 const aioha = new Aioha()
 

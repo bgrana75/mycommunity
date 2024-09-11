@@ -1,8 +1,8 @@
 // app/page.tsx
 'use client';
 
-import PostPage from "../components/blog/PostPage";
-import ProfilePage from "../components/profile/ProfilePage";
+import PostPage from "@/components/blog/PostPage";
+import ProfilePage from "@/components/profile/ProfilePage";
 
 interface HomePageProps {
   params: {

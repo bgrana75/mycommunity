@@ -1,6 +1,5 @@
-"use client";
+'use client';
 import { getFileSignature, uploadImage } from '@/lib/hive/client-functions';
-import { Box } from '@chakra-ui/react';
 import {
     headingsPlugin,
     listsPlugin,
@@ -9,7 +8,6 @@ import {
     markdownShortcutPlugin,
     MDXEditor,
     type MDXEditorMethods,
-    type MDXEditorProps,
     imagePlugin,
     InsertImage,
     DiffSourceToggleWrapper,
@@ -21,9 +19,6 @@ import {
     linkDialogPlugin,
     CreateLink,
     ListsToggle,
-    InsertSandpack,
-    sandpackPlugin,
-    InsertCodeBlock,
     InsertThematicBreak
   } from '@mdxeditor/editor'
 import { UndoRedo, BoldItalicUnderlineToggles, toolbarPlugin } from '@mdxeditor/editor'

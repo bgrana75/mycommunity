@@ -1,6 +1,6 @@
 // components/store/ProductList.tsx
 import { Box, SimpleGrid, Text } from '@chakra-ui/react';
-import { Product } from '@/app/types/Products';
+import { Product } from '@/types/Products';
 import ProductCard from './ProductCard';
 
 interface ProductListProps {

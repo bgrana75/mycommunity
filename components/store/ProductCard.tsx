@@ -1,7 +1,7 @@
 'use client';
 
 import { Box, Text, VStack, Button, Image, Card, CardBody, CardFooter, HStack } from '@chakra-ui/react';
-import { Product } from '@/app/types/Products';
+import { Product } from '@/types/Products';
 import { Swiper, SwiperSlide } from 'swiper/react';
 import { Navigation, Pagination } from 'swiper/modules';
 import 'swiper/css';

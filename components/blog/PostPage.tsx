@@ -10,7 +10,7 @@ import { Comment, Discussion } from '@hiveio/dhive'; // Ensure this import is co
 import Conversation from '../homepage/Conversation';
 import TweetReplyModal from '../homepage/TweetReplyModal';
 import { getPost } from '@/lib/hive/client-functions';
-import PostDetails from '@/app/components/blog/PostDetails';
+import PostDetails from '@/components/blog/PostDetails';
 
 interface PostPageProps {
   author: string

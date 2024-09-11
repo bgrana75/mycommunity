@@ -4,7 +4,7 @@ import { Box, Heading, Text, VStack, Spinner, Alert, AlertIcon, Image, Container
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
 import usePosts from '@/hooks/usePosts';
-import PostGrid from '@/app/components/blog/PostGrid';
+import PostGrid from '@/components/blog/PostGrid';
 
 interface ProfilePageProps {
   username: string;

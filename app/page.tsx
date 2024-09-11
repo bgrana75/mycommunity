@@ -2,13 +2,13 @@
 'use client';
 
 import { Box, Container, Flex } from '@chakra-ui/react';
-import TweetList from './components/homepage/TweetList';
-import TweetComposer from './components/homepage/TweetComposer';
-import RightSidebar from './components/layout/RightSideBar';
+import TweetList from '@/components/homepage/TweetList';
+import TweetComposer from '@/components/homepage/TweetComposer';
+import RightSidebar from '@/components/layout/RightSideBar';
 import { useState } from 'react';
 import { Comment } from '@hiveio/dhive'; // Ensure this import is consistent
-import Conversation from './components/homepage/Conversation';
-import TweetReplyModal from './components/homepage/TweetReplyModal';
+import Conversation from '@/components/homepage/Conversation';
+import TweetReplyModal from '@/components/homepage/TweetReplyModal';
 
 export default function Home() {
   const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'skatedev';
