@@ -4,8 +4,8 @@ import { MarkdownRenderer } from '../MarkdownRenderer';
 import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
-import useHiveAccount from '@/hooks/useHiveAccount';
 import { useState } from 'react';
+import { getPayoutValue } from '@/lib/hive/client-functions';
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -17,7 +17,6 @@ interface TweetProps {
 
 const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetProps) => {
     const { aioha, user } = useAioha();
-    const userAccount = useHiveAccount(comment.author)
     const [voted, setVoted] = useState(comment.active_votes?.some(item => item.voter === user))
     const [sliderValue, setSliderValue] = useState(5);
     const [showSlider, setShowSlider] = useState(false);
@@ -54,7 +53,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 borderRadius="base"  // This will apply the borderRadius from your theme
             >
                 <HStack mb={2}>
-                    <Avatar size="sm" name={comment.author} src={userAccount.hiveAccount?.metadata?.profile.profile_image} />
+                    <Avatar size="sm" name={comment.author} src={`https://images.hive.blog/u/${comment.author}/avatar/sm`} />
                     <Link href={`/@${comment.author}`} fontWeight="bold" mb={2}>
                         {comment.author}
                     </Link>
@@ -93,7 +92,9 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                             </Text>
                         )}
                     </HStack>
-                    <Button leftIcon={<FaShare />} variant="ghost"></Button>
+                    <Text fontWeight="bold" fontSize="sm">
+                    ${getPayoutValue(comment)}
+                    </Text>
                 </HStack>
             )}
             </Box>

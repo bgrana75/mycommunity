@@ -13,6 +13,7 @@ interface PostGridProps {
 }
 
 export default function PostGrid({ posts, columns }: PostGridProps) {
+    console.log(posts)
     return (
         <SimpleGrid
             columns={{ base: 1, sm: columns, md: columns, lg: columns, xl: columns }}

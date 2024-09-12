@@ -18,7 +18,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [query, setQuery] = useState("blog")
   const tag = [{ tag: username, limit: 20 }]
   const { posts, setQueryCategory, setDiscussionQuery } = usePosts(query, tag)
-  console.log(posts)
   useEffect(() => {
     if (hiveAccount && hiveAccount.json_metadata) {
       try {

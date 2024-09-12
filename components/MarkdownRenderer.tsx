@@ -4,6 +4,7 @@ import rehypeRaw from 'rehype-raw';
 import DOMPurify from 'dompurify';
 
 export function MarkdownRenderer({ children }: { children: string }) {
+  
     const sanitizedBody = DOMPurify.sanitize(children);
     return (
         <ReactMarkdown remarkPlugins={[remarkGfm]} rehypePlugins={[rehypeRaw]}>

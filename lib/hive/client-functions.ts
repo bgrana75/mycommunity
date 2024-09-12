@@ -3,7 +3,8 @@ import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainS
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
-import { Discussion } from "@hiveio/dhive";
+import { Discussion, Notifications } from "@hiveio/dhive";
+import NotificationsComp from "@/components/notifications/NotificationsComp";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -319,11 +320,80 @@ export async function uploadImage(file: File, signature: string, index?: number,
 }
 
 export async function getPost(user: string, postId: string) {
-  const postContent = await HiveClient.database.call('get_content', [
-    user,
-    postId,
-  ]);
-  if (!postContent) throw new Error('Failed to fetch post content');
+    const postContent = await HiveClient.database.call('get_content', [
+      user,
+      postId,
+    ]);
+    if (!postContent) throw new Error('Failed to fetch post content');
 
-  return postContent as Discussion;
+    return postContent as Discussion;
+}
+
+export function getPayoutValue(post: any): string {
+    const createdDate = new Date(post.created);
+    const now = new Date();
+    
+    // Calculate the time difference in days
+    const timeDifferenceInMs = now.getTime() - createdDate.getTime();
+    const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+    
+    if (timeDifferenceInDays >= 7) {
+      // Post is older than 7 days, return the total payout value
+      return post.total_payout_value.replace(" HBD", "");
+    } else {
+      // Post is less than 7 days old, return the pending payout value
+      return post.pending_payout_value.replace(" HBD", "");
+    }
+}
+
+export async function findLastNotificationsReset(username: string, start = -1, loopCount = 0): Promise<string> {
+  if (loopCount >= 5) {
+    return '1970-01-01T00:00:00Z';
+  }
+
+  try {
+    const params = {
+      account: username,
+      start: start,
+      limit: 1000,
+      include_reversible: true,
+      operation_filter_low: 262144,
+    };
+
+    const transactions = await HiveClient.call('account_history_api', 'get_account_history', params);
+    const history = transactions.history.reverse();
+      
+    if (history.length === 0) {
+      return '1970-01-01T00:00:00Z';
+    }
+    
+    for (const item of history) {
+      if (item[1].op.value.id === 'notify') {
+        const json = JSON.parse(item[1].op.value.json);
+        return json[1].date;
+      }
+    }
+
+    return findLastNotificationsReset(username, start - 1000, loopCount + 1);
+
+  } catch (error) {
+    console.log(error);
+    return '1970-01-01T00:00:00Z';
+  }
+}
+
+export async function fetchNewNotifications(username: string) {
+  try {
+    const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
+    const lastDate = await findLastNotificationsReset(username);
+    if (lastDate) {
+      const filteredNotifications = notifications.filter(notification => new Date(notification.date) > new Date(lastDate));
+      return filteredNotifications;
+    } else {
+      return notifications;
+    }
+  } catch (error) {
+    console.log(error);
+    return [];
+  }
 }

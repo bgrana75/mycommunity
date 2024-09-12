@@ -5,6 +5,7 @@ import { FaHeart, FaComment, FaRegHeart } from 'react-icons/fa';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
 import { MarkdownRenderer } from '../MarkdownRenderer';
+import { getPayoutValue } from '@/lib/hive/client-functions';
 
 interface PostDetailsProps {
     post: Discussion;
@@ -83,7 +84,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                         <Text ml={2} fontSize="sm">{post.children}</Text>
                     </Flex>
                     <Text fontWeight="bold" fontSize="sm">
-                        ${String(post.pending_payout_value).replace(" HBD", "")}
+                        ${getPayoutValue(post)}
                     </Text>
                 </Flex>
             )}
