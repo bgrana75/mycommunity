@@ -4,7 +4,6 @@ import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
 import { Discussion, Notifications } from "@hiveio/dhive";
-import { Aioha, KeyTypes } from "@aioha/aioha";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -384,23 +383,22 @@ export async function findLastNotificationsReset(username: string, start = -1, l
 
 export async function fetchNewNotifications(username: string) {
   try {
-    const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
+    const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 5 });
     const lastDate = await findLastNotificationsReset(username);
+
     if (lastDate) {
-      const filteredNotifications = notifications.filter(notification => new Date(notification.date) > new Date(lastDate));
+      const filteredNotifications = notifications.filter(notification => new Date(notification.date + 'Z').toISOString() > new Date(lastDate).toISOString());
       return filteredNotifications;
     } else {
       return notifications;
     }
   } catch (error) {
-    console.log(error);
+    console.log('Error:', error);
     return [];
   }
 }
 
-export async function markNotificationsRead(aioha: Aioha) {
-  const now = new Date().toISOString(); // Get current date and time in ISO format
-  const json = JSON.stringify(["setLastRead", { date: now }]);
-  const customJson = await aioha.customJSON(KeyTypes.Posting, 'notify', { json: json }, 'Mark as Read')
-  return customJson
-}
+
+
+
+

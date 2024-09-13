@@ -6,8 +6,8 @@ interface NotificationItemProps {
 }
 
 export default function NotificationItem({ notification }: NotificationItemProps) {
+  
   const author = notification.msg.trim().split(' ')[0].slice(1);
-  console.log(author);
 
   return (
     <HStack

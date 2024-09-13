@@ -34,7 +34,7 @@ export default function NotificationsComp() {
   async function handleMarkAsRead () {
     const now = new Date().toISOString(); 
     const json = JSON.stringify(["setLastRead", { date: now }]);
-    const result = aioha.signAndBroadcastTx([
+    const result = await aioha.signAndBroadcastTx([
       ['custom_json', {
         required_auths: [],
         required_posting_auths: [user],
@@ -42,7 +42,6 @@ export default function NotificationsComp() {
         json: json,
       }]
     ], KeyTypes.Posting)
-    //const customJson = await aioha.customJSON(KeyTypes.Posting, 'notify', { json: json }, 'Mark as Read')
     console.log("Mark as Read clicked", result);
   };
 

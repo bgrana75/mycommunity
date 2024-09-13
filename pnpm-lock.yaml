@@ -12,8 +12,8 @@ importers:
         specifier: ^1.5.4
         version: 1.5.4
       '@aioha/react-ui':
-        specifier: ^1.4.1
-        version: 1.4.1(@aioha/aioha@1.5.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
+        specifier: ^1.4.4
+        version: 1.4.4(@aioha/aioha@1.5.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)
       '@chakra-ui/icons':
         specifier: ^2.1.1
         version: 2.1.1(@chakra-ui/system@2.6.2(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@emotion/styled@11.13.0(@emotion/react@11.13.0(@types/react@18.3.4)(react@18.3.1))(@types/react@18.3.4)(react@18.3.1))(react@18.3.1))(react@18.3.1)
@@ -132,8 +132,8 @@ packages:
       '@aioha/aioha': ^1.4.0
       react: ^18.3.1
 
-  '@aioha/react-ui@1.4.1':
-    resolution: {integrity: sha512-EYdDgkiflr/xaa2c2VSi8jNydLOoRSrOIpTvhd9wXR3JvapprL2swBUTjqiqCyK17Rac69ubIYkjAymG/xO2Cg==}
+  '@aioha/react-ui@1.4.4':
+    resolution: {integrity: sha512-Lrpxuysq4wHGXMpDYwT5cLwN9hche4bk8Kuy+ZwV4z0YLEVI2n1dJAH1A2sTbDGXO9QyaQB2efTudh6YQ7zR4w==}
     peerDependencies:
       '@aioha/aioha': ^1.4.1
       react: ^18.3.1
@@ -4544,7 +4544,7 @@ snapshots:
       '@aioha/aioha': 1.5.4
       react: 18.3.1
 
-  '@aioha/react-ui@1.4.1(@aioha/aioha@1.5.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
+  '@aioha/react-ui@1.4.4(@aioha/aioha@1.5.4)(react-dom@18.3.1(react@18.3.1))(react@18.3.1)':
     dependencies:
       '@aioha/aioha': 1.5.4
       '@aioha/react-provider': 1.4.1(@aioha/aioha@1.5.4)(react@18.3.1)
@@ -7660,7 +7660,7 @@ snapshots:
       eslint: 8.57.0
       eslint-import-resolver-node: 0.3.9
       eslint-import-resolver-typescript: 3.6.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1(eslint@8.57.0))(eslint@8.57.0)
-      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       eslint-plugin-jsx-a11y: 6.9.0(eslint@8.57.0)
       eslint-plugin-react: 7.35.0(eslint@8.57.0)
       eslint-plugin-react-hooks: 4.6.2(eslint@8.57.0)
@@ -7684,7 +7684,7 @@ snapshots:
       enhanced-resolve: 5.17.1
       eslint: 8.57.0
       eslint-module-utils: 2.8.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
-      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0)
+      eslint-plugin-import: 2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0)
       fast-glob: 3.3.2
       get-tsconfig: 4.7.6
       is-core-module: 2.15.0
@@ -7706,7 +7706,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  eslint-plugin-import@2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1)(eslint@8.57.0):
+  eslint-plugin-import@2.29.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-typescript@3.6.1(@typescript-eslint/parser@7.2.0(eslint@8.57.0)(typescript@5.5.4))(eslint-import-resolver-node@0.3.9)(eslint-plugin-import@2.29.1(eslint@8.57.0))(eslint@8.57.0))(eslint@8.57.0):
     dependencies:
       array-includes: 3.1.8
       array.prototype.findlastindex: 1.2.5

@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@aioha/aioha": "^1.5.4",
-    "@aioha/react-ui": "^1.4.1",
+    "@aioha/react-ui": "^1.4.4",
     "@chakra-ui/icons": "^2.1.1",
     "@chakra-ui/react": "^2.8.2",
     "@emotion/react": "^11.13.0",
