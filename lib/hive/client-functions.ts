@@ -4,7 +4,7 @@ import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
 import { Discussion, Notifications } from "@hiveio/dhive";
-import NotificationsComp from "@/components/notifications/NotificationsComp";
+import { Aioha, KeyTypes } from "@aioha/aioha";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -396,4 +396,11 @@ export async function fetchNewNotifications(username: string) {
     console.log(error);
     return [];
   }
+}
+
+export async function markNotificationsRead(aioha: Aioha) {
+  const now = new Date().toISOString(); // Get current date and time in ISO format
+  const json = JSON.stringify(["setLastRead", { date: now }]);
+  const customJson = await aioha.customJSON(KeyTypes.Posting, 'notify', { json: json }, 'Mark as Read')
+  return customJson
 }
