@@ -1,13 +1,24 @@
-import { Box, Avatar, Text, HStack } from '@chakra-ui/react';
+import { Box, Avatar, Text, HStack, IconButton, Link } from '@chakra-ui/react';
+import { ExternalLinkIcon } from '@chakra-ui/icons'; // Import the external link icon
 import { Notifications } from '@hiveio/dhive';
 
 interface NotificationItemProps {
-  notification: Notifications; // Adjust type to match the actual Notifications type
+  notification: Notifications;
 }
 
 export default function NotificationItem({ notification }: NotificationItemProps) {
-  
+  console.log(notification);
   const author = notification.msg.trim().split(' ')[0].slice(1);
+
+  const formattedDate = new Date(notification.date + 'Z').toLocaleString('en-US', {
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
+    second: '2-digit',
+    hour12: false, // 24-hour format
+  });
 
   return (
     <HStack
@@ -15,7 +26,7 @@ export default function NotificationItem({ notification }: NotificationItemProps
       p={4}
       borderWidth="1px"
       borderRadius="none"
-      bg="gray.300"
+      bg="muted"
       w="full"
       align="stretch"
     >
@@ -23,10 +34,22 @@ export default function NotificationItem({ notification }: NotificationItemProps
       <Box flex="1"> {/* Ensure Box takes up remaining space */}
         <Text fontWeight="semibold">{author}</Text>
         <Text>{notification.msg}</Text>
-        <Text color="gray.500" fontSize="sm">
-          {notification.date}
+        <Text fontSize="sm">
+          {formattedDate}
         </Text>
       </Box>
+      {notification.url && (
+        <Link href={'/' + notification.url}>
+          <IconButton
+            aria-label="Open notification"
+            icon={<ExternalLinkIcon />}
+            variant="ghost"
+            size="lg"
+            isRound
+            alignSelf="center" // Center the icon vertically
+          />
+        </Link>
+      )}
     </HStack>
   );
 }

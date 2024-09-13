@@ -1,13 +1,16 @@
-// components/NotificationsComp.tsx
 import { useEffect, useState } from 'react';
 import { fetchNewNotifications } from '@/lib/hive/client-functions';
 import { Box, Text, Stack, Spinner, Button, HStack } from '@chakra-ui/react';
 import { useAioha } from '@aioha/react-ui';
 import { KeyTypes } from '@aioha/aioha';
 import { Notifications } from '@hiveio/dhive';
-import NotificationItem from './NotificationItem'; // Import the NotificationItem component
+import NotificationItem from './NotificationItem'; 
 
-export default function NotificationsComp() {
+interface NotificationCompProps {
+  username: string
+}
+
+export default function NotificationsComp({ username } : NotificationCompProps) {
   const { user, aioha } = useAioha();
   const [notifications, setNotifications] = useState<Notifications[]>([]);
   const [isLoading, setIsLoading] = useState<boolean>(true); // Add isLoading state
@@ -16,21 +19,21 @@ export default function NotificationsComp() {
     const loadNotifications = async () => {
       if (user) {
         try {
-          setIsLoading(true); // Set loading to true before fetching
-          const newNotifications = await fetchNewNotifications(user);
+          setIsLoading(true); 
+          console.log(username)
+          const newNotifications = await fetchNewNotifications(username);
           setNotifications(newNotifications);
         } catch (error) {
           console.error("Failed to fetch notifications:", error);
         } finally {
-          setIsLoading(false); // Set loading to false after fetching
+          setIsLoading(false); 
         }
       }
     };
 
     loadNotifications();
-  }, [user]);
+  }, [user, username]);
 
-  // Function to handle "Mark as Read" button click
   async function handleMarkAsRead () {
     const now = new Date().toISOString(); 
     const json = JSON.stringify(["setLastRead", { date: now }]);
@@ -51,11 +54,13 @@ export default function NotificationsComp() {
       <Text fontSize="2xl" fontWeight="bold">
         Notifications
       </Text>
-      <Button onClick={handleMarkAsRead} colorScheme="blue" size="sm">
-        Mark as Read
-      </Button>
+      {(user == username) && (
+        <Button onClick={handleMarkAsRead} colorScheme="blue" size="sm">
+          Mark as Read
+        </Button>
+      )}
     </HStack>
-      {isLoading ? ( // Show spinner while loading
+      {isLoading ? (
         <Spinner size="lg" />
       ) : notifications.length > 0 ? (
         <Stack spacing={4} w="full">
