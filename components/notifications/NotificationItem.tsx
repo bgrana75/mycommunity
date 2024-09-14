@@ -7,7 +7,7 @@ interface NotificationItemProps {
 }
 
 export default function NotificationItem({ notification }: NotificationItemProps) {
-  console.log(notification);
+  
   const author = notification.msg.trim().split(' ')[0].slice(1);
 
   const formattedDate = new Date(notification.date + 'Z').toLocaleString('en-US', {
@@ -31,7 +31,7 @@ export default function NotificationItem({ notification }: NotificationItemProps
       align="stretch"
     >
       <Avatar src={`https://images.hive.blog/u/${author}/avatar/sm`} name='' />
-      <Box flex="1"> {/* Ensure Box takes up remaining space */}
+      <Box flex="1">
         <Text fontWeight="semibold">{author}</Text>
         <Text>{notification.msg}</Text>
         <Text fontSize="sm">

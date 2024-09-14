@@ -4,8 +4,8 @@ import { Discussion } from '@hiveio/dhive';
 import { FaHeart, FaComment, FaRegHeart } from 'react-icons/fa';
 import { getPostDate } from '@/lib/utils/GetPostDate';
 import { useAioha } from '@aioha/react-ui';
-import { MarkdownRenderer } from '../MarkdownRenderer';
 import { getPayoutValue } from '@/lib/hive/client-functions';
+import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 
 interface PostDetailsProps {
     post: Discussion;
@@ -47,9 +47,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                     </Box>
                 </Flex>
             </Flex>
-            <Box mt={4}>
-                <MarkdownRenderer>{body}</MarkdownRenderer>
-            </Box>
+            <Box mt={4} dangerouslySetInnerHTML={{ __html: markdownRenderer(body) }} />
             {showSlider ? (
                 <Flex mt={4} alignItems="center">
                     <Box width="100%" mr={2}>

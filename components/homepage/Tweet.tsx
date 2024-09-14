@@ -6,6 +6,7 @@ import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
 import { useState } from 'react';
 import { getPayoutValue } from '@/lib/hive/client-functions';
+import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -58,7 +59,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                         {comment.author}
                     </Link>
                 </HStack>
-                <MarkdownRenderer>{comment.body}</MarkdownRenderer>
+                <Box dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }} />
                 {showSlider ? (
                 <Flex mt={4} alignItems="center">
                     <Box width="100%" mr={2}>

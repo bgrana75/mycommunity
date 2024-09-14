@@ -20,7 +20,6 @@ export default function NotificationsComp({ username } : NotificationCompProps) 
       if (user) {
         try {
           setIsLoading(true); 
-          console.log(username)
           const newNotifications = await fetchNewNotifications(username);
           setNotifications(newNotifications);
         } catch (error) {
