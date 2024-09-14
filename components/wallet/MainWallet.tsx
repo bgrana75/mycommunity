@@ -2,12 +2,13 @@ import { useState, useEffect } from 'react';
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { Box, Grid, GridItem, Text, Icon, HStack, Divider, Spinner, useDisclosure } from "@chakra-ui/react";
 import { FaExchangeAlt, FaPiggyBank, FaStore, FaShoppingCart, FaArrowDown, FaShareAlt, FaDollarSign, FaArrowUp, FaPaperPlane } from "react-icons/fa";
-import { Account, Asset } from '@hiveio/dhive'; // Adjust import based on actual usage
+import { Account } from '@hiveio/dhive'; // Adjust import based on actual usage
 import { convertVestToHive } from '@/lib/hive/client-functions'; // Import the async function
 import { extractNumber } from '@/lib/utils/extractNumber';
 import WalletModal from '@/components/wallet/WalletModal'; // Import the new generic modal component
 import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
+import { Asset, KeyTypes } from '@aioha/aioha';
 
 interface MainWalletProps {
     username: string;
@@ -45,22 +46,69 @@ export default function MainWallet({ username }: MainWalletProps) {
         onOpen();
     };
 
-    const handleConfirm = (amount: number, username?: string, memo?: string) => {
+    async function handleConfirm (amount: number, username?: string, memo?: string) {
         if (!modalContent) return;
 
         switch (modalContent.title) {
             case 'Send Hive':
                 // Handle Send Hive logic here
-                console.log('Send Hive - Amount:', amount, 'To:', username, 'Memo:', memo);
+                if (username) {
+                    await aioha.transfer(username, amount, Asset.HIVE, memo)
+                }
+                break;
+            case 'Power Up':
+                await aioha.stakeHive(amount)
+            case 'Convert to HBD':
+                aioha.signAndBroadcastTx([
+                    [
+                        "convert",
+                        {
+                          "owner": user,
+                          "requestid": Math.floor(1000000000 + Math.random() * 9000000000),
+                          "amount": {
+                            "amount": amount,
+                            "precision": 3,
+                            "nai": "@@000000013"
+                          }
+                        }
+                      ]
+                  ], KeyTypes.Active)
+            case 'HIVE Savings':
+                await aioha.signAndBroadcastTx([
+                    [
+                      "transfer_to_savings",
+                      {
+                        "from": user,
+                        "to": user,
+                        "amount": amount.toFixed(3) + " HIVE",
+                        "memo": memo || ""
+                      }
+                    ]
+                  ], KeyTypes.Active)
+            case 'Power Down' :
+                const unstake = await aioha.unstakeHive(amount)
+            case 'Delegate':
+                if (username) {
+                    const delegate = await aioha.delegateStakedHive(username, amount)
+                }
                 break;
             case 'Send HBD':
-                // Handle Send HBD logic here
-                console.log('Send HBD - Amount:', amount, 'To:', username, 'Memo:', memo);
+                if (username) {
+                    await aioha.transfer(username, amount, Asset.HBD, memo)
+                }
                 break;
-            case 'Delegate':
-                // Handle Delegate logic here
-                console.log('Delegate - Amount:', amount, 'To:', username);
-                break;
+            case 'HBD Savings':
+                await aioha.signAndBroadcastTx([
+                    [
+                      "transfer_to_savings",
+                      {
+                        "from": user,
+                        "to": user,
+                        "amount": amount.toFixed(3) + " HBD",
+                        "memo": memo || ""
+                      }
+                    ]
+                  ], KeyTypes.Active)
             default:
                 console.log('Default action - Amount:', amount, 'Memo:', memo);
                 break;
@@ -112,16 +160,16 @@ export default function MainWallet({ username }: MainWalletProps) {
                 <GridItem display="flex" alignItems="center" h={'100%'} >
                     <HStack spacing={3}>
                         <Icon as={FaPaperPlane} w={4} h={4} cursor="pointer" title="Send Hive"
-                                onClick={() => handleModalOpen('Send Hive', 'Send Hive to another account', true, true)} 
+                                onClick={() => handleModalOpen('Send HIVE', 'Send Hive to another account', true, true)} 
                         />
                         <Icon as={FaArrowUp} w={4} h={4} cursor="pointer" title="Power Up"
                                 onClick={() => handleModalOpen('Power Up', 'Power Up your HIVE to HP')} 
                         />
                         <Icon as={FaExchangeAlt} w={4} h={4} cursor="pointer" title="Convert to HBD"
-                                onClick={() => handleModalOpen('Convert Hive', 'Convert Hive to HBD or vice versa')} 
+                                onClick={() => handleModalOpen('Convert HIVE', 'Convert HIVE to HBD or vice versa')} 
                         />
-                        <Icon as={FaPiggyBank} w={4} h={4} cursor="pointer" title="Send Hive to Savings"
-                                onClick={() => handleModalOpen('Hive Savings', 'View Hive Savings')} 
+                        <Icon as={FaPiggyBank} w={4} h={4} cursor="pointer" title="Transfer to Savings"
+                                onClick={() => handleModalOpen('HIVE Savings', 'Transfer to HIVE savings')} 
                         />
                         <Icon as={FaStore} w={4} h={4} cursor="pointer" title="Hive/HBD Market"
                                 onClick={() => router.push('https://hivedex.io/')} 

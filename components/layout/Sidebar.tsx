@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, VStack, Button, Icon } from '@chakra-ui/react';
 import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
-import { FiHome, FiBell, FiUser, FiShoppingCart, FiBook } from 'react-icons/fi';
+import { FiHome, FiBell, FiUser, FiShoppingCart, FiBook, FiCreditCard } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
 import { Notifications } from '@hiveio/dhive'; 
 import { fetchNewNotifications } from '@/lib/hive/client-functions'; 
@@ -97,6 +97,16 @@ export default function Sidebar() {
                     px={1} 
                 >
                     Profile
+                </Button>
+                <Button
+                    onClick={() => handleNavigation("/@" + user + '/wallet')}
+                    variant="ghost"
+                    w="full"
+                    justifyContent="flex-start"
+                    leftIcon={<Icon as={FiCreditCard} boxSize={4} />}
+                    px={1} 
+                >
+                    Wallet
                 </Button>
                 {isBusiness && (
                     <Button
