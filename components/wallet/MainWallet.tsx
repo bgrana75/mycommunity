@@ -2,10 +2,9 @@ import { useState, useEffect } from 'react';
 import useHiveAccount from "@/hooks/useHiveAccount";
 import { Box, Grid, GridItem, Text, Icon, HStack, Divider, Spinner, useDisclosure } from "@chakra-ui/react";
 import { FaExchangeAlt, FaPiggyBank, FaStore, FaShoppingCart, FaArrowDown, FaShareAlt, FaDollarSign, FaArrowUp, FaPaperPlane } from "react-icons/fa";
-import { Account } from '@hiveio/dhive'; // Adjust import based on actual usage
-import { convertVestToHive } from '@/lib/hive/client-functions'; // Import the async function
+import { convertVestToHive } from '@/lib/hive/client-functions'; 
 import { extractNumber } from '@/lib/utils/extractNumber';
-import WalletModal from '@/components/wallet/WalletModal'; // Import the new generic modal component
+import WalletModal from '@/components/wallet/WalletModal'; 
 import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
 import { Asset, KeyTypes } from '@aioha/aioha';
@@ -66,7 +65,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                           "owner": user,
                           "requestid": Math.floor(1000000000 + Math.random() * 9000000000),
                           "amount": {
-                            "amount": amount,
+                            "amount": amount.toFixed(3),
                             "precision": 3,
                             "nai": "@@000000013"
                           }
@@ -109,6 +108,32 @@ export default function MainWallet({ username }: MainWalletProps) {
                       }
                     ]
                   ], KeyTypes.Active)
+            case 'Withdraw HBD Savings':
+                await aioha.signAndBroadcastTx([
+                    [
+                      "transfer_from_savings",
+                      {
+                        "from": user,
+                        "to": user,
+                        "request_id": Math.floor(1000000000 + Math.random() * 9000000000),
+                        "amount": amount.toFixed(3) + " HBD",
+                        "memo": memo || ""
+                      }
+                    ]
+                  ], KeyTypes.Active)
+            case 'Withdraw HIVE Savings':
+                await aioha.signAndBroadcastTx([
+                    [
+                      "transfer_from_savings",
+                      {
+                        "from": user,
+                        "to": user,
+                        "request_id": Math.floor(1000000000 + Math.random() * 9000000000),
+                        "amount": amount.toFixed(3) + " HIVE",
+                        "memo": memo || ""
+                      }
+                    ]
+                ], KeyTypes.Active)
             default:
                 console.log('Default action - Amount:', amount, 'Memo:', memo);
                 break;
@@ -128,7 +153,6 @@ export default function MainWallet({ username }: MainWalletProps) {
         return <Text color="red.500">Failed to load account information.</Text>;
     }
 
-    // Extract numeric values
     const balance = hiveAccount?.balance ? extractNumber(String(hiveAccount.balance)) : "N/A";
     const hbdBalance = hiveAccount?.hbd_balance ? extractNumber(String(hiveAccount.hbd_balance)) : "N/A";
     const savingsBalance = hiveAccount?.savings_balance ? extractNumber(String(hiveAccount.savings_balance)) : "N/A";
@@ -148,9 +172,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text fontWeight="semibold">Balance</Text>
                 </GridItem>
                 <GridItem />
-
                 <Divider gridColumn="1 / -1" />
-
                 <GridItem>
                     <Text>Hive</Text>
                 </GridItem>
@@ -179,10 +201,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         />
                     </HStack>
                 </GridItem>
-
                 <Divider gridColumn="1 / -1" />
-
-                {/* Hive Power (HP) */}
                 <GridItem>
                     <Text>Hive Power (HP)</Text>
                 </GridItem>
@@ -199,10 +218,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         />
                     </HStack>
                 </GridItem>
-
                 <Divider gridColumn="1 / -1" />
-
-                {/* Hive Backed Dollar (HBD) */}
                 <GridItem>
                     <Text>Hive Backed Dollar (HBD)</Text>
                 </GridItem>
@@ -225,10 +241,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         />
                     </HStack>
                 </GridItem>
-
                 <Divider gridColumn="1 / -1" />
-
-                {/* Hive Savings */}
                 <GridItem>
                     <Text>Hive Savings</Text>
                 </GridItem>
@@ -242,10 +255,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         />
                     </HStack>
                 </GridItem>
-
                 <Divider gridColumn="1 / -1" />
-
-                {/* HBD Savings */}
                 <GridItem>
                     <Text>HBD Savings</Text>
                 </GridItem>
