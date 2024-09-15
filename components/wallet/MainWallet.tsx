@@ -180,6 +180,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text>{balance}</Text>
                 </GridItem>
                 <GridItem display="flex" alignItems="center" h={'100%'} >
+                    {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaPaperPlane} w={4} h={4} cursor="pointer" title="Send Hive"
                                 onClick={() => handleModalOpen('Send HIVE', 'Send Hive to another account', true, true)} 
@@ -200,6 +201,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                                 onClick={() => router.push(`https://global.transak.com/?apiKey=771c8ab6-b3ba-4450-b69d-ca35e4b25eb8&redirectURL=${window.location.href}&cryptoCurrencyCode=HIVE&defaultCryptoAmount=200&exchangeScreenTitle=Buy%20HIVE&isFeeCalculationHidden=false&defaultPaymentMethod=credit_debit_card&walletAddress=${user}`)} 
                         />
                     </HStack>
+                    )}
                 </GridItem>
                 <Divider gridColumn="1 / -1" />
                 <GridItem>
@@ -209,6 +211,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text>{hivePower !== undefined ? hivePower : "Loading..."}</Text>
                 </GridItem>
                 <GridItem display="flex" alignItems="center" h={'100%'}>
+                {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaArrowDown} w={4} h={4} cursor="pointer" title="Power Down"
                                 onClick={() => handleModalOpen('Power Down', 'Unstake Hive Power')} 
@@ -217,6 +220,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                                 onClick={() => handleModalOpen('Delegate', 'Delegate HP to another user', false, true)} 
                         />
                     </HStack>
+                )}
                 </GridItem>
                 <Divider gridColumn="1 / -1" />
                 <GridItem>
@@ -226,6 +230,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text>{hbdBalance}</Text>
                 </GridItem>
                 <GridItem display="flex" alignItems="center" h={'100%'}>
+                {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaPaperPlane} w={4} h={4} cursor="pointer" title="Send HBD"
                                 onClick={() => handleModalOpen('Send HBD', 'Send HBD to another account', true, true)} 
@@ -240,6 +245,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                                 onClick={() => handleModalOpen('HBD Store', 'Use HBD in the store')} 
                         />
                     </HStack>
+                )}
                 </GridItem>
                 <Divider gridColumn="1 / -1" />
                 <GridItem>
@@ -249,11 +255,13 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text>{savingsBalance}</Text>
                 </GridItem>
                 <GridItem display="flex" alignItems="center" h={'100%'}>
+                {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaDollarSign} w={4} h={4} cursor="pointer" title="Withdraw From Savings"
                                 onClick={() => handleModalOpen('Withdraw Hive Savings', 'Withdraw Hive from Savings')} 
                         />
                     </HStack>
+                )}
                 </GridItem>
                 <Divider gridColumn="1 / -1" />
                 <GridItem>
@@ -263,11 +271,13 @@ export default function MainWallet({ username }: MainWalletProps) {
                     <Text>{hbdSavingsBalance}</Text>
                 </GridItem>
                 <GridItem display="flex" alignItems="center" h={'100%'}>
+                {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaDollarSign} w={4} h={4} cursor="pointer" title="Withdraw From Savings"
                                 onClick={() => handleModalOpen('Withdraw HBD Savings', 'Withdraw HBD from Savings')} 
                         />
                     </HStack>
+                )}
                 </GridItem>
             </Grid>
             <WalletModal

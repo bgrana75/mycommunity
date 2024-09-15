@@ -5,6 +5,7 @@ import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
 import { Discussion, Notifications } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
+import { profileEnd } from "console";
 
 interface HiveKeychainResponse {
   success: boolean
@@ -400,13 +401,16 @@ export async function fetchNewNotifications(username: string) {
 }
 
 export async function convertVestToHive (amount: number) {
-  console.log(amount,'amount')
   const globalProperties = await HiveClient.call('condenser_api', 'get_dynamic_global_properties', []);
-  console.log(globalProperties.total_vesting_fund_hive, 'gp')
   const totalVestingFund = extractNumber(globalProperties.total_vesting_fund_hive)
   const totalVestingShares = extractNumber(globalProperties.total_vesting_shares)
   const vestHive = ( totalVestingFund * amount ) / totalVestingShares
   return vestHive
+}
+
+export async function getProfile (username: string) {
+  const profile = await HiveClient.call('bridge', 'get_profile', {account: username});
+  return profile
 }
 
 

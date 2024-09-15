@@ -1,10 +1,11 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Box, Heading, Text, VStack, Spinner, Alert, AlertIcon, Image, Container, Flex } from '@chakra-ui/react';
+import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
 import usePosts from '@/hooks/usePosts';
 import PostGrid from '@/components/blog/PostGrid';
+import { getProfile } from '@/lib/hive/client-functions';
 
 interface ProfilePageProps {
   username: string;
@@ -15,6 +16,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileCoverImage, setProfileCoverImage] = useState<string>('');
   const [profileWebsite, setProfileWebsite] = useState<string>('');
+  const [profileInfo, setProfileInfo] = useState<any>(null); // Adjust type as needed
   const [query, setQuery] = useState("blog");
   const tag = [{ tag: username, limit: 20 }];
   const { posts } = usePosts(query, tag);
@@ -31,6 +33,21 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       }
     }
   }, [hiveAccount]);
+
+  useEffect(() => {
+    const fetchProfileInfo = async () => {
+      try {
+        const profileData = await getProfile(username);
+        setProfileInfo(profileData);
+      } catch (err) {
+        console.error('Failed to fetch profile info', err);
+      }
+    };
+
+    if (username) {
+      fetchProfileInfo();
+    }
+  }, [username]);
 
   if (isLoading) {
     return (
@@ -58,6 +75,15 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       </Box>
     );
   }
+
+  // Format description text
+  const followers = profileInfo?.stats?.followers || 0;
+  const following = profileInfo?.stats?.following || 0;
+  const location = profileInfo?.metadata?.profile?.location || '';
+  const about = profileInfo?.metadata?.profile?.about || '';
+
+  const descriptionLine1 = `Following: ${following} | Followers: ${followers} | Location: ${location}`;
+  const descriptionLine2 = about;
 
   return (
     <Box color="text" maxW="container.md" mx="auto">
@@ -101,7 +127,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           <Flex alignItems="center">
             {/* Username */}
             <Heading as="h2" size="lg" color="blue.700" mr={2}>
-              {hiveAccount.name}
+              {profileInfo?.metadata.profile.name}
             </Heading>
 
             {/* Reputation as a small square */}
@@ -115,15 +141,15 @@ export default function ProfilePage({ username }: ProfilePageProps) {
               fontWeight="bold" 
               fontSize="xs"
             >
-              {hiveAccount.reputation}
+              {profileInfo?.reputation ? Math.round(profileInfo.reputation) : hiveAccount.reputation}
             </Box>
           </Flex>
 
-          {/* Description Placeholder */}
-          <Text fontSize="sm" color="gray.600" mt={2} noOfLines={2}>
-            {/* Placeholder text for description */}
-            This is a placeholder for the user description. User info or bio can go here.
-            <br />second line
+          {/* Description */}
+          <Text fontSize="sm" color="gray.600" mt={2}>
+            {descriptionLine1}
+            <br />
+            {descriptionLine2}
           </Text>
 
           {/* Website Link */}

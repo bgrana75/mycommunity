@@ -54,6 +54,7 @@ export default function PostCard({ post }: PostCardProps) {
 
     return (
         <Box
+        boxShadow={'lg'}
         borderWidth="1px"
         borderRadius="base"
         overflow="hidden"
