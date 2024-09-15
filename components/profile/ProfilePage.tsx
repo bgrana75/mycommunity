@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex } from '@chakra-ui/react';
+import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex, Icon } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
 import usePosts from '@/hooks/usePosts';
@@ -154,8 +154,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
           {/* Website Link */}
           {profileWebsite && (
-            <Flex alignItems="center" mt={2}>
-              <FaGlobe onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
+            <Flex alignItems="center">
+              <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
               <Text ml={2} fontSize="sm" color="blue.500">{profileWebsite}</Text>
             </Flex>
           )}

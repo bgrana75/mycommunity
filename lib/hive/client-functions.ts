@@ -413,6 +413,11 @@ export async function getProfile (username: string) {
   return profile
 }
 
+export async function getCommunityInfo (username: string) {
+  const profile = await HiveClient.call('bridge', 'get_community', {name: username});
+  return profile
+}
+
 
 
 

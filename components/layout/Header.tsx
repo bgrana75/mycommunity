@@ -1,29 +1,88 @@
-// components/homepage/Header.tsx
 'use client'
-import React from 'react';
-import { Box, Flex, Text, Input, Button, useColorMode } from '@chakra-ui/react';
+import React, { useEffect, useState } from 'react';
+import { Box, Flex, Text, Input, Button, Image, useColorMode } from '@chakra-ui/react';
 
-import { useState } from 'react'
-import { useAioha, AiohaModal } from '@aioha/react-ui'
-import { KeyTypes } from '@aioha/aioha'
-import '@aioha/react-ui/dist/build.css'
+import { useAioha, AiohaModal } from '@aioha/react-ui';
+import { KeyTypes } from '@aioha/aioha';
+import '@aioha/react-ui/dist/build.css';
+import { getCommunityInfo, getProfile } from '@/lib/hive/client-functions';
 
 export default function Header() {
-    const { colorMode } = useColorMode()
-    const [modalDisplayed, setModalDisplayed] = useState(false)
-    const { user } = useAioha()
+    const { colorMode } = useColorMode();
+    const [modalDisplayed, setModalDisplayed] = useState(false);
+    const [profileInfo, setProfileInfo] = useState<any>();
+    const [communityInfo, setCommunityInfo] = useState<any>();
+    const { user } = useAioha();
 
-    const CommunityName = process.env.NEXT_PUBLIC_COMMUNITY_NAME || 'My Community';
+    const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
+
+    useEffect(() => {
+        const fetchData = async () => {
+            try {
+                const cachedProfileData = localStorage.getItem('profileData');
+                if (cachedProfileData) {
+                    setProfileInfo(JSON.parse(cachedProfileData));
+                } else if (communityTag) {
+                    const profileData = await getProfile(communityTag);
+                    localStorage.setItem('profileData', JSON.stringify(profileData));
+                    setProfileInfo(profileData);
+                }
+
+                const cachedCommunityData = localStorage.getItem('communityData');
+                if (cachedCommunityData) {
+                    setCommunityInfo(JSON.parse(cachedCommunityData));
+                } else if (communityTag) {
+                    const communityData = await getCommunityInfo(communityTag);
+                    localStorage.setItem('communityData', JSON.stringify(communityData));
+                    setCommunityInfo(communityData);
+                }
+            } catch (error) {
+                console.error('Failed to fetch data', error);
+            }
+        };
+
+        if (communityTag) {
+            fetchData();
+        }
+    }, [communityTag]);
+
+    /*
+    useEffect(() => {
+        if (profileInfo && communityInfo) {
+            console.log(profileInfo, communityInfo);
+        }
+    }, [profileInfo, communityInfo]);
+    */
 
     return (
-        <Box bg="secondary" px={{ base: 4, md: 6 }} py={4}>
+        <Box bg="secondary" px={{ base: 4, md: 6 }} py={2}>
             <Flex justify="space-between" align="center">
-                <Text fontSize={{ base: 'xl', md: '2xl' }} fontWeight="bold">
-                    {CommunityName}
-                </Text>
+                <Flex align="center">
+                    {/* Display profile image */}
+                    {profileInfo?.metadata?.profile?.profile_image && (
+                        <Image
+                            src={profileInfo.metadata.profile.profile_image}
+                            alt="Profile Image"
+                            boxSize="60px" // Adjust the size as needed
+                            borderRadius="full"
+                            mr={4} // Add some margin to the right of the image
+                        />
+                    )}
+                    <Flex direction="column">
+                        <Text fontSize={{ base: '2xl', md: '3xl' }} fontWeight="bold">
+                            {communityInfo?.title}
+                        </Text>
+                        {/* Display description next to title */}
+                        {communityInfo?.description && (
+                            <Text fontSize="xs" color="primary" fontWeight="bold">
+                                {communityInfo.about}
+                            </Text>
+                        )}
+                    </Flex>
+                </Flex>
                 <Input
-                    placeholder="Search HackerFeed"
-                    maxW="400px"
+                    placeholder="Search..."
+                    maxW="300px"
                     bg="muted"
                     borderColor="border"
                     _placeholder={{ color: 'text' }}
