@@ -1,6 +1,6 @@
 'use client'
 import React, { useState, useEffect } from 'react';
-import { Box, Heading, Text, VStack, Spinner, Alert, AlertIcon, Image, Container } from '@chakra-ui/react';
+import { Box, Heading, Text, VStack, Spinner, Alert, AlertIcon, Image, Container, Flex } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
 import usePosts from '@/hooks/usePosts';
@@ -15,9 +15,10 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   const [profileImage, setProfileImage] = useState<string>('');
   const [profileCoverImage, setProfileCoverImage] = useState<string>('');
   const [profileWebsite, setProfileWebsite] = useState<string>('');
-  const [query, setQuery] = useState("blog")
-  const tag = [{ tag: username, limit: 20 }]
-  const { posts, setQueryCategory, setDiscussionQuery } = usePosts(query, tag)
+  const [query, setQuery] = useState("blog");
+  const tag = [{ tag: username, limit: 20 }];
+  const { posts } = usePosts(query, tag);
+
   useEffect(() => {
     if (hiveAccount && hiveAccount.json_metadata) {
       try {
@@ -59,36 +60,83 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   }
 
   return (
-    <Box color="text" maxW="container.md" mx="auto" >
+    <Box color="text" maxW="container.md" mx="auto">
       <Box position="relative" height="200px">
-        <Container id='cover' maxW="container.md" p={0} borderRadius="md" overflow="hidden" position="relative" height="100%">
+        {/* Cover Image */}
+        <Container id='cover' maxW="container.md" p={0} overflow="hidden" position="relative" height="100%">
           <Image
             src={profileCoverImage}
             alt={`${hiveAccount.name} cover`}
             width="100%"
             height="100%"
             objectFit="cover"
-            borderRadius="md"
             mb={4}
           />
         </Container>
+      </Box>
+
+      {/* Avatar and user info over the cover image */}
+      <Flex 
+        mt={-16} 
+        p={4} 
+        alignItems="center" 
+        bg="muted" 
+        boxShadow="lg"
+        opacity={0.85}  // Adjust transparency
+        zIndex={2}      // Ensure it's on top
+        position="relative"  // Position it over the image
+      >
+        {/* Avatar */}
         <Image
           src={profileImage}
           alt={hiveAccount.name}
-          borderRadius="full"
+          borderRadius="full"   // Keeps the avatar rounded
           boxSize="100px"
-          position="absolute"
-          bottom="-50px"
-          left="50%"
-          transform="translateX(-50%)"
-          border="4px solid white"
+          mr={4}
+          zIndex={3}  // Ensure the avatar is above the semi-transparent background
         />
-      </Box>
-      <VStack spacing={2} align="start" mt={8}>
-        <Heading as="h1" size="2xl">{hiveAccount.name}</Heading>
-        <FaGlobe onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
-      </VStack>
-      <Container maxW="container.lg">
+
+        {/* User Info */}
+        <Box>
+          <Flex alignItems="center">
+            {/* Username */}
+            <Heading as="h2" size="lg" color="blue.700" mr={2}>
+              {hiveAccount.name}
+            </Heading>
+
+            {/* Reputation as a small square */}
+            <Box 
+              display="flex" 
+              alignItems="center" 
+              justifyContent="center" 
+              width="15px"  // Much smaller square size
+              height="15px" 
+              bg="gray.200" 
+              fontWeight="bold" 
+              fontSize="xs"
+            >
+              {hiveAccount.reputation}
+            </Box>
+          </Flex>
+
+          {/* Description Placeholder */}
+          <Text fontSize="sm" color="gray.600" mt={2} noOfLines={2}>
+            {/* Placeholder text for description */}
+            This is a placeholder for the user description. User info or bio can go here.
+            <br />second line
+          </Text>
+
+          {/* Website Link */}
+          {profileWebsite && (
+            <Flex alignItems="center" mt={2}>
+              <FaGlobe onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
+              <Text ml={2} fontSize="sm" color="blue.500">{profileWebsite}</Text>
+            </Flex>
+          )}
+        </Box>
+      </Flex>
+
+      <Container maxW="container.lg" mt={8}>
         {posts ? (
           <PostGrid posts={posts} columns={3} />
         ) : (

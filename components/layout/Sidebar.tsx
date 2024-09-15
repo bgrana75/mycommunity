@@ -67,6 +67,8 @@ export default function Sidebar() {
                 >
                     Blog
                 </Button>
+                {user && (
+                <>
                 <Button
                     onClick={() => handleNavigation("/@" + user + "/notifications")}
                     variant="ghost"
@@ -108,6 +110,8 @@ export default function Sidebar() {
                 >
                     Wallet
                 </Button>
+                </>
+                )}
                 {isBusiness && (
                     <Button
                         onClick={() => handleNavigation("/buy")}
