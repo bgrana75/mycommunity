@@ -1,9 +1,9 @@
-import { Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay, HStack, Avatar, Link, IconButton } from '@chakra-ui/react';
+import { Modal, ModalBody, ModalContent, ModalHeader, ModalOverlay, HStack, Avatar, Link, IconButton, Box } from '@chakra-ui/react';
 import React from 'react';
 import TweetComposer from './TweetComposer';
 import { Comment } from '@hiveio/dhive';
 import { CloseIcon } from '@chakra-ui/icons';
-import { MarkdownRenderer } from '../MarkdownRenderer';
+import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 
 interface TweetReplyModalProps {
     isOpen: boolean;
@@ -39,7 +39,7 @@ export default function TweetReplyModal({ isOpen, onClose, comment, onNewReply }
                             {comment.author}
                         </Link>
                     </HStack>
-                    <MarkdownRenderer>{comment.body}</MarkdownRenderer>
+                    <Box dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }} />
                 </ModalHeader>
                 <ModalBody>
                     <TweetComposer pa={comment.author} pp={comment.permlink} onNewComment={onNewReply} post={true} />

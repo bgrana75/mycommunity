@@ -17,7 +17,7 @@ interface TweetComposerProps {
     post?: boolean;
 }
 
-const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, post = false }) => {
+export default function TweetComposer ({ pa, pp, onNewComment, post = false }: TweetComposerProps) {
     const { user, aioha } = useAioha();
     const postBodyRef = useRef<HTMLTextAreaElement>(null);
     const [images, setImages] = useState<File[]>([]);
@@ -87,11 +87,11 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, pos
     }
 
     return (
-        <Box bg="muted" p={4} borderRadius="base" mb={3}>
+        <Box bg="muted" p={4} mb={3} borderRadius="base" border="tb1">
             <Textarea
                 placeholder="What's happening?"
                 bg="background"
-                borderColor="border"
+                border="tb1"
                 borderRadius={'base'}
                 mb={3}
                 ref={postBodyRef}
@@ -100,11 +100,11 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, pos
             />
             <HStack justify="space-between" mb={3}>
                 <HStack>
-                    <Button _hover={{ borderColor: 'border', border: '1px solid' }} _active={{ borderColor: 'border' }} as="label" variant="ghost" isDisabled={isLoading}>
+                    <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} as="label" variant="ghost" isDisabled={isLoading}>
                         <FaImage size={22} />
                         <ImageUploader images={images} onUpload={setImages} onRemove={(index) => setImages(prevImages => prevImages.filter((_, i) => i !== index))} />
                     </Button>
-                    <Button _hover={{ borderColor: 'border', border: '1px solid' }} _active={{ borderColor: 'border' }} variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>
+                    <Button _hover={{ border: 'tb1' }} _active={{ border: 'tb1' }} variant="ghost" onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={isLoading}>
                         <MdGif size={48} />
                     </Button>
                 </HStack>
@@ -115,7 +115,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, pos
             <Wrap spacing={4}>
                 {images.map((image, index) => (
                     <Box key={index} position="relative">
-                        <Image alt="" src={URL.createObjectURL(image)} boxSize="100px" borderRadius="md" />
+                        <Image alt="" src={URL.createObjectURL(image)} boxSize="100px" borderRadius="base" />
                         <IconButton
                             aria-label="Remove image"
                             icon={<CloseIcon />}
@@ -131,7 +131,7 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, pos
                 ))}
                 {selectedGif && (
                     <Box key={selectedGif.id} position="relative">
-                        <Image alt="" src={selectedGif.images.downsized_medium.url} boxSize="100px" borderRadius="md" />
+                        <Image alt="" src={selectedGif.images.downsized_medium.url} boxSize="100px" borderRadius="base" />
                         <IconButton
                             aria-label="Remove GIF"
                             icon={<CloseIcon />}
@@ -159,4 +159,3 @@ const TweetComposer: React.FC<TweetComposerProps> = ({ pa, pp, onNewComment, pos
     );
 };
 
-export default TweetComposer; 

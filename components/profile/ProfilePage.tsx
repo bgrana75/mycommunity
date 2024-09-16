@@ -1,11 +1,11 @@
-'use client'
-import React, { useState, useEffect } from 'react';
+'use client';
+import React, { useState, useEffect, useRef } from 'react';
 import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex, Icon } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
-import usePosts from '@/hooks/usePosts';
-import PostGrid from '@/components/blog/PostGrid';
-import { getProfile } from '@/lib/hive/client-functions';
+import { getProfile, findPosts } from '@/lib/hive/client-functions';
+import PostGrid from '../blog/PostGrid';
+import InfiniteScroll from 'react-infinite-scroll-component';
 
 interface ProfilePageProps {
   username: string;
@@ -13,21 +13,62 @@ interface ProfilePageProps {
 
 export default function ProfilePage({ username }: ProfilePageProps) {
   const { hiveAccount, isLoading, error } = useHiveAccount(username);
-  const [profileImage, setProfileImage] = useState<string>('');
-  const [profileCoverImage, setProfileCoverImage] = useState<string>('');
-  const [profileWebsite, setProfileWebsite] = useState<string>('');
-  const [profileInfo, setProfileInfo] = useState<any>(null); // Adjust type as needed
-  const [query, setQuery] = useState("blog");
-  const tag = [{ tag: username, limit: 20 }];
-  const { posts } = usePosts(query, tag);
+  const [profileMetadata, setProfileMetadata] = useState<{ profileImage: string; coverImage: string; website: string }>({
+    profileImage: '',
+    coverImage: '',
+    website: '',
+  });
+  const [profileInfo, setProfileInfo] = useState<any>(null);
+  const [posts, setPosts] = useState<any[]>([]);
+  const isFetching = useRef(false);
+
+  const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
+  const params = useRef([
+    {
+      tag: username,
+      limit: 12,
+      start_author: '',
+      start_permlink: '',
+    },
+  ]);
+
+  async function fetchPosts() {
+    if (isFetching.current) return; // Prevent multiple fetches
+    isFetching.current = true;
+    try {
+      const newPosts = await findPosts('blog', params.current);
+      setPosts((prevPosts) => [...prevPosts, ...newPosts]);
+
+      // Update params for the next fetch (pagination)
+      params.current = [
+        {
+          tag: username,
+          limit: 12,
+          start_author: newPosts[newPosts.length - 1].author,
+          start_permlink: newPosts[newPosts.length - 1].permlink,
+        },
+      ];
+      isFetching.current = false;
+    } catch (err) {
+      console.error('Failed to fetch posts', err);
+      isFetching.current = false;
+    }
+  }
 
   useEffect(() => {
-    if (hiveAccount && hiveAccount.json_metadata) {
+    fetchPosts();
+  }, [username]);
+
+  useEffect(() => {
+    if (hiveAccount?.json_metadata) {
       try {
-        const profileMetadata = JSON.parse(hiveAccount.posting_json_metadata);
-        setProfileImage(profileMetadata.profile?.profile_image || '');
-        setProfileCoverImage(profileMetadata.profile?.cover_image || '');
-        setProfileWebsite(profileMetadata.profile?.website || '');
+        const parsedMetadata = JSON.parse(hiveAccount.posting_json_metadata);
+        const profile = parsedMetadata?.profile || {};
+        setProfileMetadata({
+          profileImage: profile.profile_image || '',
+          coverImage: profile.cover_image || '',
+          website: profile.website || '',
+        });
       } catch (err) {
         console.error('Failed to parse profile metadata', err);
       }
@@ -49,7 +90,12 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     }
   }, [username]);
 
-  if (isLoading) {
+  const followers = profileInfo?.stats?.followers || 0;
+  const following = profileInfo?.stats?.following || 0;
+  const location = profileInfo?.metadata?.profile?.location || '';
+  const about = profileInfo?.metadata?.profile?.about || '';
+
+  if (isLoading || !hiveAccount) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <Spinner size="xl" color="primary" />
@@ -68,31 +114,14 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     );
   }
 
-  if (!hiveAccount) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Text fontSize="xl" color="text">No account information available.</Text>
-      </Box>
-    );
-  }
-
-  // Format description text
-  const followers = profileInfo?.stats?.followers || 0;
-  const following = profileInfo?.stats?.following || 0;
-  const location = profileInfo?.metadata?.profile?.location || '';
-  const about = profileInfo?.metadata?.profile?.about || '';
-
-  const descriptionLine1 = `Following: ${following} | Followers: ${followers} | Location: ${location}`;
-  const descriptionLine2 = about;
-
   return (
     <Box color="text" maxW="container.lg" mx="auto">
       <Box position="relative" height="200px">
         {/* Cover Image */}
-        <Container id='cover' maxW="container.lg" p={0} overflow="hidden" position="relative" height="100%">
+        <Container id="cover" maxW="container.lg" p={0} overflow="hidden" position="relative" height="100%">
           <Image
-            src={profileCoverImage}
-            alt={`${hiveAccount.name} cover`}
+            src={profileMetadata.coverImage}
+            alt={`${hiveAccount?.name} cover`}
             width="100%"
             height="100%"
             objectFit="cover"
@@ -102,24 +131,24 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       </Box>
 
       {/* Avatar and user info over the cover image */}
-      <Flex 
-        mt={-16} 
-        p={4} 
-        alignItems="center" 
-        bg="muted" 
+      <Flex
+        mt={-16}
+        p={4}
+        alignItems="center"
+        bg="muted"
         boxShadow="lg"
-        opacity={0.85}  // Adjust transparency
-        zIndex={2}      // Ensure it's on top
-        position="relative"  // Position it over the image
+        opacity={0.85}
+        zIndex={2}
+        position="relative"
       >
         {/* Avatar */}
         <Image
-          src={profileImage}
-          alt={hiveAccount.name}
-          borderRadius="full"   // Keeps the avatar rounded
+          src={profileMetadata.profileImage}
+          alt={hiveAccount?.name}
+          borderRadius="full"
           boxSize="100px"
           mr={4}
-          zIndex={3}  // Ensure the avatar is above the semi-transparent background
+          zIndex={3}
         />
 
         {/* User Info */}
@@ -127,47 +156,48 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           <Flex alignItems="center">
             {/* Username */}
             <Heading as="h2" size="lg" color="blue.700" mr={2}>
-              {profileInfo?.metadata.profile.name}
+              {profileInfo?.metadata.profile.name || username}
             </Heading>
 
-            {/* Reputation as a small square */}
-            <Box 
-              display="flex" 
-              alignItems="center" 
-              justifyContent="center" 
-              width="15px"  // Much smaller square size
-              height="15px" 
-              bg="gray.200" 
-              fontWeight="bold" 
-              fontSize="xs"
-            >
-              {profileInfo?.reputation ? Math.round(profileInfo.reputation) : hiveAccount.reputation}
+            {/* Reputation */}
+            <Box display="flex" alignItems="center" justifyContent="center" width="15px" height="15px" bg="gray.200" fontWeight="bold" fontSize="xs">
+              {profileInfo?.reputation ? Math.round(profileInfo.reputation) : 0}
             </Box>
           </Flex>
 
           {/* Description */}
           <Text fontSize="sm" color="gray.600" mt={2}>
-            {descriptionLine1}
+            Following: {following} | Followers: {followers} | Location: {location}
             <br />
-            {descriptionLine2}
+            {about}
           </Text>
 
           {/* Website Link */}
-          {profileWebsite && (
+          {profileMetadata.website && (
             <Flex alignItems="center">
-              <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileWebsite, '_blank')} style={{ cursor: 'pointer' }} />
-              <Text ml={2} fontSize="sm" color="blue.500">{profileWebsite}</Text>
+              <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
+              <Text ml={2} fontSize="sm" color="blue.500">
+                {profileMetadata.website}
+              </Text>
             </Flex>
           )}
         </Box>
       </Flex>
 
+      {/* Infinite Scroll for Posts */}
       <Container maxW="container.lg" mt={8}>
-        {posts ? (
-          <PostGrid posts={posts} columns={3} />
-        ) : (
-          <></>
-        )}
+        <InfiniteScroll
+          dataLength={posts.length}
+          next={fetchPosts}
+          hasMore={true}
+          loader={
+            <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+              <Spinner size="xl" color="primary" />
+            </Box>
+          }
+        >
+          {posts && <PostGrid posts={posts} columns={3} />}
+        </InfiniteScroll>
       </Container>
     </Box>
   );

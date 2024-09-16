@@ -79,16 +79,6 @@ export default function Header() {
                         )}
                     </Flex>
                 </Flex>
-                <Input
-                    placeholder="Search..."
-                    maxW="300px"
-                    bg="muted"
-                    borderColor="border"
-                    _placeholder={{ color: 'text' }}
-                    display={{ base: 'none', md: 'block' }}
-                    ml={2} // Slight margin-left to adjust proximity to the left section
-                    mr={20}
-                />
                 <Button onClick={() => setModalDisplayed(true)}>
                     {user ?? 'Login'}
                 </Button>

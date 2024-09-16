@@ -34,7 +34,7 @@ const Conversation = ({ comment, setConversation, onOpen, setReply }: Conversati
     }
 
     return (
-        <Box bg="muted" p={4} mt={1} mb={1} borderRadius="md">
+        <Box bg="muted" p={4} mt={1} mb={1} borderRadius="base" border="tb1" boxShadow="lg">
             <HStack mb={4} spacing={2}>
                 <Button onClick={onBackClick} variant="ghost" leftIcon={<ArrowBackIcon />}></Button>
                 <Text fontSize="lg" fontWeight="bold">Conversation</Text>

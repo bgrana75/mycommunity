@@ -11,7 +11,6 @@ export const windows95Theme = extendTheme({
         secondary: '#008080', // Teal for secondary elements
         accent: '#800080', // Purple for accents
         muted: '#D3D3D3', // Light gray for muted elements
-        border: '#A9A9A9', // Dark gray for borders
         error: '#FF0000', // Bright red for errors
         success: '#008000', // Green for success messages
         warning: '#FFA500', // Orange for warnings
@@ -48,8 +47,8 @@ export const windows95Theme = extendTheme({
         taller: '2',
     },
     borders: {
-        border: '2px solid #A9A9A9', // Solid dark gray border
-        borderRadius: '0px', // Sharp, rectangular corners typical of Windows 95
+        tb1: '1px solid #A9A9A9', // Solid dark gray border
+        borderRadius: 'full', // Sharp, rectangular corners typical of Windows 95
     },
     radii: {
         none: '0',

@@ -20,7 +20,7 @@ export default function Blog() {
     const params = useRef([
         { 
             tag: tag, 
-            limit: 10,
+            limit: 12,
             start_author: '',
             start_permlink: '',
         }
@@ -34,7 +34,7 @@ export default function Blog() {
             setAllPosts(prevPosts => [...prevPosts, ...posts]);
             params.current = [{
                     tag: tag, 
-                    limit: 10,
+                    limit: 12   ,
                     start_author: posts[posts.length - 1].author,
                     start_permlink: posts[posts.length - 1].permlink,
                 }]               

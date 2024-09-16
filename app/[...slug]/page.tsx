@@ -23,9 +23,9 @@ export default function HomePage({ params }: HomePageProps) {
         <MainWallet username={decodeURIComponent(params.slug[0]).slice(1)} />
       )
     } else if ((params.slug.length === 2 && decodeURIComponent(params.slug[0]).startsWith('@')) && params.slug[1] === 'notifications') {
-        return (
-          <NotificationsComp username={decodeURIComponent(params.slug[0]).slice(1)} />
-        )
+      return (
+        <NotificationsComp username={decodeURIComponent(params.slug[0]).slice(1)} />
+      )
     } else if ((params.slug.length === 2 && decodeURIComponent(params.slug[0]).startsWith('@')) || (params.slug.length === 3 && decodeURIComponent(params.slug[1]).startsWith('@'))) {
       return (
         <PostPage author={decodeURIComponent(params.slug[0]).substring(1)} permlink={params.slug[1]} />

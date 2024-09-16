@@ -54,7 +54,7 @@ export default function NotificationsComp({ username } : NotificationCompProps) 
         Notifications
       </Text>
       {(user == username) && (
-        <Button onClick={handleMarkAsRead} colorScheme="blue" size="sm">
+        <Button onClick={handleMarkAsRead} size="sm">
           Mark as Read
         </Button>
       )}

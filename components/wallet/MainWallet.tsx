@@ -150,7 +150,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     }
 
     if (error) {
-        return <Text color="red.500">Failed to load account information.</Text>;
+        return <Text color="warning">Failed to load account information.</Text>;
     }
 
     const balance = hiveAccount?.balance ? extractNumber(String(hiveAccount.balance)) : "N/A";
@@ -159,7 +159,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     const hbdSavingsBalance = hiveAccount?.savings_hbd_balance ? extractNumber(String(hiveAccount.savings_hbd_balance)) : "N/A";
 
     return (
-        <Box p={4} borderWidth="1px" borderRadius="none" bg="muted" m={4} boxShadow={'lg'}>
+        <Box p={4} border="tb1" borderRadius="base" bg="muted" m={4} boxShadow={'lg'}>
             <Grid 
                 templateColumns="1fr auto auto" 
                 rowGap={4}  

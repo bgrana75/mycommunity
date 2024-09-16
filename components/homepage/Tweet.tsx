@@ -1,6 +1,5 @@
 import { Box, Text, HStack, Button, Avatar, Link, VStack, Flex, Slider, SliderTrack, SliderFilledTrack, SliderThumb } from '@chakra-ui/react';
 import { Comment } from '@hiveio/dhive';
-import { MarkdownRenderer } from '../MarkdownRenderer';
 import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
@@ -49,8 +48,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 p={4}
                 mt={1}
                 mb={1}
-                border="1px solid"
-                borderColor="border"
+                border="tb1"
                 borderRadius="base"  // This will apply the borderRadius from your theme
             >
                 <HStack mb={2}>

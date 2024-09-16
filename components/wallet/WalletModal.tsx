@@ -70,7 +70,7 @@ export default function WalletModal ({ isOpen, onClose, title, description, show
                 </ModalBody>
                 <ModalFooter>
                     <Button variant="ghost" onClick={onClose}>Cancel</Button>
-                    <Button colorScheme="blue" ml={3} onClick={handleConfirm}>Confirm</Button>
+                    <Button ml={3} onClick={handleConfirm}>Confirm</Button>
                 </ModalFooter>
             </ModalContent>
         </Modal>

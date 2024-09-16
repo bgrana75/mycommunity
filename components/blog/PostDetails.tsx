@@ -30,7 +30,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
     }
 
     return (
-        <Box borderWidth="1px" borderRadius="base" overflow="hidden" bg="muted" mb={3} p={4} w="100%">
+        <Box border="tb1" borderRadius="base" overflow="hidden" bg="muted" mb={3} p={4} w="100%">
             <Text fontSize="2xl" fontWeight="bold" mb={4} textAlign="center">
                 {title}
             </Text>
@@ -41,7 +41,7 @@ export default function PostDetails({ post }: PostDetailsProps) {
                         <Text fontWeight="medium" fontSize="sm">
                             <Link href={`/@${author}`}>@{author}</Link>
                         </Text>
-                        <Text fontSize="sm" color="gray.500">
+                        <Text fontSize="sm" color="secondary">
                             {postDate}
                         </Text>
                     </Box>

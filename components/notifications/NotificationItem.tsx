@@ -24,8 +24,8 @@ export default function NotificationItem({ notification }: NotificationItemProps
     <HStack
       spacing={4}
       p={4}
-      borderWidth="1px"
-      borderRadius="none"
+      border="tb1"
+      borderRadius="base"
       bg="muted"
       w="full"
       align="stretch"
