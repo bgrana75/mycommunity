@@ -13,9 +13,13 @@ export default function Blog() {
     const router = useRouter(); 
     const [query, setQuery] = useState("created");
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
+    const isFetching = useRef(false);
+
+    const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG
+
     const params = useRef([
         { 
-            tag: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG, 
+            tag: tag, 
             limit: 10,
             start_author: '',
             start_permlink: '',
@@ -23,21 +27,27 @@ export default function Blog() {
     ])
 
     async function fetchPosts() {
+        if (isFetching.current) return; // Prevent multiple fetches
+        isFetching.current = true;
         try {
             const posts = await findPosts(query, params.current);
             setAllPosts(prevPosts => [...prevPosts, ...posts]);
             params.current = [{
-                    tag: process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG, 
+                    tag: tag, 
                     limit: 10,
                     start_author: posts[posts.length - 1].author,
                     start_permlink: posts[posts.length - 1].permlink,
-                }]                
-            console.log('here')
+                }]               
+            isFetching.current = false; 
         } catch (error) {
             console.log(error)
         }
 
     }
+
+    useEffect(() => {
+        fetchPosts();
+    }, []);
 
     return (
         <Container maxW="container.lg" mt="3">
