@@ -159,7 +159,7 @@ export default function MainWallet({ username }: MainWalletProps) {
     const hbdSavingsBalance = hiveAccount?.savings_hbd_balance ? extractNumber(String(hiveAccount.savings_hbd_balance)) : "N/A";
 
     return (
-        <Box p={4} borderWidth="1px" borderRadius="none" bg="muted" m={4}>
+        <Box p={4} borderWidth="1px" borderRadius="none" bg="muted" m={4} boxShadow={'lg'}>
             <Grid 
                 templateColumns="1fr auto auto" 
                 rowGap={4}  

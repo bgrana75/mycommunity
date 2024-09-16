@@ -418,7 +418,11 @@ export async function getCommunityInfo (username: string) {
   return profile
 }
 
-
+export async function findPosts(query: string, params: any[]) {
+      const by = 'get_discussions_by_' + query;
+      const posts = await HiveClient.database.call(by, params);
+  return posts
+}
 
 
 

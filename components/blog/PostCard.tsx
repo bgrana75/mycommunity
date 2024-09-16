@@ -80,8 +80,8 @@ export default function PostCard({ post }: PostCardProps) {
             </Flex>
 
             {/* Content Section */}
-            <Box flexGrow={1} mt={4} cursor="pointer" onClick={viewPost}>
-                <Text fontWeight="bold" fontSize="lg" textAlign="left">
+            <Box flexGrow={1} mt={4} cursor="pointer">
+                <Text fontWeight="bold" fontSize="lg" textAlign="left" onClick={viewPost}>
                 {title}
                 </Text>
                 {imageUrls.length > 0 && (

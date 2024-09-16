@@ -19,21 +19,21 @@ export default function Header() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const cachedProfileData = localStorage.getItem('profileData');
+                const cachedProfileData = sessionStorage.getItem('profileData');
                 if (cachedProfileData) {
                     setProfileInfo(JSON.parse(cachedProfileData));
                 } else if (communityTag) {
                     const profileData = await getProfile(communityTag);
-                    localStorage.setItem('profileData', JSON.stringify(profileData));
+                    sessionStorage.setItem('profileData', JSON.stringify(profileData));
                     setProfileInfo(profileData);
                 }
 
-                const cachedCommunityData = localStorage.getItem('communityData');
+                const cachedCommunityData = sessionStorage.getItem('communityData');
                 if (cachedCommunityData) {
                     setCommunityInfo(JSON.parse(cachedCommunityData));
                 } else if (communityTag) {
                     const communityData = await getCommunityInfo(communityTag);
-                    localStorage.setItem('communityData', JSON.stringify(communityData));
+                    sessionStorage.setItem('communityData', JSON.stringify(communityData));
                     setCommunityInfo(communityData);
                 }
             } catch (error) {
@@ -46,18 +46,10 @@ export default function Header() {
         }
     }, [communityTag]);
 
-    /*
-    useEffect(() => {
-        if (profileInfo && communityInfo) {
-            console.log(profileInfo, communityInfo);
-        }
-    }, [profileInfo, communityInfo]);
-    */
-
     return (
         <Box bg="secondary" px={{ base: 4, md: 6 }} py={2}>
             <Flex justify="space-between" align="center">
-                <Flex align="center">
+                <Flex align="center" gap={2}>
                     {/* Display profile image */}
                     {profileInfo?.metadata?.profile?.profile_image && (
                         <Image
@@ -65,16 +57,23 @@ export default function Header() {
                             alt="Profile Image"
                             boxSize="60px" // Adjust the size as needed
                             borderRadius="full"
-                            mr={4} // Add some margin to the right of the image
+                            mr={2} // Reduced margin to bring elements closer
                         />
                     )}
                     <Flex direction="column">
                         <Text fontSize={{ base: '2xl', md: '3xl' }} fontWeight="bold">
                             {communityInfo?.title}
                         </Text>
-                        {/* Display description next to title */}
-                        {communityInfo?.description && (
-                            <Text fontSize="xs" color="primary" fontWeight="bold">
+                        {/* Display description with limited width */}
+                        {communityInfo?.about && (
+                            <Text
+                                fontSize="xs"
+                                color="primary"
+                                fontWeight="bold"
+                                maxW="300px" // Limit the width of the description
+                                whiteSpace="normal" // Allow line breaks
+                                wordBreak="break-word" // Ensure long words break properly
+                            >
                                 {communityInfo.about}
                             </Text>
                         )}
@@ -87,6 +86,8 @@ export default function Header() {
                     borderColor="border"
                     _placeholder={{ color: 'text' }}
                     display={{ base: 'none', md: 'block' }}
+                    ml={2} // Slight margin-left to adjust proximity to the left section
+                    mr={20}
                 />
                 <Button onClick={() => setModalDisplayed(true)}>
                     {user ?? 'Login'}
