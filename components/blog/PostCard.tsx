@@ -95,11 +95,12 @@ export default function PostCard({ post }: PostCardProps) {
             </Flex>
 
             {/* Content Section */}
-            <Box flexGrow={1} mt={2} cursor="pointer">
-                <Text fontWeight="bold" fontSize="lg" textAlign="left" onClick={viewPost}>
-                    {title}
-                </Text>
-                {imageUrls.length > 0 && (
+            <Box display="flex" flexDirection="column" flexGrow={1} cursor="pointer">
+            <Text fontWeight="bold" fontSize="lg" textAlign="left" onClick={viewPost} mb={2}>
+                {title}
+            </Text>
+            {imageUrls.length > 0 && (
+                <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center">
                     <Swiper
                         spaceBetween={10}
                         slidesPerView={1}
@@ -124,8 +125,9 @@ export default function PostCard({ post }: PostCardProps) {
                             </SwiperSlide>
                         ))}
                     </Swiper>
-                )}
-            </Box>
+                </Box>
+            )}
+        </Box>
 
             {/* Vote and Stats Section */}
             <Box mt="auto">

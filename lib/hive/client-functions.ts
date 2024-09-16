@@ -341,9 +341,11 @@ export function getPayoutValue(post: any): string {
     if (timeDifferenceInDays >= 7) {
       // Post is older than 7 days, return the total payout value
       return post.total_payout_value.replace(" HBD", "");
-    } else {
+    } else if (timeDifferenceInDays < 7) {
       // Post is less than 7 days old, return the pending payout value
       return post.pending_payout_value.replace(" HBD", "");
+    } else {
+      return "0.000"
     }
 }
 
