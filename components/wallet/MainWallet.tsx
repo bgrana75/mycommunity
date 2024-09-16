@@ -57,6 +57,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                 break;
             case 'Power Up':
                 await aioha.stakeHive(amount)
+                break;
             case 'Convert to HBD':
                 aioha.signAndBroadcastTx([
                     [
@@ -72,6 +73,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                         }
                       ]
                   ], KeyTypes.Active)
+                break;
             case 'HIVE Savings':
                 await aioha.signAndBroadcastTx([
                     [
@@ -84,8 +86,10 @@ export default function MainWallet({ username }: MainWalletProps) {
                       }
                     ]
                   ], KeyTypes.Active)
+                break;
             case 'Power Down' :
                 const unstake = await aioha.unstakeHive(amount)
+                break;
             case 'Delegate':
                 if (username) {
                     const delegate = await aioha.delegateStakedHive(username, amount)
@@ -108,6 +112,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       }
                     ]
                   ], KeyTypes.Active)
+                break;
             case 'Withdraw HBD Savings':
                 await aioha.signAndBroadcastTx([
                     [
@@ -121,6 +126,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       }
                     ]
                   ], KeyTypes.Active)
+                break;
             case 'Withdraw HIVE Savings':
                 await aioha.signAndBroadcastTx([
                     [
@@ -134,6 +140,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                       }
                     ]
                 ], KeyTypes.Active)
+                break;
             default:
                 console.log('Default action - Amount:', amount, 'Memo:', memo);
                 break;
