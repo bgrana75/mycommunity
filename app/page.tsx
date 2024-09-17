@@ -30,8 +30,7 @@ export default function Home() {
   return (
     <Box bg="background" color="text" minH="100vh">
       <Flex direction={{ base: 'column', md: 'row' }}>
-        <Box flex="1" p={4}>
-          <Container maxW="container.sm">
+        <Box flex="1" p={2} justifyContent="center">
             {!conversation ? (
               <>
                 <TweetComposer pa={thread_author} pp={thread_permlink} onNewComment={handleNewComment} />
@@ -47,7 +46,7 @@ export default function Home() {
             ) : (
               <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
             )}
-          </Container>
+
         </Box>
         <RightSidebar />
       </Flex>

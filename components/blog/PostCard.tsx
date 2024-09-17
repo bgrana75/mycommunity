@@ -96,9 +96,16 @@ export default function PostCard({ post }: PostCardProps) {
 
             {/* Content Section */}
             <Box display="flex" flexDirection="column" flexGrow={1} cursor="pointer">
-            <Text fontWeight="bold" fontSize="lg" textAlign="left" onClick={viewPost} mb={2}>
-                {title}
-            </Text>
+            <Text 
+    fontWeight="bold" 
+    fontSize="lg" 
+    textAlign="left" 
+    onClick={viewPost} 
+    mb={2}
+    isTruncated
+>
+    {title}
+</Text>
             {imageUrls.length > 0 && (
                 <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center">
                     <Swiper
