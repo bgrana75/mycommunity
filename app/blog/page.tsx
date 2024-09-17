@@ -1,5 +1,3 @@
-// pages/blog.tsx
-
 'use client';
 import { Container } from '@chakra-ui/react';
 import { useState, useRef, useEffect } from 'react';
@@ -14,7 +12,7 @@ export default function Blog() {
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
     const isFetching = useRef(false);
 
-    const tag = 'hivebr';
+    const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG
 
     const params = useRef([
         { 

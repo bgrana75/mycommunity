@@ -12,7 +12,7 @@ export default function RightSideBar() {
   const sidebarRef = useRef<HTMLDivElement>(null); // Reference for the sidebar
   const isFetching = useRef(false);
 
-  const tag = 'hivebr';
+  const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG
 
   const params = useRef([
     {
