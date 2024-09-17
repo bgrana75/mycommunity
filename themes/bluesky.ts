@@ -46,7 +46,7 @@ export const blueSkyTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        border: '1px solid #1E90FF',
+        tb1: '1px solid #1E90FF',
         borderRadius: '8px',
     },
     radii: {

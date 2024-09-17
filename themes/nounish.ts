@@ -45,7 +45,7 @@ export const nounsDaoTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        border: '1px solid #ffcc00',  // Nouns yellow border
+        tb1: '1px solid #ffcc00',  // Nouns yellow border
         borderRadius: '8px',
     },
     space: {

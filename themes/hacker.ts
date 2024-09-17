@@ -48,7 +48,7 @@ export const hackerTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        border: '1px solid #00FF00', // Bright green border for a hacker aesthetic
+        tb1: '1px solid #00FF00', // Bright green border for a hacker aesthetic
         borderRadius: '4px', // Slightly less rounded corners for a sharper look
     },
     space: {
