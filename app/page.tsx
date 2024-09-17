@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { Box, Container, Flex } from '@chakra-ui/react';
