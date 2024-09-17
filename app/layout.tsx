@@ -1,4 +1,3 @@
-// app/layout.tsx
 'use client'
 import { Box, Flex } from '@chakra-ui/react';
 import Header from '@/components/layout/Header';

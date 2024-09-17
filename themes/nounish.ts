@@ -14,8 +14,8 @@ export const nounsDaoTheme = extendTheme({
         warning: '#dd6b20',  // Orange for warnings
     },
     fonts: {
-        heading: '"Londrina Solid", cursive',
-        body: '"Londrina Solid", cursive',
+        heading: '"Protest Guerrilla", cursive',
+        body: '"Protest Guerrilla", cursive',
         mono: '"Courier New", monospace',
     },
     fontSizes: {
