@@ -426,5 +426,11 @@ export async function findPosts(query: string, params: any[]) {
   return posts
 }
 
+export async function findPostsByAuthor(params: any[]) {
+  const by = 'get_blog_entries';
+  const posts = await HiveClient.database.call(by, params);
+return posts
+}
+
 
 

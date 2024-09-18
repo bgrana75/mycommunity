@@ -24,30 +24,24 @@ export default function ProfilePage({ username }: ProfilePageProps) {
 
   const tag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
   const params = useRef([
-    {
-      tag: username,
-      limit: 12,
-      start_author: '',
-      start_permlink: '',
-    },
+      username,
+      '',
+      new Date().toISOString().split('.')[0],
+      12
   ]);
 
   async function fetchPosts() {
     if (isFetching.current) return; // Prevent multiple fetches
     isFetching.current = true;
     try {
-      const newPosts = await findPosts('blog', params.current);
+      const newPosts = await findPosts('author_before_date', params.current);
       setPosts((prevPosts) => [...prevPosts, ...newPosts]);
-
-      // Update params for the next fetch (pagination)
       params.current = [
-        {
-          tag: username,
-          limit: 12,
-          start_author: newPosts[newPosts.length - 1].author,
-          start_permlink: newPosts[newPosts.length - 1].permlink,
-        },
-      ];
+        username,
+        newPosts[newPosts.length - 1].permlink,
+        newPosts[newPosts.length - 1].created,
+        12
+      ]
       isFetching.current = false;
     } catch (err) {
       console.error('Failed to fetch posts', err);
@@ -131,58 +125,64 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       </Box>
 
       {/* Avatar and user info over the cover image */}
-      <Flex
-        mt={-16}
-        p={4}
-        alignItems="center"
-        bg="muted"
-        boxShadow="lg"
-        opacity={0.85}
-        zIndex={2}
-        position="relative"
-      >
-        {/* Avatar */}
-        <Image
-          src={profileMetadata.profileImage}
-          alt={hiveAccount?.name}
-          borderRadius="full"
-          boxSize="100px"
-          mr={4}
-          zIndex={3}
-        />
+      <Flex position="relative" mt={-16} p={4} alignItems="center" boxShadow="lg">
+  {/* Background layer with opacity */}
+  <Box
+    position="absolute"
+    top={0}
+    left={0}
+    right={0}
+    bottom={0}
+    bg="muted"
+    opacity={0.85}
+    zIndex={1}  // Lower z-index to place the background below content
+  />
 
-        {/* User Info */}
-        <Box>
-          <Flex alignItems="center">
-            {/* Username */}
-            <Heading as="h2" size="lg" color="blue.700" mr={2}>
-              {profileInfo?.metadata.profile.name || username}
-            </Heading>
+  {/* Avatar and content */}
+  <Flex alignItems="center" zIndex={2} position="relative">
+    {/* Avatar */}
+    <Image
+      src={profileMetadata.profileImage}
+      alt={hiveAccount?.name}
+      borderRadius="full"
+      boxSize="100px"
+      mr={4}
+    />
 
-            {/* Reputation */}
-            <Box display="flex" alignItems="center" justifyContent="center" width="15px" height="15px" bg="gray.200" fontWeight="bold" fontSize="xs">
-              {profileInfo?.reputation ? Math.round(profileInfo.reputation) : 0}
-            </Box>
-          </Flex>
+    {/* User Info */}
+    <Box>
+      <Flex alignItems="center">
+        {/* Username */}
+        <Heading as="h2" size="lg" color="primary" mr={2}>
+          {profileInfo?.metadata.profile.name || username}
+        </Heading>
 
-          {/* Description */}
-          <Text fontSize="sm" color="gray.600" mt={2}>
-            Following: {following} | Followers: {followers} | Location: {location}
-            <br />
-            {about}
-          </Text>
-
-          {/* Website Link */}
-          {profileMetadata.website && (
-            <Flex alignItems="center">
-              <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
-              <Text ml={2} fontSize="sm" color="blue.500">
-                {profileMetadata.website}
-              </Text>
-            </Flex>
-          )}
+        {/* Reputation */}
+        <Box display="flex" alignItems="center" justifyContent="center" width="15px" height="15px" bg="gray.200" fontWeight="bold" fontSize="xs">
+          {profileInfo?.reputation ? Math.round(profileInfo.reputation) : 0}
         </Box>
       </Flex>
+
+      {/* Description */}
+      <Text fontSize="sm" color="text">
+        Following: {following} | Followers: {followers} | Location: {location}
+        <br />
+        {about}
+      </Text>
+
+      {/* Website Link */}
+      {profileMetadata.website && (
+        <Flex alignItems="center">
+          <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
+          <Text ml={2} fontSize="sm" color="primary">
+            {profileMetadata.website}
+          </Text>
+        </Flex>
+      )}
+    </Box>
+  </Flex>
+</Flex>
+
 
       {/* Infinite Scroll for Posts */}
       <Container maxW="container.lg" mt={8}>
