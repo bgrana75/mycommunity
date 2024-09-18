@@ -1,33 +1,34 @@
-import { extendTheme } from '@chakra-ui/react';
-import { Bebas_Neue, Roboto } from 'next/font/google';
-import { swiperStyles } from './swiperStyles';
 
-const bebasNeue = Bebas_Neue({
-    weight: '400',
+import { swiperStyles } from './swiperStyles';
+import { extendTheme } from '@chakra-ui/react';
+import { Montserrat, Poppins } from 'next/font/google';
+
+const montserrat = Montserrat({
+    weight: ['400', '700'],
     subsets: ['latin'],
 });
 
-const roboto = Roboto({
+const poppins = Poppins({
     weight: ['300', '400', '500', '700'],
     subsets: ['latin'],
 });
 
 export const hiveBRTheme = extendTheme({
     colors: {
-        background: '#ffffff', // Clean white background
-        text: '#333333', // Neutral text
-        primary: '#009c3b',  // Brazil green
-        secondary: '#ffcc00',  // Brazil yellow
-        accent: '#002776',  // Brazil blue
-        muted: '#ebebeb',  // Light gray background for muted areas
-        border: '#dddddd',  // Light gray border
-        error: '#e53e3e',  // Red for errors
-        success: '#38a169',  // Green for success
-        warning: '#dd6b20',  // Orange for warnings
+        background: '#ffffff',  // Clean white background
+        text: '#212121',  // Dark neutral text color
+        primary: '#0033a0',  // Brazil flag blue for primary elements
+        secondary: '#ffcc29',  // Brazil flag yellow for attention elements
+        accent: '#00a859',  // Brazil flag green for subtle accents
+        muted: '#e6e6e6',  // Light gray for muted elements or backgrounds
+        border: '#e0e0e0',  // Light gray border for cards or sections
+        error: '#d32f2f',  // Red for errors
+        success: '#66bb6a',  // Green for success messages
+        warning: '#ffb300',  // Orange for warnings
     },
     fonts: {
-        heading: bebasNeue.style.fontFamily + ', sans-serif',
-        body: roboto.style.fontFamily + ', sans-serif',
+        heading: montserrat.style.fontFamily + ', sans-serif',
+        body: poppins.style.fontFamily + ', sans-serif',
         mono: '"Courier New", monospace',
     },
     fontSizes: {
