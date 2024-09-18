@@ -164,7 +164,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       </Flex>
 
       {/* Description */}
-      <Text fontSize="sm" color="text">
+      <Text fontSize="xs" color="text">
         Following: {following} | Followers: {followers} | Location: {location}
         <br />
         {about}
@@ -173,8 +173,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       {/* Website Link */}
       {profileMetadata.website && (
         <Flex alignItems="center">
-          <Icon as={FaGlobe} w={3} h={3} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
-          <Text ml={2} fontSize="sm" color="primary">
+          <Icon as={FaGlobe} w={2} h={2} onClick={() => window.open(profileMetadata.website, '_blank')} style={{ cursor: 'pointer' }} />
+          <Text ml={2} fontSize="xs" color="primary">
             {profileMetadata.website}
           </Text>
         </Flex>
