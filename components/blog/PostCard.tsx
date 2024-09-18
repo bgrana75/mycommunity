@@ -140,7 +140,7 @@ export default function PostCard({ post }: PostCardProps) {
             <Box mt="auto">
                 {showSlider ? (
                     <Flex mt={4} alignItems="center">
-                        <Box width="100%" mr={2}>
+                        <Box width="100%" mr={4}>
                             <Slider
                                 aria-label="slider-ex-1"
                                 defaultValue={0}

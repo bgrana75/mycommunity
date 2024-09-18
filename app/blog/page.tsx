@@ -7,7 +7,7 @@ import TopBar from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
 
 export default function Blog() {
-    const [viewMode, setViewMode] = useState<'grid' | 'list'>('list');
+    const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
     const [query, setQuery] = useState("created");
     const [allPosts, setAllPosts] = useState<Discussion[]>([]);
     const isFetching = useRef(false);

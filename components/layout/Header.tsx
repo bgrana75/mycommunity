@@ -70,7 +70,7 @@ export default function Header() {
                                 fontSize="xs"
                                 color="primary"
                                 fontWeight="bold"
-                                maxW="300px" // Limit the width of the description
+                                maxW="400px" // Limit the width of the description
                                 whiteSpace="normal" // Allow line breaks
                                 wordBreak="break-word" // Ensure long words break properly
                             >
