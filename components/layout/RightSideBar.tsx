@@ -55,9 +55,9 @@ export default function RightSideBar() {
     const sidebar = sidebarRef.current;
     if (sidebar) {
       const { scrollTop, scrollHeight, clientHeight } = sidebar;
-      const threshold = 400; // Load more posts 100px before reaching the bottom
+      const threshold = 400; 
       if (scrollTop + clientHeight >= scrollHeight - threshold && !isLoading) {
-        fetchPosts(); // Fetch more posts when the user is near the bottom
+        fetchPosts(); 
       }
     }
   };
@@ -65,22 +65,22 @@ export default function RightSideBar() {
   useEffect(() => {
     const sidebar = sidebarRef.current;
     if (sidebar) {
-      sidebar.addEventListener('scroll', handleScroll); // Add scroll listener
-      return () => sidebar.removeEventListener('scroll', handleScroll); // Cleanup on unmount
+      sidebar.addEventListener('scroll', handleScroll); 
+      return () => sidebar.removeEventListener('scroll', handleScroll); 
     }
   }, [isLoading]);
 
   return (
     <Box
       as="aside"
-      w={{ base: '100%', md: '300px' }} // Adjust width for responsive layout
-      h="100vh" // Full viewport height
-      overflowY="auto" // Enable vertical scrolling
-      pr={2} // Padding for content
+      w={{ base: '100%', md: '350px' }} 
+      h="100vh" 
+      overflowY="auto" 
+      pr={2} 
       pt={2}
-      position="sticky" // Stick to the viewport
-      top={0} // Ensure it's stuck to the top when scrolling
-      ref={sidebarRef} // Assign the ref to the sidebar div
+      position="sticky" 
+      top={0} 
+      ref={sidebarRef} 
     >
       <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="list" />
       {isLoading && (

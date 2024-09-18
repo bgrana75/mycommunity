@@ -42,6 +42,13 @@ export default function Blog() {
     }
 
     useEffect(() => {
+        setAllPosts([]);
+        params.current = [{
+            tag: tag,
+            limit: 12,
+            start_author: '',
+            start_permlink: '',
+        }];
         fetchPosts();
     }, [query]);
 
