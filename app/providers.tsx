@@ -14,6 +14,7 @@ import { AiohaProvider } from '@aioha/react-ui'
 import { useEffect } from 'react'
 import { windows95Theme } from '@/themes/windows95'
 import { hiveBRTheme } from '@/themes/hivebr'
+import { cannabisTheme } from '@/themes/cannabis'
 
 const aioha = new Aioha()
 
@@ -23,7 +24,8 @@ const themeMap = {
   hacker: hackerTheme,
   nounish: nounsDaoTheme,
   windows95: windows95Theme,
-  hiveBR: hiveBRTheme
+  hiveBR: hiveBRTheme,
+  cannabis: cannabisTheme,
 }
 
 type ThemeName = keyof typeof themeMap;

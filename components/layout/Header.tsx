@@ -55,7 +55,7 @@ export default function Header() {
                         <Image
                             src={profileInfo.metadata.profile.profile_image}
                             alt="Profile Image"
-                            boxSize="60px" // Adjust the size as needed
+                            boxSize="80px" // Adjust the size as needed
                             borderRadius="full"
                             mr={2} // Reduced margin to bring elements closer
                         />
