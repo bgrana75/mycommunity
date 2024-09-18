@@ -1,5 +1,12 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
+import { Londrina_Solid } from 'next/font/google'
+
+const londrinaSolid = Londrina_Solid({
+    weight: '400',
+    subsets: ['latin'],
+  })
+
 export const nounsDaoTheme = extendTheme({
     colors: {
         background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
@@ -14,8 +21,8 @@ export const nounsDaoTheme = extendTheme({
         warning: '#dd6b20',  // Orange for warnings
     },
     fonts: {
-        heading: '"Protest Guerrilla", cursive',
-        body: '"Protest Guerrilla", cursive',
+        heading: londrinaSolid.style.fontFamily + ', cursive',
+        body: londrinaSolid.style.fontFamily + ', cursive',
         mono: '"Courier New", monospace',
     },
     fontSizes: {

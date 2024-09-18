@@ -4,7 +4,6 @@
 import { Box, Container, Flex, Spinner } from '@chakra-ui/react';
 import TweetList from '../homepage/TweetList';
 import TweetComposer from '../homepage/TweetComposer';
-import RightSidebar from '../layout/RightSideBar';
 import { useEffect, useState } from 'react';
 import { Comment, Discussion } from '@hiveio/dhive'; // Ensure this import is consistent
 import Conversation from '../homepage/Conversation';
@@ -82,7 +81,6 @@ export default function PostPage({ author, permlink }: PostPageProps) {
             )}
           </Container>
         </Box>
-        <RightSidebar />
       </Flex>
       {isOpen && <TweetReplyModal isOpen={isOpen} onClose={onClose} comment={reply} onNewReply={handleNewComment} />}
     </Box>

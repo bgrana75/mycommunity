@@ -46,7 +46,7 @@ export default function TopBar({ viewMode, setViewMode, setQuery }: TopBarProps)
                     >
                         Sort
                     </MenuButton>
-                    <MenuList>
+                    <MenuList zIndex="popover">
                         <MenuItem onClick={() => setQuery('created')}>Recent</MenuItem>
                         <MenuItem onClick={() => setQuery('trending')}>Trending</MenuItem>
                         <MenuItem onClick={() => setQuery('hot')}>Hot</MenuItem>

@@ -26,9 +26,17 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false }: T
     const [isLoading, setIsLoading] = useState(false);
     const [uploadProgress, setUploadProgress] = useState<number[]>([]);
 
-    const buttonText = (post ? "Reply" : "Tweet")
+    const buttonText = (post ? "Reply" : "Post")
 
     async function handleComment() {
+
+        let commentBody = postBodyRef.current?.value || '';
+
+        if (!commentBody.trim() && images.length === 0 && !selectedGif) {
+            alert('Please enter some text, upload an image, or select a gif before posting.');
+            return; // Do not proceed
+        }
+
         setIsLoading(true);
         setUploadProgress([]);
 
@@ -36,8 +44,6 @@ export default function TweetComposer ({ pa, pp, onNewComment, post = false }: T
             .toISOString()
             .replace(/[^a-zA-Z0-9]/g, "")
             .toLowerCase();
-
-        let commentBody = postBodyRef.current?.value || '';
 
         if (images.length > 0) {
             const uploadedImages = await Promise.all(images.map(async (image, index) => {

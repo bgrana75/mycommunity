@@ -389,9 +389,9 @@ export async function fetchNewNotifications(username: string) {
   try {
     const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
     const lastDate = await findLastNotificationsReset(username);
-
+    
     if (lastDate) {
-      const filteredNotifications = notifications.filter(notification => new Date(notification.date + 'Z').toISOString() > new Date(lastDate).toISOString());
+      const filteredNotifications = notifications.filter(notification => notification.date > lastDate);
       return filteredNotifications;
     } else {
       return notifications;
