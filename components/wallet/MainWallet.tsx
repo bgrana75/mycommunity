@@ -49,7 +49,7 @@ export default function MainWallet({ username }: MainWalletProps) {
         if (!modalContent) return;
 
         switch (modalContent.title) {
-            case 'Send Hive':
+            case 'Send HIVE':
                 // Handle Send Hive logic here
                 if (username) {
                     await aioha.transfer(username, amount, Asset.HIVE, memo)
@@ -265,7 +265,7 @@ export default function MainWallet({ username }: MainWalletProps) {
                 {(user == username) && (
                     <HStack spacing={3}>
                         <Icon as={FaDollarSign} w={4} h={4} cursor="pointer" title="Withdraw From Savings"
-                                onClick={() => handleModalOpen('Withdraw Hive Savings', 'Withdraw Hive from Savings')} 
+                                onClick={() => handleModalOpen('Withdraw HIVE Savings', 'Withdraw HIVE from Savings')} 
                         />
                     </HStack>
                 )}

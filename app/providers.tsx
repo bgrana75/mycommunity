@@ -7,11 +7,13 @@ import { blueSkyTheme } from '@/themes/bluesky'
 import { hackerTheme } from '@/themes/hacker'
 import { nounsDaoTheme } from '@/themes/nounish'
 
+
 import { Aioha } from '@aioha/aioha'
 import { AiohaProvider } from '@aioha/react-ui'
 
 import { useEffect } from 'react'
 import { windows95Theme } from '@/themes/windows95'
+import { hiveBRTheme } from '@/themes/hivebr'
 
 const aioha = new Aioha()
 
@@ -20,7 +22,8 @@ const themeMap = {
   bluesky: blueSkyTheme,
   hacker: hackerTheme,
   nounish: nounsDaoTheme,
-  windows95: windows95Theme
+  windows95: windows95Theme,
+  hiveBR: hiveBRTheme
 }
 
 type ThemeName = keyof typeof themeMap;

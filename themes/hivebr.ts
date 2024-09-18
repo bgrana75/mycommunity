@@ -1,28 +1,33 @@
 import { extendTheme } from '@chakra-ui/react';
+import { Bebas_Neue, Roboto } from 'next/font/google';
 import { swiperStyles } from './swiperStyles';
-import { Londrina_Solid } from 'next/font/google'
 
-const londrinaSolid = Londrina_Solid({
-    weight:     ['100', '300', '400', '900'],
-    subsets:    ['latin'],
-  })
+const bebasNeue = Bebas_Neue({
+    weight: '400',
+    subsets: ['latin'],
+});
 
-export const nounsDaoTheme = extendTheme({
+const roboto = Roboto({
+    weight: ['300', '400', '500', '700'],
+    subsets: ['latin'],
+});
+
+export const hiveBRTheme = extendTheme({
     colors: {
-        background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
-        text: '#333333',  // Dark gray text
-        primary: '#333333',
-        secondary: '#ffcc00',  // Nouns yellow
-        accent: '#00ccff',  // Nouns blue
-        muted: '#f7f7f7',  // Muted background
+        background: '#ffffff', // Clean white background
+        text: '#333333', // Neutral text
+        primary: '#009c3b',  // Brazil green
+        secondary: '#ffcc00',  // Brazil yellow
+        accent: '#002776',  // Brazil blue
+        muted: '#ebebeb',  // Light gray background for muted areas
         border: '#dddddd',  // Light gray border
-        error: '#e53e3e',  // Red for error states
-        success: '#38a169',  // Green for success states
+        error: '#e53e3e',  // Red for errors
+        success: '#38a169',  // Green for success
         warning: '#dd6b20',  // Orange for warnings
     },
     fonts: {
-        heading: londrinaSolid.style.fontFamily + ', cursive',
-        body: londrinaSolid.style.fontFamily + ', cursive',
+        heading: bebasNeue.style.fontFamily + ', sans-serif',
+        body: roboto.style.fontFamily + ', sans-serif',
         mono: '"Courier New", monospace',
     },
     fontSizes: {
