@@ -1,6 +1,6 @@
 'use client';
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex, Icon } from '@chakra-ui/react';
+import { Box, Heading, Text, Spinner, Alert, AlertIcon, Image, Container, Flex, Icon, Avatar } from '@chakra-ui/react';
 import useHiveAccount from '@/hooks/useHiveAccount';
 import { FaGlobe } from 'react-icons/fa';
 import { getProfile, findPosts } from '@/lib/hive/client-functions';
@@ -120,6 +120,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
             height="100%"
             objectFit="cover"
             mb={4}
+            fallback={(<div></div>)}
           />
         </Container>
       </Box>
@@ -141,9 +142,9 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   {/* Avatar and content */}
   <Flex alignItems="center" zIndex={2} position="relative">
     {/* Avatar */}
-    <Image
+    <Avatar
       src={profileMetadata.profileImage}
-      alt={hiveAccount?.name}
+      name={hiveAccount?.name}
       borderRadius="full"
       boxSize="100px"
       mr={4}

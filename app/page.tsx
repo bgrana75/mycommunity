@@ -1,4 +1,3 @@
-// app/page.tsx
 'use client';
 
 import { Box, Container, Flex } from '@chakra-ui/react';
@@ -26,27 +25,29 @@ export default function Home() {
     setNewComment(newComment as Comment); // Type assertion
   };
 
-
   return (
     <Box bg="background" color="text" minH="100vh">
       <Flex direction={{ base: 'column', md: 'row' }}>
         <Box flex="1" p={2} justifyContent="center">
-            {!conversation ? (
-              <>
-                <TweetComposer pa={thread_author} pp={thread_permlink} onNewComment={handleNewComment} />
-                <TweetList
-                  author={thread_author}
-                  permlink={thread_permlink}
-                  setConversation={setConversation}
-                  onOpen={onOpen}
-                  setReply={setReply}
-                  newComment={newComment} // Pass the newComment to TweetList
-                />
-              </>
-            ) : (
-              <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
-            )}
-
+          {!conversation ? (
+            // Make TweetComposer and TweetList share the same scrollable container
+            <Box
+              h="100vh" // Adjust height as needed
+              overflowY="auto" // Enable vertical scrolling
+            >
+              <TweetComposer pa={thread_author} pp={thread_permlink} onNewComment={handleNewComment} />
+              <TweetList
+                author={thread_author}
+                permlink={thread_permlink}
+                setConversation={setConversation}
+                onOpen={onOpen}
+                setReply={setReply}
+                newComment={newComment} // Pass the newComment to TweetList
+              />
+            </Box>
+          ) : (
+            <Conversation comment={conversation} setConversation={setConversation} onOpen={onOpen} setReply={setReply} />
+          )}
         </Box>
         <RightSidebar />
       </Flex>

@@ -50,6 +50,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 mb={1}
                 border="tb1"
                 borderRadius="base"  // This will apply the borderRadius from your theme
+                width="100%"
             >
                 <HStack mb={2}>
                     <Avatar size="sm" name={comment.author} src={`https://images.hive.blog/u/${comment.author}/avatar/sm`} />
