@@ -4,9 +4,10 @@ import { useRouter } from 'next/navigation';
 import { useAioha } from '@aioha/react-ui';
 import { FiHome, FiBell, FiUser, FiShoppingCart, FiBook, FiCreditCard } from 'react-icons/fi';
 import { useEffect, useState } from 'react';
-import { Notifications } from '@hiveio/dhive'; 
-import { fetchNewNotifications } from '@/lib/hive/client-functions'; 
+import { Notifications } from '@hiveio/dhive';
+import { fetchNewNotifications } from '@/lib/hive/client-functions';
 import { motion } from 'framer-motion';
+import { FaGear } from 'react-icons/fa6';
 
 
 export default function Sidebar() {
@@ -17,18 +18,18 @@ export default function Sidebar() {
 
     useEffect(() => {
         const loadNotifications = async () => {
-          if (user) {
-            try {
-              const newNotifications = await fetchNewNotifications(user);
-              setNotifications(newNotifications);
-            } catch (error) {
-              console.error("Failed to fetch notifications:", error);
+            if (user) {
+                try {
+                    const newNotifications = await fetchNewNotifications(user);
+                    setNotifications(newNotifications);
+                } catch (error) {
+                    console.error("Failed to fetch notifications:", error);
+                }
             }
-          }
         };
-    
+
         loadNotifications();
-      }, [user]);
+    }, [user]);
 
     const handleNavigation = (path: string) => {
         if (router) {
@@ -52,7 +53,7 @@ export default function Sidebar() {
                     w="full"
                     justifyContent="flex-start"
                     leftIcon={<Icon as={FiHome} boxSize={4} />}
-                    px={1} 
+                    px={1}
                     mt={4}
                 >
                     Home
@@ -63,54 +64,54 @@ export default function Sidebar() {
                     w="full"
                     justifyContent="flex-start"
                     leftIcon={<Icon as={FiBook} boxSize={4} />}
-                    px={1} 
+                    px={1}
                 >
                     Blog
                 </Button>
                 {user && (
-                <>
-                <Button
-                    onClick={() => handleNavigation("/@" + user + "/notifications")}
-                    variant="ghost"
-                    w="full"
-                    justifyContent="flex-start"
-                    leftIcon={
-                        notifications.length > 0 ? (
-                        <motion.div
-                        animate={{ rotate: [0, 45, 0, -45, 0] }}
-                        transition={{ duration: 0.6, repeat: Infinity }}
+                    <>
+                        <Button
+                            onClick={() => handleNavigation("/@" + user + "/notifications")}
+                            variant="ghost"
+                            w="full"
+                            justifyContent="flex-start"
+                            leftIcon={
+                                notifications.length > 0 ? (
+                                    <motion.div
+                                        animate={{ rotate: [0, 45, 0, -45, 0] }}
+                                        transition={{ duration: 0.6, repeat: Infinity }}
+                                    >
+                                        <Icon as={FiBell} boxSize={4} color="red" />
+                                    </motion.div>
+                                ) : (
+                                    <Icon as={FiBell} boxSize={4} />
+                                )
+                            }
+                            px={1}
                         >
-                        <Icon as={FiBell} boxSize={4} color="red" />
-                        </motion.div>
-                    ) : (
-                        <Icon as={FiBell} boxSize={4} />
-                    )
-                    }
-                    px={1} 
-                >
-                    Notifications
-                </Button>
-                <Button
-                    onClick={() => handleNavigation("/@" + user)}
-                    variant="ghost"
-                    w="full"
-                    justifyContent="flex-start"
-                    leftIcon={<Icon as={FiUser} boxSize={4} />}
-                    px={1} 
-                >
-                    Profile
-                </Button>
-                <Button
-                    onClick={() => handleNavigation("/@" + user + '/wallet')}
-                    variant="ghost"
-                    w="full"
-                    justifyContent="flex-start"
-                    leftIcon={<Icon as={FiCreditCard} boxSize={4} />}
-                    px={1} 
-                >
-                    Wallet
-                </Button>
-                </>
+                            Notifications
+                        </Button>
+                        <Button
+                            onClick={() => handleNavigation("/@" + user)}
+                            variant="ghost"
+                            w="full"
+                            justifyContent="flex-start"
+                            leftIcon={<Icon as={FiUser} boxSize={4} />}
+                            px={1}
+                        >
+                            Profile
+                        </Button>
+                        <Button
+                            onClick={() => handleNavigation("/@" + user + '/wallet')}
+                            variant="ghost"
+                            w="full"
+                            justifyContent="flex-start"
+                            leftIcon={<Icon as={FiCreditCard} boxSize={4} />}
+                            px={1}
+                        >
+                            Wallet
+                        </Button>
+                    </>
                 )}
                 {isBusiness && (
                     <Button
@@ -119,11 +120,21 @@ export default function Sidebar() {
                         w="full"
                         justifyContent="flex-start"
                         leftIcon={<Icon as={FiShoppingCart} boxSize={4} />}
-                        px={1} 
+                        px={1}
                     >
                         Store
                     </Button>
                 )}
+                <Button
+                    onClick={() => handleNavigation("/settings")}
+                    variant="ghost"
+                    w="full"
+                    justifyContent="flex-start"
+                    leftIcon={<Icon as={FaGear} boxSize={4} />}
+                    px={1}
+                >
+                    Settings
+                </Button>
             </VStack>
         </Box>
     );
