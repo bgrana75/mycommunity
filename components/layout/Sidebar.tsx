@@ -45,6 +45,14 @@ export default function Sidebar() {
             w={{ base: 'full', md: '20%' }}
             minH={{ base: 'auto', md: '100vh' }}
             display={{ base: 'none', md: 'block' }}
+            sx={
+                {
+                    '&::-webkit-scrollbar': {
+                        display: 'none',
+                    },
+                    scrollbarWidth: 'none',
+                }
+            }
         >
             <VStack spacing={4} align="start">
                 <Button
