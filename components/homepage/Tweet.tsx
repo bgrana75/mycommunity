@@ -60,43 +60,43 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                 </HStack>
                 <Box dangerouslySetInnerHTML={{ __html: markdownRenderer(comment.body) }} />
                 {showSlider ? (
-                <Flex mt={4} alignItems="center">
-                    <Box width="100%" mr={2}>
-                        <Slider
-                            aria-label="slider-ex-1"
-                            min={0}
-                            max={100}
-                            value={sliderValue}
-                            onChange={(val) => setSliderValue(val)}
-                        >
-                            <SliderTrack>
-                                <SliderFilledTrack />
-                            </SliderTrack>
-                            <SliderThumb />
-                        </Slider>
-                    </Box>
-                    <Button size="xs" onClick={handleVote}>&nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;</Button>
-                    <Button size="xs" onClick={handleHeartClick} ml={2}>X</Button>
+                    <Flex mt={4} alignItems="center">
+                        <Box width="100%" mr={2}>
+                            <Slider
+                                aria-label="slider-ex-1"
+                                min={0}
+                                max={100}
+                                value={sliderValue}
+                                onChange={(val) => setSliderValue(val)}
+                            >
+                                <SliderTrack>
+                                    <SliderFilledTrack />
+                                </SliderTrack>
+                                <SliderThumb />
+                            </Slider>
+                        </Box>
+                        <Button size="xs" onClick={handleVote}>&nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;</Button>
+                        <Button size="xs" onClick={handleHeartClick} ml={2}>X</Button>
 
-                </Flex>
-            ) : (
-                <HStack justify="space-between" mt={3}>
-                    <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleHeartClick}>
-                        {comment.active_votes?.length}
-                    </Button>
-                    <HStack>
-                        <FaRegComment onClick={handleReplyModal} cursor="pointer" />
-                        {setConversation && (
-                            <Text onClick={handleConversation} cursor="pointer" fontWeight="bold">
-                                {comment.children}
-                            </Text>
-                        )}
+                    </Flex>
+                ) : (
+                    <HStack justify="space-between" mt={3}>
+                        <Button leftIcon={voted ? (<FaHeart />) : (<FaRegHeart />)} variant="ghost" onClick={handleHeartClick}>
+                            {comment.active_votes?.length}
+                        </Button>
+                        <HStack>
+                            <FaRegComment onClick={handleReplyModal} cursor="pointer" />
+                            {setConversation && (
+                                <Text onClick={handleConversation} cursor="pointer" fontWeight="bold">
+                                    {comment.children}
+                                </Text>
+                            )}
+                        </HStack>
+                        <Text fontWeight="bold" fontSize="sm">
+                            ${getPayoutValue(comment)}
+                        </Text>
                     </HStack>
-                    <Text fontWeight="bold" fontSize="sm">
-                    ${getPayoutValue(comment)}
-                    </Text>
-                </HStack>
-            )}
+                )}
             </Box>
             {/* Render replies recursively */}
             {replies && replies.length > 0 && (
