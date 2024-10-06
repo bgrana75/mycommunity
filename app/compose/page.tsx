@@ -6,7 +6,7 @@ import { useState } from 'react'
 
 const Editor = dynamic(() => import('./Editor'), { ssr: false })
 
-export default function Home() {
+export default function Composer() {
   const [markdown, setMarkdown] = useState("")
   const [title, setTitle] = useState("")
   const [hashtagInput, setHashtagInput] = useState("")
@@ -38,8 +38,8 @@ export default function Home() {
   return (
     <Flex
       width="100%"
-      height="90%" 
-      bgColor="white"
+      height="90%"
+      bgColor="background"
       justify="center"
       p="1"
       direction="column"
