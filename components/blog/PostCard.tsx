@@ -24,7 +24,7 @@ export default function PostCard({ post }: PostCardProps) {
     const { aioha, user } = useAioha();
     const [voted, setVoted] = useState(post.active_votes?.some(item => item.voter === user));
     const router = useRouter();
-
+    const default_thumbnail = 'https://images.hive.blog/u/' + author + '/avatar/large';
     // **State to control how many images to show initially**
     const [visibleImages, setVisibleImages] = useState<number>(3); // Start with 3 images
 
@@ -93,21 +93,19 @@ export default function PostCard({ post }: PostCardProps) {
                     </Box>
                 </Flex>
             </Flex>
+            <Text
+                fontWeight="bold"
+                fontSize="lg"
+                textAlign="left"
+                onClick={viewPost}
+                mb={2}
+                isTruncated
+            >
+                {title}
+            </Text>
 
-            {/* Content Section */}
-            <Box display="flex" flexDirection="column" flexGrow={1} cursor="pointer">
-            <Text 
-    fontWeight="bold" 
-    fontSize="lg" 
-    textAlign="left" 
-    onClick={viewPost} 
-    mb={2}
-    isTruncated
->
-    {title}
-</Text>
-            {imageUrls.length > 0 && (
-                <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center">
+            <Box flex="1" display="flex" alignItems="flex-end" justifyContent="center">
+                {imageUrls.length > 0 ? (
                     <Swiper
                         spaceBetween={10}
                         slidesPerView={1}
@@ -132,10 +130,20 @@ export default function PostCard({ post }: PostCardProps) {
                             </SwiperSlide>
                         ))}
                     </Swiper>
-                </Box>
-            )}
-        </Box>
-
+                ) : (
+                    <Box h="200px" w="100%">
+                        <Image
+                            src={default_thumbnail}
+                            alt="default thumbnail"
+                            borderRadius="base"
+                            objectFit="cover"
+                            w="100%"
+                            h="100%"
+                            loading="lazy"
+                        />
+                    </Box>
+                )}
+            </Box>
             {/* Vote and Stats Section */}
             <Box mt="auto">
                 {showSlider ? (

@@ -90,16 +90,8 @@ export default function TweetList({
       ref={listRef} // Attach the ref to the container
       h="100vh" // Give it a fixed height to allow scrolling
       pt={2}
-      // no scroll bar 
-      sx={{
-        '&::-webkit-scrollbar': {
-          display: 'none',
-        },
-        '-ms-overflow-style': 'none',
-        scrollbarWidth: 'none',
-      }}
     >
-      <VStack spacing={2} align="stretch">
+      <VStack spacing={2} align="stretch" >
         {updatedComments.map((comment: Comment) => (
           <Tweet
             key={comment.permlink}

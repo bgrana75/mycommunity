@@ -54,7 +54,7 @@ export default function Sidebar() {
                 }
             }
         >
-            <VStack spacing={4} align="start">
+            <VStack spacing={4} align="start" ml={4}>
                 <Button
                     onClick={() => handleNavigation("/")}
                     variant="ghost"
