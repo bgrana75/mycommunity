@@ -10,6 +10,7 @@ import Conversation from '@/components/homepage/Conversation';
 import TweetReplyModal from '@/components/homepage/TweetReplyModal';
 
 export default function Home() {
+  console.log('author', process.env.NEXT_PUBLIC_THREAD_AUTHOR);
   const thread_author = process.env.NEXT_PUBLIC_THREAD_AUTHOR || 'skatedev';
   const thread_permlink = process.env.NEXT_PUBLIC_THREAD_PERMLINK || 're-skatedev-sidr6t';
 
@@ -41,6 +42,7 @@ export default function Home() {
                 '-ms-overflow-style': 'none',
                 scrollbarWidth: 'none',
               }}
+              maxW={{ base: '100%', md: '720px' }}
             >
               <TweetComposer pa={thread_author} pp={thread_permlink} onNewComment={handleNewComment} />
               <TweetList
