@@ -24,9 +24,10 @@ export default function FooterNavigation() {
             p={2}
             border="tb1"
             display={{ base: 'block', md: 'none' }}
+            zIndex={100}
         >
             <HStack justify="space-around">
-            <Button
+                <Button
                     onClick={() => handleNavigation("/")}
                     variant="ghost"
                     leftIcon={<Icon as={FiHome} boxSize={4} />}
@@ -40,13 +41,15 @@ export default function FooterNavigation() {
                 >
                     Blog
                 </Button>
-                <Button
-                    onClick={() => handleNavigation("/@" + user + "/notifications")}
-                    variant="ghost"
-                    leftIcon={<Icon as={FiBell} boxSize={4} />}
-                >
-                    Notifications
-                </Button>
+                {user && (
+                    <Button
+                        onClick={() => handleNavigation("/@" + user + "/notifications")}
+                        variant="ghost"
+                        leftIcon={<Icon as={FiBell} boxSize={4} />}
+                    >
+                        Notifications
+                    </Button>
+                )}
                 <Button
                     onClick={() => handleNavigation("/@" + user)}
                     variant="ghost"

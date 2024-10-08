@@ -1,7 +1,7 @@
 import { extendTheme } from '@chakra-ui/react';
 import { swiperStyles } from './swiperStyles';
 
-export const windows95Theme = extendTheme({
+const windows95Theme = extendTheme({
     initialColorMode: 'light',
     useSystemColorMode: false,
     colors: {
@@ -211,3 +211,5 @@ export const windows95Theme = extendTheme({
         },
     },
 });
+
+export default windows95Theme;

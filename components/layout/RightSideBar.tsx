@@ -55,9 +55,9 @@ export default function RightSideBar() {
     const sidebar = sidebarRef.current;
     if (sidebar) {
       const { scrollTop, scrollHeight, clientHeight } = sidebar;
-      const threshold = 400; 
+      const threshold = 400;
       if (scrollTop + clientHeight >= scrollHeight - threshold && !isLoading) {
-        fetchPosts(); 
+        fetchPosts();
       }
     }
   };
@@ -65,22 +65,30 @@ export default function RightSideBar() {
   useEffect(() => {
     const sidebar = sidebarRef.current;
     if (sidebar) {
-      sidebar.addEventListener('scroll', handleScroll); 
-      return () => sidebar.removeEventListener('scroll', handleScroll); 
+      sidebar.addEventListener('scroll', handleScroll);
+      return () => sidebar.removeEventListener('scroll', handleScroll);
     }
   }, [isLoading]);
 
   return (
     <Box
       as="aside"
-      w={{ base: '100%', md: '350px' }} 
-      h="100vh" 
-      overflowY="auto" 
-      pr={2} 
+      w={{ base: '100%', md: '350px' }}
+      h="100vh"
+      overflowY="auto"
+      pr={2}
       pt={2}
-      position="sticky" 
-      top={0} 
-      ref={sidebarRef} 
+      position={"sticky"}
+      top={0}
+      ref={sidebarRef}
+      sx={
+        {
+          '&::-webkit-scrollbar': {
+            display: 'none',
+          },
+          scrollbarWidth: 'none',
+        }
+      }
     >
       <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="list" />
       {isLoading && (

@@ -3,11 +3,11 @@ import { swiperStyles } from './swiperStyles';
 import { Londrina_Solid } from 'next/font/google'
 
 const londrinaSolid = Londrina_Solid({
-    weight:     ['100', '300', '400', '900'],
-    subsets:    ['latin'],
-  })
+    weight: ['100', '300', '400', '900'],
+    subsets: ['latin'],
+})
 
-export const nounsDaoTheme = extendTheme({
+const nounsDaoTheme = extendTheme({
     colors: {
         background: 'linear-gradient(45deg, #ffcc00, #f7f7f7)',  // Cool gradient background
         text: '#333333',  // Dark gray text
@@ -213,3 +213,5 @@ export const nounsDaoTheme = extendTheme({
         },
     },
 });
+
+export default nounsDaoTheme;

@@ -5,6 +5,7 @@ import Sidebar from '@/components/layout/Sidebar';
 import FooterNavigation from '@/components/layout/FooterNavigation';
 import { Providers } from './providers';
 
+
 export default function RootLayout({ children }: { children: React.ReactNode }) {
 
   return (
@@ -12,7 +13,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <body>
         <Providers>
           <Box bg="background" color="text" minH="100vh">
-            <Header />
+            {/* <Header /> */}
             <Flex direction={{ base: 'column', md: 'row' }}>
               <Sidebar />
               <Box flex="1">

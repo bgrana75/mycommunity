@@ -89,7 +89,7 @@ export default function TweetList({
       h="100vh"
       pt={2}
     >
-      <VStack spacing={2} align="stretch">
+      <VStack spacing={2} align="stretch" mx="auto">
         {updatedComments.map((comment: Comment) => (
           <Tweet
             key={comment.permlink}

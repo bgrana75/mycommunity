@@ -13,7 +13,7 @@ const roboto = Roboto({
     subsets: ['latin'],
 });
 
-export const cannabisTheme = extendTheme({
+const cannabisTheme = extendTheme({
     colors: {
         background: '#ffffff',  // Clean white background
         text: '#212121',  // Dark neutral text color
@@ -219,3 +219,4 @@ export const cannabisTheme = extendTheme({
         },
     },
 });
+export default cannabisTheme;
