@@ -124,10 +124,7 @@ export default function ProfilePage({ username }: ProfilePageProps) {
           />
         </Container>
       </Box>
-
-      {/* Avatar and user info over the cover image */}
       <Flex position="relative" mt={-16} p={4} alignItems="center" boxShadow="lg">
-  {/* Background layer with opacity */}
   <Box
     position="absolute"
     top={0}
@@ -139,9 +136,8 @@ export default function ProfilePage({ username }: ProfilePageProps) {
     zIndex={1}  // Lower z-index to place the background below content
   />
 
-  {/* Avatar and content */}
   <Flex alignItems="center" zIndex={2} position="relative">
-    {/* Avatar */}
+
     <Avatar
       src={profileMetadata.profileImage}
       name={hiveAccount?.name}
@@ -150,7 +146,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
       mr={4}
     />
 
-    {/* User Info */}
     <Box>
       <Flex alignItems="center">
         {/* Username */}
@@ -184,8 +179,6 @@ export default function ProfilePage({ username }: ProfilePageProps) {
   </Flex>
 </Flex>
 
-
-      {/* Infinite Scroll for Posts */}
       <Container maxW="container.lg" mt={8}>
         <InfiniteScroll
           dataLength={posts.length}

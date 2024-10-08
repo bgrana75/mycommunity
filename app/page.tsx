@@ -22,7 +22,7 @@ export default function Home() {
   const onClose = () => setIsOpen(false);
 
   const handleNewComment = (newComment: Partial<Comment> | CharacterData) => {
-    setNewComment(newComment as Comment); // Type assertion
+    setNewComment(newComment as Comment);
   };
 
   return (
@@ -30,10 +30,9 @@ export default function Home() {
       <Flex direction={{ base: 'column', md: 'row' }}>
         <Box flex="1" p={2} justifyContent="center">
           {!conversation ? (
-            // Make TweetComposer and TweetList share the same scrollable container
             <Box
-              h="100vh" // Adjust height as needed
-              overflowY="auto" // Enable vertical scrolling
+              h="100vh" 
+              overflowY="auto"
             >
               <TweetComposer pa={thread_author} pp={thread_permlink} onNewComment={handleNewComment} />
               <TweetList
@@ -42,7 +41,7 @@ export default function Home() {
                 setConversation={setConversation}
                 onOpen={onOpen}
                 setReply={setReply}
-                newComment={newComment} // Pass the newComment to TweetList
+                newComment={newComment} 
               />
             </Box>
           ) : (

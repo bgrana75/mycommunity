@@ -23,19 +23,17 @@ export default function TweetList({
   newComment,
   post = false,
 }: TweetListProps) {
-  const { comments, isLoading, error } = useComments(author, permlink, post);
-  const [isFetchingMore, setIsFetchingMore] = useState(false); // State for infinite scroll
-  const listRef = useRef<HTMLDivElement>(null); // Ref for the scrollable container
-  const isFetching = useRef(false); // To prevent multiple fetches at once
 
-  // Simulate loading more tweets
+  const { comments, isLoading, error } = useComments(author, permlink, post);
+  const [isFetchingMore, setIsFetchingMore] = useState(false); 
+  const listRef = useRef<HTMLDivElement>(null); 
+  const isFetching = useRef(false); 
+
   const fetchMoreTweets = async () => {
     if (isFetching.current) return;
     isFetching.current = true;
     setIsFetchingMore(true);
 
-    // Add your logic here for loading more comments
-    // For now, it's just simulating the fetching state
     await new Promise((resolve) => setTimeout(resolve, 1000));
 
     isFetching.current = false;
@@ -47,7 +45,7 @@ export default function TweetList({
       const container = listRef.current;
       if (container) {
         const { scrollTop, scrollHeight, clientHeight } = container;
-        const threshold = 200; // Trigger when 200px from the bottom
+        const threshold = 400; // Trigger when 200px from the bottom
 
         if (scrollTop + clientHeight >= scrollHeight - threshold && !isFetchingMore) {
           fetchMoreTweets(); // Call function to load more tweets
@@ -66,7 +64,7 @@ export default function TweetList({
     return (
       <Box textAlign="center" mt={4}>
         <Spinner size="xl" />
-        <Text>Loading tweets...</Text>
+        <Text>Loading posts...</Text>
       </Box>
     );
   }
@@ -74,7 +72,7 @@ export default function TweetList({
   if (error) {
     return (
       <Box textAlign="center" mt={4}>
-        <Text color="red.500">Failed to load tweets: {error}</Text>
+        <Text color="red.500">Failed to load posts: {error}</Text>
       </Box>
     );
   }
@@ -87,8 +85,8 @@ export default function TweetList({
 
   return (
     <Box
-      ref={listRef} // Attach the ref to the container
-      h="100vh" // Give it a fixed height to allow scrolling
+      ref={listRef} 
+      h="100vh"
       pt={2}
     >
       <VStack spacing={2} align="stretch">
