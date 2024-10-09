@@ -3,7 +3,7 @@ import { Broadcast, Custom, KeychainKeyTypes, KeychainRequestResponse, KeychainS
 import HiveClient from "./hiveclient";
 import crypto from 'crypto';
 import { signImageHash } from "./server-functions";
-import { Discussion, Notifications } from "@hiveio/dhive";
+import { Account, Discussion, Notifications, PublicKey, PrivateKey, KeyRole } from "@hiveio/dhive";
 import { extractNumber } from "../utils/extractNumber";
 import { profileEnd } from "console";
 
@@ -192,6 +192,19 @@ export async function checkFollow(follower: string, following: string): Promise<
   } catch (error) {
     console.log(error)
     return false
+  }
+}
+
+export async function checkAccountName(username: string) {
+  try {
+    const users = await HiveClient.call('condenser_api', 'lookup_accounts', [
+      username, 1
+    ]);
+    console.log(users[0])
+    return users[0]
+  } catch (error) {
+    console.log(error)
+    //return false
   }
 }
 
@@ -425,7 +438,3 @@ export async function findPosts(query: string, params: any[]) {
       const posts = await HiveClient.database.call(by, params);
   return posts
 }
-
-
-
-
