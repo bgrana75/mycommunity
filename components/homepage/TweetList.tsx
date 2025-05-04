@@ -3,7 +3,6 @@ import InfiniteScroll from 'react-infinite-scroll-component';
 import { Box, Spinner, VStack, Text } from '@chakra-ui/react';
 import Tweet from './Tweet';
 import { ExtendedComment, useComments } from '@/hooks/useComments';
-import { useSnaps } from '@/hooks/useSnaps';
 import TweetComposer from './TweetComposer';
 
 interface TweetListProps {
@@ -29,16 +28,16 @@ function handleNewComment() {
 }
 
 export default function TweetList(
-{
-  author,
-  permlink,
-  setConversation,
-  onOpen,
-  setReply,
-  newComment,
-  post = false,
-  data,
-}: TweetListProps) {
+  {
+    author,
+    permlink,
+    setConversation,
+    onOpen,
+    setReply,
+    newComment,
+    post = false,
+    data,
+  }: TweetListProps) {
 
   const { comments, loadNextPage, isLoading, hasMore } = data
 
@@ -48,41 +47,40 @@ export default function TweetList(
   // Handle new comment addition
   //const updatedComments = newComment ? [newComment, ...comments] : comments;
 
-  if (isLoading && comments.length === 0) {
-    // Initial loading state
-    return (
-      <Box textAlign="center" mt={4}>
-        <Spinner size="xl" />
-        <Text>Loading posts...</Text>
-      </Box>
-    );
-  }
-
   return (
-        <InfiniteScroll
-            dataLength={comments.length}
-            next={loadNextPage}
-            hasMore={hasMore}
-            loader={
-                (<Box display="flex" justifyContent="center" alignItems="center" py={5}>
-                    <Spinner size="xl" color="primary" />
-                </Box>
-                )}
-            scrollableTarget="scrollableDiv"
-        >
-          <VStack spacing={1} align="stretch" mx="auto">
-          <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} onClose={() => null} />
-          {comments.map((comment: ExtendedComment) => (
-            <Tweet
-              key={comment.permlink}
-              comment={comment}
-              onOpen={onOpen}
-              setReply={setReply}
-              {...(!post ? { setConversation } : {})}
-            />
-          ))}
-          </VStack>
-      </InfiniteScroll>
+    <VStack spacing={1} align="stretch" mx="auto">
+      <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} onClose={() => null} />
 
+      {isLoading && comments.length === 0 ? (
+        <Box textAlign="center" mt={4}>
+          <Spinner size="xl" />
+          <Text>Loading posts...</Text>
+        </Box>
+      ) : (
+        <InfiniteScroll
+          dataLength={comments.length}
+          next={loadNextPage}
+          hasMore={hasMore}
+          loader={
+            (<Box display="flex" justifyContent="center" alignItems="center" py={5}>
+              <Spinner size="xl" color="primary" />
+            </Box>
+            )}
+          scrollableTarget="scrollableDiv"
+        >
+          <VStack spacing={1} align="stretch">
+            {comments.map((comment: ExtendedComment) => (
+              <Tweet
+                key={comment.permlink}
+                comment={comment}
+                onOpen={onOpen}
+                setReply={setReply}
+                {...(!post ? { setConversation } : {})}
+              />
+            ))}
+          </VStack>
+        </InfiniteScroll>
+      )}
+    </VStack>
   );
 }

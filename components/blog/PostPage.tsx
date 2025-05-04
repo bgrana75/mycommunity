@@ -29,9 +29,9 @@ export default function PostPage({ author, permlink }: PostPageProps) {
 
   const data = useComments(author, permlink, true);
   const commentsData = {
-    ...data, 
-    loadNextPage: () => {}, 
-    hasMore: false,         
+    ...data,
+    loadNextPage: () => { },
+    hasMore: false,
   };
 
   useEffect(() => {
@@ -73,7 +73,9 @@ export default function PostPage({ author, permlink }: PostPageProps) {
             <PostDetails post={post} />
             {!conversation ? (
               <>
-                <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} post={true} />
+                <TweetComposer pa={author} pp={permlink} onNewComment={handleNewComment} post={true} onClose={function (): void {
+                  throw new Error('Function not implemented.');
+                }} />
                 <TweetList
                   author={author}
                   permlink={permlink}

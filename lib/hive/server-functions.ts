@@ -6,7 +6,7 @@ import { Buffer } from 'buffer';
 import nodemailer from 'nodemailer';
 import HiveClient from "./hiveclient";
 
-import { DefaultRenderer } from "@hiveio/content-renderer";
+// import { DefaultRenderer } from "@hiveio/content-renderer";
 
 export async function signImageHash(hash: string): Promise<string> {
     const wif = process.env.HIVE_POSTING_KEY;

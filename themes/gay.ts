@@ -1,29 +1,28 @@
 import { extendTheme } from '@chakra-ui/react';
 
-
-const hackerTheme = extendTheme({
+const gayTheme = extendTheme({
     config: {
         usesHeader: true,
         usesSidebar: false,
     },
-    initialColorMode: 'dark', // set 'light' or 'dark' as the default color mode
+    initialColorMode: 'light', // set 'light' or 'dark' as the default color mode
     useSystemColorMode: false,
     colors: {
-        background: '#0f0f0f', // Black background, typical of hacker aesthetics
-        text: '#00FF00', // Bright green text, reminiscent of terminal output
-        primary: '#00FF00', // Bright green for primary actions
-        secondary: '#6aa86a', // Dark gray for secondary elements
-        accent: '#FFD700', // Gold for accentuating certain elements
-        muted: '#1a1a1a', // Slightly lighter black for muted elements
-        border: '#00FF00', // Green for borders to maintain the hacker vibe
+        background: '#ffffff', // White background for a clean look
+        text: '#000000', // Black text for readability
+        primary: '#FF69B4', // Pink for primary actions
+        secondary: '#FFD700', // Gold for secondary elements
+        accent: '#00BFFF', // Deep sky blue for accentuating certain elements
+        muted: '#f0f0f0', // Light gray for muted elements
+        border: '#FF69B4', // Pink for borders to maintain the theme
         error: '#FF4136', // Bright red for errors
         success: '#2ECC40', // Green for success messages
         warning: '#FF851B', // Orange for warnings
     },
     fonts: {
-        heading: 'var(--font-vt323), monospace',
-        body: 'var(--font-vt323), monospace',
-        mono: 'var(--font-vt323), "Courier New", monospace',
+        heading: '"Arial", sans-serif', // Sans-serif font for headings
+        body: '"Arial", sans-serif', // Sans-serif font for body text
+        mono: '"Courier New", monospace', // Monospace for code-like elements
     },
     fontSizes: {
         xs: '12px',
@@ -52,8 +51,8 @@ const hackerTheme = extendTheme({
         taller: '2',
     },
     borders: {
-        tb1: '1px solid #00FF00', // Bright green border for a hacker aesthetic
-        borderRadius: '4px', // Slightly less rounded corners for a sharper look
+        tb1: '1px solid #FF69B4', // Pink border for a vibrant aesthetic
+        borderRadius: '4px', // Slightly rounded corners for a softer look
     },
     space: {
         px: '1px',
@@ -101,17 +100,17 @@ const hackerTheme = extendTheme({
         },
     },
     shadows: {
-        xs: '0 0 2px 0 rgba(0, 255, 0, 0.5)',
-        sm: '0 1px 2px 0 rgba(0, 255, 0, 0.5)',
-        base: '0 1px 3px 0 rgba(0, 255, 0, 0.5), 0 1px 2px 0 rgba(0, 255, 0, 0.3)',
-        md: '0 4px 6px -1px rgba(0, 255, 0, 0.5), 0 2px 4px -1px rgba(0, 255, 0, 0.3)',
-        lg: '0 10px 15px -3px rgba(0, 255, 0, 0.5), 0 4px 6px -2px rgba(0, 255, 0, 0.3)',
-        xl: '0 20px 25px -5px rgba(0, 255, 0, 0.5), 0 10px 10px -5px rgba(0, 255, 0, 0.3)',
-        '2xl': '0 25px 50px -12px rgba(0, 255, 0, 0.7)',
-        outline: '0 0 0 3px rgba(0, 255, 0, 0.6)',
+        xs: '0 0 2px 0 rgba(255, 105, 180, 0.5)',
+        sm: '0 1px 2px 0 rgba(255, 105, 180, 0.5)',
+        base: '0 1px 3px 0 rgba(255, 105, 180, 0.5), 0 1px 2px 0 rgba(255, 105, 180, 0.3)',
+        md: '0 4px 6px -1px rgba(255, 105, 180, 0.5), 0 2px 4px -1px rgba(255, 105, 180, 0.3)',
+        lg: '0 10px 15px -3px rgba(255, 105, 180, 0.5), 0 4px 6px -2px rgba(255, 105, 180, 0.3)',
+        xl: '0 20px 25px -5px rgba(255, 105, 180, 0.5), 0 10px 10px -5px rgba(255, 105, 180, 0.3)',
+        '2xl': '0 25px 50px -12px rgba(255, 105, 180, 0.7)',
+        outline: '0 0 0 3px rgba(255, 105, 180, 0.6)',
         inner: 'inset 0 2px 4px 0 rgba(0, 0, 0, 0.8)',
         none: 'none',
-        'dark-lg': 'rgba(0, 255, 0, 0.5) 0px 10px 15px -3px, rgba(0, 255, 0, 0.3) 0px 4px 6px -2px',
+        'dark-lg': 'rgba(255, 105, 180, 0.5) 0px 10px 15px -3px, rgba(255, 105, 180, 0.3) 0px 4px 6px -2px',
     },
     components: {
         Button: {
@@ -208,4 +207,5 @@ const hackerTheme = extendTheme({
         },
     },
 });
-export default hackerTheme;
+
+export default gayTheme;

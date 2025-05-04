@@ -3,10 +3,11 @@ import { Comment } from '@hiveio/dhive';
 import { ExtendedComment } from '@/hooks/useComments';
 import { FaRegComment, FaRegHeart, FaShare, FaHeart } from "react-icons/fa";
 import { useAioha } from '@aioha/react-ui';
-import { useState } from 'react';
-import { getPayoutValue } from '@/lib/hive/client-functions';
+import { useState, useEffect } from 'react';
+import { getPayoutValue, calculateUserVoteValue } from '@/lib/hive/client-functions';
 import markdownRenderer from '@/lib/utils/MarkdownRenderer';
 import { getPostDate } from '@/lib/utils/GetPostDate';
+import useHiveAccount from '@/hooks/useHiveAccount';
 
 interface TweetProps {
     comment: ExtendedComment;
@@ -19,9 +20,32 @@ interface TweetProps {
 const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetProps) => {
     const commentDate = getPostDate(comment.created);
     const { aioha, user } = useAioha();
+    const { hiveAccount } = useHiveAccount(user || ''); // Ensure user is defined
     const [voted, setVoted] = useState(comment.active_votes?.some(item => item.voter === user))
     const [sliderValue, setSliderValue] = useState(5);
     const [showSlider, setShowSlider] = useState(false);
+    const [rewardAmount, setRewardAmount] = useState(getPayoutValue(comment));
+
+    const calculateVotingPower = () => {
+        if (!hiveAccount || !hiveAccount.voting_manabar) return 0;
+        const { voting_manabar, voting_power } = hiveAccount;
+        const elapsedTime = (Date.now() / 1000) - voting_manabar.last_update_time;
+        const regeneratedMana = elapsedTime * 10000 / 432000; // 432000 seconds in 5 days
+        const currentMana = Math.min(Number(voting_manabar.current_mana) + regeneratedMana, 10000); // Ensure current_mana is a number
+        return (currentMana / 10000) * voting_power;
+    };
+
+    const currentVotingPower = calculateVotingPower();
+
+    useEffect(() => {
+        const logVotingValue = async () => {
+            if (hiveAccount) {
+                const votingValue = await calculateUserVoteValue(hiveAccount);
+                console.log(`Current Voting Value in HBD: ${votingValue}`);
+            }
+        };
+        logVotingValue();
+    }, [hiveAccount]);
 
     const replies = comment.replies;
 
@@ -37,10 +61,20 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
     function handleConversation() {
         if (setConversation) setConversation(comment);
     }
-
+    console.log(`Current Voting Power: ${currentVotingPower}`); // Log the calculated voting power
     async function handleVote() {
+        const votingValue = await calculateUserVoteValue(hiveAccount);
+        console.log(`Voting Value: ${votingValue}`);
+        console.log(`Slider Value: ${sliderValue}`);
+        const newRewardAmount = parseFloat(rewardAmount) + (votingValue * (sliderValue / 100));
+        console.log(`Previous Reward Amount: ${rewardAmount}`);
+        console.log(`New Reward Amount: ${newRewardAmount}`);
+
         const vote = await aioha.vote(comment.author, comment.permlink, sliderValue * 100);
-        setVoted(vote.success);
+        if (vote.success) {
+            setVoted(true);
+            setRewardAmount(newRewardAmount.toFixed(3)); // Update reward amount optimistically
+        }
         handleHeartClick();
     }
     return (
@@ -84,7 +118,6 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                         </Box>
                         <Button size="xs" onClick={handleVote}>&nbsp;&nbsp;&nbsp;Vote {sliderValue} %&nbsp;&nbsp;&nbsp;</Button>
                         <Button size="xs" onClick={handleHeartClick} ml={2}>X</Button>
-
                     </Flex>
                 ) : (
                     <HStack justify="space-between" mt={3}>
@@ -100,7 +133,7 @@ const Tweet = ({ comment, onOpen, setReply, setConversation, level = 0 }: TweetP
                             )}
                         </HStack>
                         <Text fontWeight="bold" fontSize="sm">
-                            ${getPayoutValue(comment)}
+                            ${rewardAmount}
                         </Text>
                     </HStack>
                 )}

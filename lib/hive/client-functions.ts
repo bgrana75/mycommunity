@@ -64,7 +64,7 @@ export async function loginWithKeychain(username: string) {
     const login = await keychain
       .login(
         formParamsAsObject.data as Login);
-    return({ login });
+    return ({ login });
   } catch (error) {
     console.log({ error });
   }
@@ -265,32 +265,32 @@ export async function witnessVoteWithKeychain(username: string, witness: string)
   }
 }
 
-export function getFileSignature (file: File): Promise<string> {
+export function getFileSignature(file: File): Promise<string> {
   return new Promise<string>(async (resolve, reject) => {
-      const reader = new FileReader();
+    const reader = new FileReader();
 
-      reader.onload = async () => {
-          if (reader.result) {
-              const content = Buffer.from(reader.result as ArrayBuffer);
-              const hash = crypto.createHash('sha256')
-                  .update('ImageSigningChallenge')
-                  .update(content as any)
-                  .digest('hex');
-              try {
-                  const signature = await signImageHash(hash);
-                  resolve(signature);
-              } catch (error) {
-                  console.error('Error signing the hash:', error);
-                  reject(error);
-              }
-          } else {
-              reject(new Error('Failed to read file.'));
-          }
-      };
-      reader.onerror = () => {
-          reject(new Error('Error reading file.'));
-      };
-      reader.readAsArrayBuffer(file);
+    reader.onload = async () => {
+      if (reader.result) {
+        const content = Buffer.from(reader.result as ArrayBuffer);
+        const hash = crypto.createHash('sha256')
+          .update('ImageSigningChallenge')
+          .update(content as any)
+          .digest('hex');
+        try {
+          const signature = await signImageHash(hash);
+          resolve(signature);
+        } catch (error) {
+          console.error('Error signing the hash:', error);
+          reject(error);
+        }
+      } else {
+        reject(new Error('Failed to read file.'));
+      }
+    };
+    reader.onerror = () => {
+      reject(new Error('Error reading file.'));
+    };
+    reader.readAsArrayBuffer(file);
   });
 }
 
@@ -299,69 +299,69 @@ export async function uploadImage(file: File, signature: string, index?: number,
   const signatureUser = process.env.NEXT_PUBLIC_HIVE_USER
 
   const formData = new FormData();
-        formData.append("file", file, file.name);
+  formData.append("file", file, file.name);
 
-        return new Promise((resolve, reject) => {
-            const xhr = new XMLHttpRequest();
-            xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('POST', 'https://images.hive.blog/' + signatureUser + '/' + signature, true);
 
-            if (index && setUploadProgress) {
-              xhr.upload.onprogress = (event) => {
-                  if (event.lengthComputable) {
-                      const progress = (event.loaded / event.total) * 100;
-                      setUploadProgress((prevProgress: number[]) => {
-                          const updatedProgress = [...prevProgress];
-                          updatedProgress[index] = progress;
-                          return updatedProgress;
-                      });
-                  }
-              }
-            }
+    if (index && setUploadProgress) {
+      xhr.upload.onprogress = (event) => {
+        if (event.lengthComputable) {
+          const progress = (event.loaded / event.total) * 100;
+          setUploadProgress((prevProgress: number[]) => {
+            const updatedProgress = [...prevProgress];
+            updatedProgress[index] = progress;
+            return updatedProgress;
+          });
+        }
+      }
+    }
 
-            xhr.onload = () => {
-                if (xhr.status === 200) {
-                    const response = JSON.parse(xhr.responseText);
-                    resolve(response.url);
-                } else {
-                    reject(new Error('Failed to upload image'));
-                }
-            };
+    xhr.onload = () => {
+      if (xhr.status === 200) {
+        const response = JSON.parse(xhr.responseText);
+        resolve(response.url);
+      } else {
+        reject(new Error('Failed to upload image'));
+      }
+    };
 
-            xhr.onerror = () => {
-                reject(new Error('Failed to upload image'));
-            };
+    xhr.onerror = () => {
+      reject(new Error('Failed to upload image'));
+    };
 
-            xhr.send(formData);
-        });
+    xhr.send(formData);
+  });
 }
 
 export async function getPost(user: string, postId: string) {
-    const postContent = await HiveClient.database.call('get_content', [
-      user,
-      postId,
-    ]);
-    if (!postContent) throw new Error('Failed to fetch post content');
+  const postContent = await HiveClient.database.call('get_content', [
+    user,
+    postId,
+  ]);
+  if (!postContent) throw new Error('Failed to fetch post content');
 
-    return postContent as Discussion;
+  return postContent as Discussion;
 }
 
 export function getPayoutValue(post: any): string {
-    const createdDate = new Date(post.created);
-    const now = new Date();
-    
-    // Calculate the time difference in days
-    const timeDifferenceInMs = now.getTime() - createdDate.getTime();
-    const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
-    
-    if (timeDifferenceInDays >= 7) {
-      // Post is older than 7 days, return the total payout value
-      return post.total_payout_value.replace(" HBD", "");
-    } else if (timeDifferenceInDays < 7) {
-      // Post is less than 7 days old, return the pending payout value
-      return post.pending_payout_value.replace(" HBD", "");
-    } else {
-      return "0.000"
-    }
+  const createdDate = new Date(post.created);
+  const now = new Date();
+
+  // Calculate the time difference in days
+  const timeDifferenceInMs = now.getTime() - createdDate.getTime();
+  const timeDifferenceInDays = timeDifferenceInMs / (1000 * 60 * 60 * 24);
+
+  if (timeDifferenceInDays >= 7) {
+    // Post is older than 7 days, return the total payout value
+    return post.total_payout_value.replace(" HBD", "");
+  } else if (timeDifferenceInDays < 7) {
+    // Post is less than 7 days old, return the pending payout value
+    return post.pending_payout_value.replace(" HBD", "");
+  } else {
+    return "0.000"
+  }
 }
 
 export async function findLastNotificationsReset(username: string, start = -1, loopCount = 0): Promise<string> {
@@ -380,11 +380,11 @@ export async function findLastNotificationsReset(username: string, start = -1, l
 
     const transactions = await HiveClient.call('account_history_api', 'get_account_history', params);
     const history = transactions.history.reverse();
-      
+
     if (history.length === 0) {
       return '1970-01-01T00:00:00Z';
     }
-    
+
     for (const item of history) {
       if (item[1].op.value.id === 'notify') {
         const json = JSON.parse(item[1].op.value.json);
@@ -404,7 +404,7 @@ export async function fetchNewNotifications(username: string) {
   try {
     const notifications: Notifications[] = await HiveClient.call('bridge', 'account_notifications', { account: username, limit: 100 });
     const lastDate = await findLastNotificationsReset(username);
-    
+
     if (lastDate) {
       const filteredNotifications = notifications.filter(notification => notification.date > lastDate);
       return filteredNotifications;
@@ -417,41 +417,75 @@ export async function fetchNewNotifications(username: string) {
   }
 }
 
-export async function convertVestToHive (amount: number) {
+export async function convertVestToHive(amount: number) {
   const globalProperties = await HiveClient.call('condenser_api', 'get_dynamic_global_properties', []);
   const totalVestingFund = extractNumber(globalProperties.total_vesting_fund_hive)
   const totalVestingShares = extractNumber(globalProperties.total_vesting_shares)
-  const vestHive = ( totalVestingFund * amount ) / totalVestingShares
+  const vestHive = (totalVestingFund * amount) / totalVestingShares
   return vestHive
 }
 
-export async function getProfile (username: string) {
-  const profile = await HiveClient.call('bridge', 'get_profile', {account: username});
+export async function getProfile(username: string) {
+  const profile = await HiveClient.call('bridge', 'get_profile', { account: username });
   return profile
 }
 
-export async function getCommunityInfo (username: string) {
-  const profile = await HiveClient.call('bridge', 'get_community', {name: username});
+export async function getCommunityInfo(username: string) {
+  const profile = await HiveClient.call('bridge', 'get_community', { name: username });
   return profile
 }
 
 export async function findPosts(query: string, params: any[]) {
-      const by = 'get_discussions_by_' + query;
-      const posts = await HiveClient.database.call(by, params);
+  const by = 'get_discussions_by_' + query;
+  const posts = await HiveClient.database.call(by, params);
   return posts
 }
 
 export async function getLastSnapsContainer() {
-  const author = "peak.snaps";   
+  const author = "peak.snaps";
   const beforeDate = new Date().toISOString().split('.')[0];
   const permlink = '';
   const limit = 1;
 
   const result = await HiveClient.database.call('get_discussions_by_author_before_date',
-      [author, permlink, beforeDate, limit]);
+    [author, permlink, beforeDate, limit]);
 
   return {
-      author,
-      permlink: result[0].permlink
+    author,
+    permlink: result[0].permlink
   }
 }
+
+export async function calculateUserVoteValue(user: any) {
+  const { voting_power = 0, vesting_shares = 0, received_vesting_shares = 0, delegated_vesting_shares = 0 } =
+    user || {};
+
+  const client = HiveClient;
+  const reward_fund = await client.database.call('get_reward_fund', ['post']);
+  const feed_history = await client.database.call('get_feed_history', []);
+
+  const { reward_balance, recent_claims } = reward_fund;
+  const { base, quote } = feed_history.current_median_history;
+
+  const baseNumeric = parseFloat(base.split(' ')[0]);
+  const quoteNumeric = parseFloat(quote.split(' ')[0]);
+
+  const hbdMedianPrice = baseNumeric / quoteNumeric;
+
+  const rewardBalanceNumeric = parseFloat(reward_balance.split(' ')[0]);
+  const recentClaimsNumeric = parseFloat(recent_claims);
+
+  const vestingSharesNumeric = parseFloat(String(vesting_shares).split(' ')[0]);
+  const receivedVestingSharesNumeric = parseFloat(String(received_vesting_shares).split(' ')[0]);
+  const delegatedVestingSharesNumeric = parseFloat(String(delegated_vesting_shares).split(' ')[0]);
+
+  const total_vests = vestingSharesNumeric + receivedVestingSharesNumeric - delegatedVestingSharesNumeric;
+  const final_vest = total_vests * 1e6;
+
+  const power = (voting_power * 10000 / 10000) / 50;
+  const rshares = power * final_vest / 10000;
+
+  const estimate = rshares / recentClaimsNumeric * rewardBalanceNumeric * hbdMedianPrice;
+  return estimate;
+}
+

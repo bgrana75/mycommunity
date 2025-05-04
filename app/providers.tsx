@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { ChakraProvider } from '@chakra-ui/react';
+import { ChakraProvider, CSSReset } from '@chakra-ui/react';
 import { Aioha } from '@aioha/aioha';
 import { AiohaProvider } from '@aioha/react-ui';
 import { ThemeProvider } from './themeProvider';
@@ -22,7 +22,10 @@ export function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <ThemeProvider>
-      <AiohaProvider aioha={aioha}>{children}</AiohaProvider>
+      <AiohaProvider aioha={aioha}>
+        <CSSReset />
+        {children}
+      </AiohaProvider>
     </ThemeProvider>
   );
 }
