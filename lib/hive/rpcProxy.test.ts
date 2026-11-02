@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { NextRequest } from 'next/server'
 import {
   ATTEMPT_TIMEOUT_MS,
+  CROSS_CHECK_TIMEOUT_MS,
   FAILURE_COOLDOWN_MS,
   FALLBACK_NODES,
   dispatchHiveRpc,
@@ -248,6 +249,69 @@ describe('unread_notifications cross-check', () => {
     const outcome = await dispatchHiveRpc(batch, [A, B], { fetchImpl })
     expect(outcome).toEqual({ ok: true, data: [content, reply(2, '2026-10-30T12:00:00', 2)] })
     expect(sent[B]).toEqual([[{ ...unreadCall, id: 2 }]])
+  })
+
+  it('does not ask a node that already failed in this call', async () => {
+    const calls: string[] = []
+    const D = 'https://nodes.test/d'
+    const fetchImpl = vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url === A) throw new TypeError('fetch failed')
+      if (url === B) return jsonResponse(STALE)
+      if (url === C) return jsonResponse(FRESH)
+      throw new TypeError('fetch failed')
+    })
+    const outcome = await dispatchHiveRpc(unreadCall, [A, B, C, D], { fetchImpl })
+    expect(outcome).toEqual({ ok: true, data: FRESH })
+    expect(calls).toEqual([A, B, C])
+  })
+
+  it('skips nodes still in cooldown when every candidate is cooled down', async () => {
+    let now = 1_000_000
+    const calls: string[] = []
+    const fail = vi.fn(async () => {
+      throw new TypeError('fetch failed')
+    })
+    await dispatchHiveRpc(body, [A], { fetchImpl: fail, now: () => now })
+    await dispatchHiveRpc(body, [B], { fetchImpl: fail, now: () => now })
+    await dispatchHiveRpc(body, [C], { fetchImpl: fail, now: () => now })
+
+    const fetchImpl = vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url === A) return jsonResponse(STALE)
+      if (url === C) return jsonResponse(FRESH)
+      throw new TypeError('fetch failed')
+    })
+    now += 1_000
+    const outcome = await dispatchHiveRpc(unreadCall, [A, B, C], { fetchImpl, now: () => now })
+    expect(outcome).toEqual({ ok: true, data: STALE })
+    expect(calls).toEqual([A])
+  })
+
+  it('aborts a hanging cross-check at its own short timeout', async () => {
+    vi.useFakeTimers()
+    const calls: string[] = []
+    const fetchImpl = vi.fn((url: string, init?: RequestInit) => {
+      calls.push(url)
+      if (url === A) return Promise.resolve(jsonResponse(STALE))
+      return new Promise<Response>((_resolve, reject) => {
+        const signal = init?.signal
+        const abort = () => {
+          const error = new Error('The operation was aborted')
+          error.name = 'AbortError'
+          reject(error)
+        }
+        if (!signal) return
+        if (signal.aborted) abort()
+        else signal.addEventListener('abort', abort)
+      })
+    })
+
+    const pending = dispatchHiveRpc(unreadCall, [A, B, C], { fetchImpl })
+    await vi.advanceTimersByTimeAsync(CROSS_CHECK_TIMEOUT_MS * 2)
+    await expect(pending).resolves.toEqual({ ok: true, data: STALE })
+    expect(calls).toEqual([A, B, C])
+    expect(CROSS_CHECK_TIMEOUT_MS * 2).toBeLessThan(ATTEMPT_TIMEOUT_MS * 2)
   })
 
   it('does not contact a second node for other methods', async () => {

@@ -13,6 +13,11 @@ const NODE_CACHE_TTL_MS = 5 * 60 * 1000
 
 /** Per-attempt budget. Transport failures return immediately; a hung socket waits this long. */
 export const ATTEMPT_TIMEOUT_MS = 8000
+/**
+ * Budget for the unread_notifications second opinion. It shares the caller's
+ * batch, which aborts well before a full extra attempt, so this stays short.
+ */
+export const CROSS_CHECK_TIMEOUT_MS = 3000
 /** Skip a node that just failed so the next call does not start on it. */
 export const FAILURE_COOLDOWN_MS = 60_000
 const MAX_NODES_PER_CALL = 6
@@ -290,10 +295,13 @@ export function pickFreshestUnreadItem(first: unknown, second: unknown): unknown
 }
 
 /**
- * Ask one more node for just the unread_notifications calls in `body` and keep
- * the fresher answer for each. A single node's stale answer is otherwise the
- * app's truth, because the proxy sticks to the last node that succeeded.
- * Best effort: with no second node reachable the first answer is returned.
+ * Ask later nodes for just the unread_notifications calls in `body` and keep
+ * the fresher answer for each. Nodes this call already tried (they timed out
+ * or 5xx'd before one answered) are not asked again, and neither is a node
+ * still in cooldown. A single node's stale answer is otherwise the app's
+ * truth, because the proxy sticks to the last node that succeeded.
+ * Best effort, on CROSS_CHECK_TIMEOUT_MS: with no later node reachable the
+ * first answer is returned.
  */
 async function crossCheckUnreadNotifications(
   body: unknown,
@@ -301,7 +309,6 @@ async function crossCheckUnreadNotifications(
   answeredBy: string,
   candidates: string[],
   fetchImpl: FetchLike,
-  timeoutMs: number,
   now: () => number,
 ): Promise<unknown> {
   const isBatch = Array.isArray(body)
@@ -311,9 +318,13 @@ async function crossCheckUnreadNotifications(
   if (isBatch !== Array.isArray(data)) return data
 
   const payload = isBatch ? checks : checks[0]
-  const others = candidates.filter((node) => node !== answeredBy).slice(0, MAX_CROSS_CHECK_ATTEMPTS)
+  const answeredAt = candidates.indexOf(answeredBy)
+  const at = now()
+  const others = (answeredAt === -1 ? [] : candidates.slice(answeredAt + 1))
+    .filter((node) => (cooldownUntil.get(node) ?? 0) <= at)
+    .slice(0, MAX_CROSS_CHECK_ATTEMPTS)
   for (const node of others) {
-    const outcome = await attemptNode(node, payload, fetchImpl, timeoutMs, now)
+    const outcome = await attemptNode(node, payload, fetchImpl, CROSS_CHECK_TIMEOUT_MS, now)
     if (!outcome.ok) continue
 
     const otherItems: unknown[] = Array.isArray(outcome.data) ? outcome.data : [outcome.data]
@@ -361,7 +372,6 @@ export async function dispatchHiveRpc(
       node,
       candidates,
       fetchImpl,
-      timeoutMs,
       now,
     )
     return { ok: true, data }
