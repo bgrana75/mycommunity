@@ -547,4 +547,43 @@ describe('ChatPanel conversation list loading (#267)', () => {
 
     expect(await screen.findByText('No conversations yet')).toBeTruthy();
   });
+
+  it('keeps DMs already on screen when reopening and conversations fail', async () => {
+    const { default: ChatPanel } = await import('./ChatPanel');
+    const onClose = vi.fn();
+    const view = render(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+    expect(await screen.findByText('dm-preview', { exact: false })).toBeTruthy();
+
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen={false} onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    let resolveChannels: (channels: unknown) => void = () => {};
+    mocks.getChannels.mockImplementation(
+      () => new Promise(resolve => { resolveChannels = resolve; }),
+    );
+    mocks.getConversations.mockRejectedValue(new Error('HTTP 500'));
+
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    expect(await screen.findByText('dm-preview', { exact: false })).toBeTruthy();
+
+    resolveChannels([
+      { _id: 'general', name: 'general', type: 'channel', isPublic: true, memberCount: 2 },
+    ]);
+
+    expect(await screen.findByText('Could not load your DMs and groups.')).toBeTruthy();
+    expect(screen.getByText('#general')).toBeTruthy();
+    expect(screen.getByText('dm-preview', { exact: false })).toBeTruthy();
+  });
 });

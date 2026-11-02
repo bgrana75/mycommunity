@@ -737,6 +737,28 @@ function ConversationRow({ conv, isActive, onClick }: { conv: Conversation; isAc
   );
 }
 
+/** DMs and private groups already on screen. Public rows come from the channel list. */
+function directConversations(list: Conversation[]): Conversation[] {
+  return list.filter(c => c.type === 'dm' || !c.isPublic);
+}
+
+/** Public rows currently shown, so a missing channel response can keep them. */
+function channelsFromConversations(list: Conversation[]): Channel[] {
+  return list
+    .filter(c => c.isPublic && c.type !== 'dm')
+    .map(c => ({
+      _id: c._id,
+      name: c.name,
+      description: c.description,
+      type: c.type,
+      conversationKind: c.type === 'group' ? 'group' : 'channel',
+      isPublic: true,
+      owner: c.owner,
+      members: c.members || [],
+      memberCount: c.memberCount ?? 0,
+    }));
+}
+
 export default function ChatPanel({
   isOpen,
   onClose,
@@ -963,17 +985,24 @@ export default function ChatPanel({
   // ── Load conversations/channels on open ────────────────────────────────
   // Public channels and the signed-in user's conversations are independent:
   // each is applied the moment it lands, so a slow or failing authed call can
-  // never hide #General. A newer load supersedes an older one, so a late
-  // response from a previous isAuthed value cannot overwrite fresh state.
+  // never hide #General. A result that has not arrived (or failed) stays
+  // null and the rows already on screen are kept, so reopening or Retry
+  // cannot flash the list down to channels-only. A newer load supersedes an
+  // older one, so a late response from a previous isAuthed value cannot
+  // overwrite fresh state.
   useEffect(() => {
     if (!isOpen) return;
     const seq = ++listLoadSeqRef.current;
     const superseded = () => listLoadSeqRef.current !== seq;
-    let pubChannels: Channel[] = [];
-    let convs: Conversation[] = [];
+    let pubChannels: Channel[] | null = null;
+    let convs: Conversation[] | null = null;
     const apply = () => {
-      setChannels(pubChannels);
-      setConversations(mergeConversations(convs, pubChannels));
+      if (pubChannels != null) setChannels(pubChannels);
+      if (pubChannels == null && convs == null) return;
+      setConversations(prev => mergeConversations(
+        convs ?? directConversations(prev),
+        pubChannels ?? channelsFromConversations(prev),
+      ));
     };
 
     setListLoad(prev => ({ status: 'loading', notice: prev.notice }));
