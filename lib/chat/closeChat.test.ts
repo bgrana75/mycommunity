@@ -2,24 +2,19 @@ import { describe, it, expect } from 'vitest';
 import { chatCloseDestination } from './closeChat';
 
 describe('chatCloseDestination', () => {
-  it('sends a phone /chat visit back to the previous in-app page', () => {
+  it('sends a phone /chat visit back when this entry was opened in-app', () => {
     expect(chatCloseDestination({
       isPhone: true,
       pathname: '/chat',
-      previousPath: '/games',
+      fromInAppNavigation: true,
     })).toBe('back');
   });
 
-  it('sends a phone /chat visit home when nothing came before it', () => {
+  it('sends a phone /chat visit home when the entry was a direct visit', () => {
     expect(chatCloseDestination({
       isPhone: true,
       pathname: '/chat',
-      previousPath: null,
-    })).toBe('home');
-    expect(chatCloseDestination({
-      isPhone: true,
-      pathname: '/chat',
-      previousPath: '/chat',
+      fromInAppNavigation: false,
     })).toBe('home');
   });
 
@@ -27,12 +22,12 @@ describe('chatCloseDestination', () => {
     expect(chatCloseDestination({
       isPhone: true,
       pathname: '/games',
-      previousPath: '/',
+      fromInAppNavigation: true,
     })).toBe('stay');
     expect(chatCloseDestination({
       isPhone: false,
       pathname: '/chat',
-      previousPath: '/games',
+      fromInAppNavigation: true,
     })).toBe('stay');
   });
 });

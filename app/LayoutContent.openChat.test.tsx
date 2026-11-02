@@ -170,4 +170,41 @@ describe('chat shell', () => {
     expect(nav.replace).toHaveBeenCalledWith('/');
     expect(nav.back).not.toHaveBeenCalled();
   });
+
+  it('sends Close home when browser back returns to a direct /chat visit', async () => {
+    phone.matches = true;
+    nav.pathname = '/chat';
+    window.history.replaceState({}, '', '/chat');
+    const view = renderShell('Chat');
+
+    window.history.pushState({}, '', '/games');
+    nav.pathname = '/games';
+    view.rerender(
+      <ChakraProvider>
+        <LayoutContent>
+          <h1>Games</h1>
+        </LayoutContent>
+      </ChakraProvider>,
+    );
+
+    await act(async () => {
+      window.history.back();
+    });
+    nav.pathname = '/chat';
+    view.rerender(
+      <ChakraProvider>
+        <LayoutContent>
+          <h1>Chat</h1>
+        </LayoutContent>
+      </ChakraProvider>,
+    );
+
+    await act(async () => {
+      window.dispatchEvent(new CustomEvent(OPEN_CHAT_EVENT));
+    });
+    fireEvent.click(await screen.findByRole('button', { name: 'Close chat' }));
+
+    expect(nav.replace).toHaveBeenCalledWith('/');
+    expect(nav.back).not.toHaveBeenCalled();
+  });
 });

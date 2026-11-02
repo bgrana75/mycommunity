@@ -32,15 +32,13 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   const isPhone = usePhoneLayout();
   const isPhoneRef = useRef(isPhone);
   isPhoneRef.current = isPhone;
-  // In-app page that was showing before this one. Closing /chat on a phone
-  // returns there; a direct visit (no previous app page) goes home.
-  const previousPathRef = useRef<string | null>(null);
-  const pathRef = useRef(pathname);
   const seenPathRef = useRef<string | null>(null);
-  if (pathRef.current !== pathname) {
-    previousPathRef.current = pathRef.current;
-    pathRef.current = pathname;
-  }
+  // The document's first history entry is the landing visit. Later entries
+  // created by in-app navigations are marked so Close can tell them from a
+  // direct /chat visit the user backed onto. Refs stay out of render: React
+  // may replay a render and a write there would not match the history entry.
+  const landingHistoryRef = useRef(true);
+  const historyPoppedRef = useRef(false);
   const isShortsPage = pathname === '/shorts';
   // useSearchParams() on this component bails the layout's suspense boundary
   // out to client rendering (`BAILOUT_TO_CLIENT_SIDE_RENDERING`), so the home
@@ -120,6 +118,27 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     setIsChatMinimized(false);
   }, [isChatPopoutMode]);
 
+  useEffect(() => {
+    const onPop = () => { historyPoppedRef.current = true; };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  useEffect(() => {
+    if (landingHistoryRef.current) {
+      landingHistoryRef.current = false;
+      return;
+    }
+    if (historyPoppedRef.current) {
+      historyPoppedRef.current = false;
+      return;
+    }
+    const current = window.history.state;
+    const base = current && typeof current === 'object' ? current as Record<string, unknown> : {};
+    if (base.snapieInApp === true) return;
+    window.history.replaceState({ ...base, snapieInApp: true }, '');
+  }, [pathname]);
+
   // /chat asks for the existing panel once a session exists. Guests stay on
   // the page's sign-in gate; opening the overlay on mobile would cover it.
   useEffect(() => {
@@ -158,10 +177,14 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     // width without the state hook having flushed yet.
     const phoneNow = typeof window !== 'undefined'
       && window.matchMedia('(max-width: 479px)').matches;
+    const historyState = window.history.state;
+    const fromInAppNavigation = !!historyState
+      && typeof historyState === 'object'
+      && (historyState as { snapieInApp?: unknown }).snapieInApp === true;
     const action = chatCloseDestination({
       isPhone: phoneNow,
       pathname,
-      previousPath: previousPathRef.current,
+      fromInAppNavigation,
     });
     if (action === 'back') routerRef.current.back();
     else if (action === 'home') routerRef.current.replace('/');

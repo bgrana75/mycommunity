@@ -25,6 +25,14 @@ export interface ChangelogEntry {
 // only things a user would actually notice belong here.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-02',
+    date: '2026-11-02',
+    title: 'Phone chat',
+    items: [
+      { type: 'fix', text: 'On a phone, chat sits between the header and the tab bar. Close returns to the page you opened it from, or home if you opened chat directly.' },
+    ],
+  },
+  {
     id: '2026-10-29',
     date: '2026-10-29',
     title: 'Small fixes',
