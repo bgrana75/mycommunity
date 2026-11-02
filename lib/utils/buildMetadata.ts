@@ -69,14 +69,17 @@ export function buildPostMetadata(post: {
     ogImage = getHiveAvatarUrl(post.author, 'large');
   }
 
+  const canonical = `/@${post.author}/${post.permlink}`;
+
   return {
     title,
     description,
+    alternates: { canonical },
     openGraph: {
       title,
       description,
       type: 'article',
-      url: `/@${post.author}/${post.permlink}`,
+      url: canonical,
       siteName: SITE_NAME,
       images: [{ url: ogImage, width: 1200, height: 630 }],
     },
@@ -102,15 +105,17 @@ export function buildProfileMetadata(profile: {
   const ogImage = coverImage || profileImage;
 
   const title = `@${profile.name}`;
+  const canonical = `/@${profile.name}`;
 
   return {
     title,
     description,
+    alternates: { canonical },
     openGraph: {
       title,
       description,
       type: 'profile',
-      url: `/@${profile.name}`,
+      url: canonical,
       siteName: SITE_NAME,
       images: ogImage ? [{ url: ogImage }] : [],
     },
@@ -119,6 +124,37 @@ export function buildProfileMetadata(profile: {
       title,
       description,
       images: ogImage ? [ogImage] : [],
+    },
+  };
+}
+
+/** Tag feed (`/explore/<tag>`) or community feed (`/explore/hive-xxxx`). */
+export function buildExploreTagMetadata(tag: string, communityTitle?: string | null): Metadata {
+  const isCommunity = /^hive-\d+$/.test(tag);
+  const display = communityTitle || (isCommunity ? tag : `#${tag}`);
+  const title = isCommunity
+    ? (communityTitle ? `${communityTitle} (${tag})` : tag)
+    : `#${tag}`;
+  const description = isCommunity
+    ? `Posts from the ${display} community on Snapie`
+    : `Trending posts tagged ${display} on Snapie`;
+  const canonical = `/explore/${encodeURIComponent(tag)}`;
+
+  return {
+    title,
+    description,
+    alternates: { canonical },
+    openGraph: {
+      title,
+      description,
+      type: 'website',
+      url: canonical,
+      siteName: SITE_NAME,
+    },
+    twitter: {
+      card: 'summary',
+      title,
+      description,
     },
   };
 }

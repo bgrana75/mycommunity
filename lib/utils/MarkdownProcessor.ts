@@ -37,7 +37,7 @@ export async function processMarkdownWithVideos(
       }
     },
     usertagUrlFn: (account: string) => "/@" + account,
-    hashtagUrlFn: (hashtag: string) => "/trending/" + hashtag,
+    hashtagUrlFn: (hashtag: string) => "/explore/" + hashtag,
     isLinkSafeFn: (url: string) => true,
     addExternalCssClassToMatchingLinksFn: (url: string) => true,
     ipfsPrefix: "https://ipfs.skatehive.app",

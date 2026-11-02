@@ -1,0 +1,32 @@
+---
+description: Never install Node dependencies on the host; only inside Docker
+alwaysApply: true
+---
+
+# Docker-only node_modules
+
+Never install or refresh Node dependencies on the host machine.
+
+## Forbidden on the host
+
+- `pnpm install` / `npm install` / `yarn install` (any variant, including `--frozen-lockfile`)
+- Adding packages with `pnpm add` / `npm i` / `yarn add` that write into host `node_modules`
+- `rm -rf node_modules` followed by a host reinstall
+- Copying a host `node_modules` tree into a Docker image
+
+## Required
+
+- Install and run Node tooling **inside Docker** only (`Dockerfile` already runs `pnpm install --frozen-lockfile`).
+- Prefer `docker compose` for the app (`docker compose up --build`).
+- For one-off scripts/tests/typecheck, run them in a container, e.g.:
+
+```bash
+docker compose run --rm --no-deps web pnpm test
+docker compose run --rm --no-deps web pnpm typecheck
+```
+
+- If Compose is awkward for a one-shot, use `docker build` + `docker run --rm <image> pnpm <script>` instead of installing on the host.
+
+## Why
+
+Host `node_modules` drifts from the Linux image (optional native bindings, arch mismatches) and pollutes the working tree. The Dockerfile is the source of truth for dependency install.

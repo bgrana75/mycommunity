@@ -85,7 +85,7 @@ describe('markdownRenderer inline order', () => {
     it('keeps a hashtag in place beside a markdown link', () => {
         const html = markdownRenderer('Wow #hive the [Factory](https://example.com/tag) is cool');
         expect(visibleText(html)).toBe('Wow #hive the Factory is cool');
-        expect(html).toContain('href="/trending/hive"');
+        expect(html).toContain('href="/explore/hive"');
         expect(html.indexOf('#hive')).toBeLessThan(html.indexOf('Factory'));
         expect(html.indexOf('Factory')).toBeLessThan(html.indexOf('is cool'));
     });

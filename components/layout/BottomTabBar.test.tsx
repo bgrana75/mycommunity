@@ -70,7 +70,9 @@ describe('BottomTabBar', () => {
 
   it('asks a guest to log in instead of linking to a wallet page', () => {
     renderBar();
-    fireEvent.click(screen.getByRole('link', { name: /Wallet/ }));
+    const wallet = screen.getByRole('link', { name: /Wallet/ });
+    expect(wallet.getAttribute('href')).toBe('#');
+    fireEvent.click(wallet);
     expect(mocks.openLoginModal).toHaveBeenCalledTimes(1);
   });
 
