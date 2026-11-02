@@ -67,7 +67,7 @@ export function Avatar({
 
   if (href) {
     return (
-      <ChakraLink as={NextLink} href={href} display="inline-block" _hover={{ textDecoration: 'none' }}>
+      <ChakraLink as={NextLink} href={href} prefetch={false} display="inline-block" _hover={{ textDecoration: 'none' }}>
         {content}
       </ChakraLink>
     );

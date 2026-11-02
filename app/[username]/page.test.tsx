@@ -1,8 +1,13 @@
 import { describe, it, expect, vi } from 'vitest';
 
+vi.mock('next/navigation', () => ({
+  notFound: () => {
+    throw new Error('NEXT_NOT_FOUND');
+  },
+}));
+
 // /@username must keep rendering the profile view. A segment that does not
-// start with @ is not a profile — /profile is a static route of its own, and
-// this dynamic segment must not start inventing profiles for bare paths.
+// start with @ is not a profile, so it must 404 (not render an empty 200 page).
 
 vi.mock('../[...slug]/views/ProfileView', () => ({
   default: function ProfileView() {
@@ -38,9 +43,9 @@ describe('[username] profile route', () => {
     expect(usernameProp(element)).toBe('bob');
   });
 
-  it('renders nothing for a segment that is not an @username', async () => {
-    expect(await ProfileRoute(usernameParams('profile'))).toBeNull();
-    expect(await ProfileRoute(usernameParams('alice'))).toBeNull();
+  it('returns a 404 for a segment that is not an @username', async () => {
+    await expect(ProfileRoute(usernameParams('wallet'))).rejects.toThrow('NEXT_NOT_FOUND');
+    await expect(ProfileRoute(usernameParams('alice'))).rejects.toThrow('NEXT_NOT_FOUND');
   });
 
   it('still builds metadata from the @username segment', async () => {

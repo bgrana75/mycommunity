@@ -4,6 +4,7 @@ import NextLink from 'next/link';
 import { FiArrowRight } from 'react-icons/fi';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLoginModal } from '@/contexts/LoginModalContext';
+import { usePointsSummary } from '@/hooks/usePointsSummary';
 import { GAMES_FEATURE_FLAG } from '@/lib/points/config';
 import snapieVictory from '@/components/games/puff-quest/assets/snapie-victory.png';
 import snapieBlastCard from '@/components/games/snapie-blast/assets/snapie-blast-card.png';
@@ -75,8 +76,9 @@ const GAMES_CATALOG: {
 ];
 
 export default function GamesPage() {
-  const { isLoggedIn } = useCurrentUser();
+  const { username, isLoggedIn } = useCurrentUser();
   const { openLoginModal } = useLoginModal();
+  const points = usePointsSummary(username);
 
   if (!GAMES_FEATURE_FLAG) {
     return (
@@ -99,6 +101,11 @@ export default function GamesPage() {
               ? 'Play games and earn Snapie Points. Blocks pays out on a win.'
               : 'Snapie Blocks is open to guests. Log in to earn points — guest wins stay at zero.'}
           </Text>
+          {isLoggedIn && (
+            <Text mt={1} color="fg.muted">
+              Balance: <strong>{points?.balance ?? '—'}</strong> Snapie Points
+            </Text>
+          )}
         </Box>
 
         <SimpleGrid columns={{ base: 1, md: 2, lg: 3 }} spacing={6}>

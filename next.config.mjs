@@ -13,8 +13,8 @@ const facadeReactUi = path.join(projectDir, 'lib/aioha/facade-react-ui.tsx');
 /** @type {import('next').NextConfig} */
 const nextConfig = {
     experimental: {
-        // instrumentation.ts loads by default. Framework-script deferral runs
-        // only when SNAPIE_DEFER_FRAMEWORK_SCRIPTS=1. See
+        // instrumentation.ts loads by default. Home HTML holds framework
+        // scripts unless SNAPIE_DEFER_FRAMEWORK_SCRIPTS=0. See
         // lib/perf/deferFrameworkScripts.js.
         serverActions: {
             bodySizeLimit: '10mb', // Increase the body size limit

@@ -47,6 +47,30 @@ describe('installDeferredScriptResponse', () => {
     expect(text).toContain('<p>Hello</p>');
   });
 
+  it('streams the early HTML through when the rest of the document is slow', async () => {
+    const head = '<!DOCTYPE html><html><head><script src="/_next/static/chunks/app-aaa.js" async=""></script></head><body><img src="/photo.jpg"/>';
+    const tail = '<p>late</p></body></html>';
+    const server = createServer((_req, res) => {
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      res.write(head);
+      setTimeout(() => res.end(tail), 600);
+    });
+    servers.push(server);
+    const port = await listen(server);
+
+    const started = Date.now();
+    const res = await fetch(`http://127.0.0.1:${port}/`);
+    const reader = res.body!.getReader();
+    const first = await reader.read();
+    const firstAt = Date.now() - started;
+    expect(new TextDecoder().decode(first.value)).toContain('<img src="/photo.jpg"/>');
+    expect(firstAt).toBeLessThan(500);
+
+    let rest = '';
+    for (let r = await reader.read(); !r.done; r = await reader.read()) rest += new TextDecoder().decode(r.value);
+    expect(rest).toContain('<p>late</p>');
+  });
+
   it('rewrites a gzipped HTML document and leaves javascript alone', async () => {
     const server = createServer((req, res) => {
       if (req.url === '/app.js') {
@@ -90,21 +114,41 @@ describe('installDeferredScriptResponse', () => {
     expect(text).toContain('DOMContentLoaded');
   });
 
-  it('leaves the script tags in place unless the flag is exactly 1', async () => {
-    for (const value of [undefined, '', '0', 'true', 'yes'] as const) {
-      if (value === undefined) delete process.env.SNAPIE_DEFER_FRAMEWORK_SCRIPTS;
-      else process.env.SNAPIE_DEFER_FRAMEWORK_SCRIPTS = value;
-      const server = createServer((_req, res) => {
-        res.setHeader('content-type', 'text/html; charset=utf-8');
-        res.writeHead(200);
-        res.end(HTML);
-      });
-      servers.push(server);
-      const port = await listen(server);
-      const text = await (await fetch(`http://127.0.0.1:${port}/`)).text();
-      expect(text, `flag ${String(value)}`).toContain('<script src="/_next/static/chunks/app-aaa.js" async=""></script>');
-      expect(text, `flag ${String(value)}`).not.toContain('data-snapie-src');
-      expect(text).toContain('<p>Hello</p>');
-    }
+  it('rewrites home when the flag is unset and leaves scripts when it is 0', async () => {
+    delete process.env.SNAPIE_DEFER_FRAMEWORK_SCRIPTS;
+    const on = createServer((_req, res) => {
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      res.writeHead(200);
+      res.end(HTML);
+    });
+    servers.push(on);
+    const onText = await (await fetch(`http://127.0.0.1:${await listen(on)}/`)).text();
+    expect(onText).toContain('data-snapie-src="/_next/static/chunks/app-aaa.js"');
+
+    process.env.SNAPIE_DEFER_FRAMEWORK_SCRIPTS = '0';
+    const off = createServer((_req, res) => {
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      res.writeHead(200);
+      res.end(HTML);
+    });
+    servers.push(off);
+    const offText = await (await fetch(`http://127.0.0.1:${await listen(off)}/`)).text();
+    expect(offText).toContain('<script src="/_next/static/chunks/app-aaa.js" async=""></script>');
+    expect(offText).not.toContain('data-snapie-src');
+  });
+
+  it('does not rewrite HTML for routes other than home', async () => {
+    delete process.env.SNAPIE_DEFER_FRAMEWORK_SCRIPTS;
+    const server = createServer((_req, res) => {
+      res.setHeader('content-type', 'text/html; charset=utf-8');
+      res.writeHead(200);
+      res.end(HTML);
+    });
+    servers.push(server);
+    const port = await listen(server);
+    const text = await (await fetch(`http://127.0.0.1:${port}/games/snapie-blocks`)).text();
+    expect(text).toContain('<script src="/_next/static/chunks/app-aaa.js" async=""></script>');
+    expect(text).not.toContain('data-snapie-src');
+    expect(text).toContain('<p>Hello</p>');
   });
 });

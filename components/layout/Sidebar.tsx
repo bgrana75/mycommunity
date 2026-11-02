@@ -99,14 +99,17 @@ export default function Sidebar({ isChatOpen = false, setIsChatOpen, chatUnreadC
             as="nav"
             bg="surface"
             p={3}
-            w={forceCompact ? '72px' : { base: 'full', sm: '72px', md: '260px' }}
-            h="100vh"
+            // Width comes from the slot in app/sidebarSlot.css — this box
+            // just fills it (see LayoutContent, which only mounts this
+            // component once that slot is on screen).
+            w="100%"
+            h="100%"
             overflowY="auto"
-            position={{ base: 'relative', sm: 'sticky' }}
+            position="relative"
             top={0}
             mt={0}
-            alignSelf={{ base: 'auto', sm: 'flex-start' }}
-            display={{ base: 'none', sm: 'block' }}
+            alignSelf="auto"
+            display="block"
             transition="width 0.3s ease"
             borderRight="1px solid"
             borderRightColor="surfaceBorder"

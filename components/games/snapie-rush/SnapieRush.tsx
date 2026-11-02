@@ -11,6 +11,7 @@ import {
 
 import { VIEW_H, VIEW_W, createEngine, type SnapieRushEngine } from "./game/engine";
 import { useFullscreen, usePortraitOrientation } from "@/hooks/useFullscreen";
+import { TouchControls } from "../shared/TouchControls";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import type {
   SnapieControls,
@@ -448,42 +449,13 @@ export const SnapieRush = forwardRef<SnapieControls, SnapieRushProps>(function S
       )}
 
       {touch && (
-        <div style={{ flexShrink: 0, display: "flex", gap: 8, marginTop: 8 }}>
-          {(
-            [
-              ["left", "◀", "Steer left"],
-              ["brake", "BRK", "Brake"],
-              ["accel", "GAS", "Accelerate"],
-              ["right", "▶", "Steer right"],
-            ] as const
-          ).map(([side, label, aria]) => (
-            <button
-              key={side}
-              type="button"
-              aria-label={aria}
-              onPointerDown={(e) => {
-                e.preventDefault();
-                hold(side, true);
-              }}
-              onPointerUp={() => hold(side, false)}
-              onPointerLeave={() => hold(side, false)}
-              onPointerCancel={() => hold(side, false)}
-              style={{
-                flex: 1,
-                height: isFullscreen ? 52 : 64,
-                fontFamily: PIXEL_FONT,
-                fontSize: side === "left" || side === "right" ? 16 : 9,
-                background: SHELL,
-                color: side === "brake" ? ORANGE : CYAN,
-                border: `2px solid ${side === "brake" ? ORANGE : CYAN}`,
-                touchAction: "none",
-                cursor: "pointer",
-              }}
-            >
-              {label}
-            </button>
-          ))}
-        </div>
+        <TouchControls
+          fullscreen={isFullscreen}
+          dpad={{ left: "left", right: "right" }}
+          actions={[{ label: "GAS", code: "accel", primary: true }, { label: "BRK", code: "brake" }]}
+          press={(c) => hold(c as "left" | "right" | "accel" | "brake", true)}
+          release={(c) => hold(c as "left" | "right" | "accel" | "brake", false)}
+        />
       )}
     </div>
   );

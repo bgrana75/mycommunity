@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect, forwardRef, useImperativeHandle } from 'react';
-import { Box, HStack, Button, Image, IconButton, Wrap, Spinner, Progress, Text, VStack, Menu, MenuButton, MenuList, MenuItem } from '@chakra-ui/react';
+import { Box, HStack, Image, IconButton, Wrap, Spinner, Progress, Text, VStack } from '@chakra-ui/react';
 import MentionHighlightedTextarea from '@/components/shared/MentionHighlightedTextarea';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import GiphySelector from './GiphySelector';
@@ -72,6 +72,9 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
     const [isLoading, setIsLoading] = useState(false);
     const { percentHbd } = useUserSettings();
     const [isMemePickerOpen, setIsMemePickerOpen] = useState(false);
+    const [emojiOpen, setEmojiOpen] = useState(false);
+    const emojiRef = useRef<HTMLDivElement>(null);
+    const emojiToggleRef = useRef<HTMLButtonElement>(null);
     const [memeBeneficiaries, setMemeBeneficiaries] = useState<Beneficiary[]>([]);
     const [memeTemplateIds, setMemeTemplateIds] = useState<string[]>([]);
     const [isMemeUploading, setIsMemeUploading] = useState(false);
@@ -135,6 +138,25 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
         window.addEventListener('message', onMessage);
         return () => window.removeEventListener('message', onMessage);
     }, []);
+
+    useEffect(() => {
+        if (!emojiOpen) return;
+        const onDoc = (event: MouseEvent) => {
+            if (!emojiRef.current?.contains(event.target as Node)) setEmojiOpen(false);
+        };
+        const onKey = (event: KeyboardEvent) => {
+            if (event.key === 'Escape') {
+                setEmojiOpen(false);
+                emojiToggleRef.current?.focus();
+            }
+        };
+        document.addEventListener('mousedown', onDoc);
+        document.addEventListener('keydown', onKey);
+        return () => {
+            document.removeEventListener('mousedown', onDoc);
+            document.removeEventListener('keydown', onKey);
+        };
+    }, [emojiOpen]);
 
     const handleEmojiClick = (emoji: string) => {
         const el = postBodyRef.current;
@@ -478,15 +500,7 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
     }
 
     return (
-        <Box
-            bg="surface"
-            p={4}
-            mb={3}
-            borderRadius="10px"
-            border="tb1"
-            boxShadow="lg"
-            backdropFilter="blur(18px)"
-        >
+        <div className="feed-composer">
             <MentionHighlightedTextarea
                 placeholder={!user ? "Please log in to post..." : "What's happening?"}
                 bg="muted"
@@ -501,114 +515,87 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
                 onKeyDown={handleKeyDown}
                 onPaste={handlePaste}
             />
-            <HStack justify="space-between" mb={3} flexWrap="wrap" gap={2}>
-                <HStack flexShrink={1} minW={0}>
-                    <Button
-                        as="label" variant="ghost" borderRadius="full"
-                        color="overlay.600" _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
-                        isDisabled={!user || isLoading} size={{ base: 'sm', md: 'md' }}
+            <div className="feed-toolbar">
+                <div className="feed-tools" ref={emojiRef}>
+                    <label
+                        className={!user || isLoading ? 'feed-tool-btn is-disabled' : 'feed-tool-btn'}
+                        aria-label="Image"
                     >
                         <FaImage size={20} />
                         <ImageUploader onUpload={handleImageSelection} />
-                    </Button>
-                    <Button
-                        variant="ghost" borderRadius="full"
-                        color="overlay.600" _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
-                        onClick={() => setGiphyModalOpen(!isGiphyModalOpen)} isDisabled={!user || isLoading} size={{ base: 'sm', md: 'md' }}
+                    </label>
+                    <button
+                        type="button"
+                        className="feed-tool-btn"
+                        onClick={() => setGiphyModalOpen(!isGiphyModalOpen)}
+                        disabled={!user || isLoading}
+                        aria-label="GIF"
                     >
                         <MdGif size={44} />
-                    </Button>
-                    <Menu>
-                        <MenuButton
-                            as={Button}
-                            variant="ghost" borderRadius="full"
-                            color="overlay.600" _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
-                            isDisabled={!user || isLoading} size={{ base: 'sm', md: 'md' }}
-                            aria-label="Emoji"
-                        >
-                            <FaSmile size={20} />
-                        </MenuButton>
-                        <MenuList maxH="200px" overflowY="auto" display="grid" gridTemplateColumns="repeat(6, 1fr)" gap={1} p={2} bg="surface" borderColor="surfaceBorder">
+                    </button>
+                    <button
+                        ref={emojiToggleRef}
+                        type="button"
+                        className="feed-tool-btn"
+                        aria-label="Emoji"
+                        aria-expanded={emojiOpen}
+                        disabled={!user || isLoading}
+                        onClick={() => setEmojiOpen(open => !open)}
+                    >
+                        <FaSmile size={20} />
+                    </button>
+                    {emojiOpen && (
+                        <div className="feed-emoji-pop">
                             {ALL_COMMON_EMOJIS.map((emoji, index) => (
-                                <MenuItem
+                                <button
                                     key={index}
-                                    onClick={() => handleEmojiClick(emoji)}
-                                    minH="32px"
-                                    w="32px"
-                                    display="flex"
-                                    alignItems="center"
-                                    justifyContent="center"
-                                    fontSize="lg"
-                                    p={1}
+                                    type="button"
+                                    onClick={() => { handleEmojiClick(emoji); setEmojiOpen(false); emojiToggleRef.current?.focus(); }}
                                 >
                                     {emoji}
-                                </MenuItem>
+                                </button>
                             ))}
-                        </MenuList>
-                    </Menu>
-                    <Button
-                        variant="ghost" borderRadius="full"
-                        color="overlay.600" _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
+                        </div>
+                    )}
+                    <button
+                        type="button"
+                        className="feed-tool-btn"
                         onClick={handleVideoButtonClick}
-                        isDisabled={!user || isLoading || hasVideoInProgress || hasAudio || hasMeme} size={{ base: 'sm', md: 'md' }}
+                        disabled={!user || isLoading || hasVideoInProgress || hasAudio || hasMeme}
                         title={hasMeme ? 'Remove meme to add a video' : undefined}
+                        aria-label="Video"
                     >
                         <FaVideo size={20} />
-                    </Button>
-                    <Button
-                        variant="ghost" borderRadius="full"
-                        color="overlay.600" _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
-                        onClick={() => setAudioRecorderOpen(true)} isDisabled={!user || isLoading || hasVideoInProgress || hasAudio} size={{ base: 'sm', md: 'md' }}
+                    </button>
+                    <button
+                        type="button"
+                        className="feed-tool-btn"
+                        onClick={() => setAudioRecorderOpen(true)}
+                        disabled={!user || isLoading || hasVideoInProgress || hasAudio}
+                        aria-label="Audio"
                     >
                         <FaMicrophone size={20} />
-                    </Button>
-                    <Button
-                        variant="ghost" borderRadius="full"
-                        color={hasMeme ? 'primary' : 'overlay.600'}
-                        _hover={{ bg: 'rgba(28, 161, 241, 0.10)', color: 'overlay.700' }}
+                    </button>
+                    <button
+                        type="button"
+                        className={hasMeme ? 'feed-tool-btn is-active' : 'feed-tool-btn'}
                         onClick={() => setIsMemePickerOpen(true)}
-                        isDisabled={!user || isLoading || hasVideoInProgress || isMemeUploading}
-                        size={{ base: 'sm', md: 'md' }}
+                        disabled={!user || isLoading || hasVideoInProgress || isMemeUploading}
                         title={hasVideoInProgress ? 'Remove video to add a meme' : 'Add a meme'}
                     >
-                        {isMemeUploading ? <Spinner size="xs" /> : (
-                            <Box
-                                as="span"
-                                display="inline-flex"
-                                alignItems="center"
-                                justifyContent="center"
-                                minW="34px"
-                                h="20px"
-                                px={1}
-                                border="1.5px solid currentColor"
-                                borderRadius="4px"
-                                fontSize="9px"
-                                fontWeight="800"
-                                letterSpacing="0.3px"
-                                lineHeight="1"
-                            >
-                                MEME
-                            </Box>
-                        )}
-                    </Button>
-                </HStack>
-                <Button
+                        {isMemeUploading ? <Spinner size="xs" /> : <span className="feed-meme-mark">MEME</span>}
+                    </button>
+                </div>
+                <button
+                    type="button"
+                    className="feed-post-btn"
                     onClick={handleComment}
-                    isDisabled={isDisabled || Boolean(selectedVideo && !videoEmbedUrl)}
-                    flexShrink={0}
-                    size={{ base: 'sm', md: 'md' }}
-                    borderRadius="full"
-                    px={6}
-                    bg="#2d5278"
-                    color="white"
-                    fontWeight="semibold"
-                    _hover={{ bg: '#356090' }}
-                    _active={{ bg: '#244466' }}
-                    _disabled={{ opacity: 0.45, cursor: 'not-allowed' }}
+                    disabled={isDisabled || Boolean(selectedVideo && !videoEmbedUrl)}
                 >
                     {isLoading ? <Spinner size="sm" /> : imagesStillUploading ? "Uploading..." : (!user ? "Log in to post" : buttonText)}
-                </Button>
-            </HStack>
+                </button>
+            </div>
+            {(uploadingImages.length > 0 || selectedGif || selectedVideo || audioEmbedUrl || memeTemplateIds.length > 0) && (
             <Wrap spacing={4}>
                 {uploadingImages.map((image, index) => (
                     <Box key={index} position="relative" minW="100px">
@@ -723,6 +710,7 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
                     </Box>
                 )}
             </Wrap>
+            )}
             {isGiphyModalOpen && (
                 <GiphySelector
                     apiKey={process.env.GIPHY_API_KEY || 'qXGQXTPKyNJByTFZpW7Kb0tEFeB90faV'}
@@ -733,19 +721,21 @@ const SnapComposer = forwardRef<HTMLTextAreaElement, SnapComposerProps>(function
                     }}
                 />
             )}
-            {user && (
+            {user && isAudioRecorderOpen && (
                 <AudioRecorder
-                    isOpen={isAudioRecorderOpen}
+                    isOpen
                     onClose={() => setAudioRecorderOpen(false)}
                     onAudioRecorded={(playUrl) => setAudioEmbedUrl(playUrl)}
                     username={user}
                 />
             )}
-            <MemePickerModal
-                isOpen={isMemePickerOpen}
-                onClose={() => setIsMemePickerOpen(false)}
-            />
-        </Box>
+            {isMemePickerOpen && (
+                <MemePickerModal
+                    isOpen
+                    onClose={() => setIsMemePickerOpen(false)}
+                />
+            )}
+        </div>
     );
 });
 

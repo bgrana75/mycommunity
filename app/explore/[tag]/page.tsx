@@ -76,7 +76,11 @@ export default function ExploreTagPage(props: { params: Promise<{ tag: string }>
       };
       if (posts.length < 20) setHasMore(false);
     } catch (e) {
-      console.error(e);
+      // Hivemind rejects a tag with no posts ("Tag <x> does not exist"), but
+      // dhive often drops that text and leaves only "category=hivemind".
+      const message = e instanceof Error ? e.message : String(e);
+      if (/does not exist|hivemind/i.test(message)) setHasMore(false);
+      else console.error('Failed to fetch explore posts:', message);
     } finally {
       isFetching.current = false;
     }
@@ -190,6 +194,11 @@ export default function ExploreTagPage(props: { params: Promise<{ tag: string }>
         hasMore={hasMore}
         searchMode={false}
       />
+      {!hasMore && allPosts.length === 0 && (
+        <Text color="overlay.500" fontSize="sm" textAlign="center" py={10} wordBreak="break-word">
+          No posts found for {displayName}
+        </Text>
+      )}
     </Box>
   );
 }

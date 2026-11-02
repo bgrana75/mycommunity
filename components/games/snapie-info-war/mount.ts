@@ -1,17 +1,11 @@
 import { Game } from "./game/game";
 import { audio } from "./game/audio";
 import { WEAP } from "./game/entities";
+import { createTouchOverlay, type TouchOverlayHandle } from "../shared/touchOverlay";
 import {
   GAME_ID, GAME_VERSION,
   type SnapieEvent, type SnapieHud, type SnapieMountHandle, type SnapieOptions, type SnapiePhase, type SnapieResult,
 } from "./types";
-
-const TOUCH: { label: string; code: string; area: "pad" | "act" }[] = [
-  { label: "◀", code: "KeyA", area: "pad" }, { label: "▲", code: "KeyW", area: "pad" },
-  { label: "▼", code: "KeyS", area: "pad" }, { label: "▶", code: "KeyD", area: "pad" },
-  { label: "JUMP", code: "Space", area: "act" }, { label: "FIRE", code: "KeyJ", area: "act" },
-  { label: "SWAP", code: "KeyK", area: "act" }, { label: "II", code: "KeyP", area: "act" },
-];
 
 function newId() {
   return typeof crypto !== "undefined" && "randomUUID" in crypto ? crypto.randomUUID() : `s-${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
@@ -40,24 +34,25 @@ export function mountSnapieInfoWar(element: HTMLElement, options: SnapieOptions 
   game.menus = showMenus;
 
   // ---- touch controls ----
+  // Floating over the screen in fullscreen, a bar under the canvas otherwise.
+  let overlay: TouchOverlayHandle | null = null;
+  const syncOverlayMode = () => overlay?.setMode(document.fullscreenElement?.contains(root) ? "overlay" : "bar");
   if (touch) {
-    const bar = document.createElement("div");
-    bar.style.cssText = "display:flex;justify-content:space-between;gap:8px;padding:8px;font:10px 'Press Start 2P',monospace;";
-    for (const area of ["pad", "act"] as const) {
-      const g = document.createElement("div"); g.style.cssText = "display:flex;gap:6px;flex-wrap:wrap;";
-      for (const b of TOUCH.filter((t) => t.area === area)) {
-        const btn = document.createElement("button");
-        btn.type = "button"; btn.textContent = b.label; btn.setAttribute("aria-label", b.code);
-        btn.style.cssText = "min-width:44px;height:44px;border:2px solid #3a3150;background:#1a1426;color:#ffd21f;border-radius:6px;font:inherit;touch-action:none;";
-        const down = (e: Event) => { e.preventDefault(); audio.init(); game.input.press(b.code); if (b.code === "KeyJ" || b.code === "Space") game.input.press("Enter"); };
-        const up = (e: Event) => { e.preventDefault(); game.input.release(b.code); game.input.release("Enter"); };
-        btn.addEventListener("pointerdown", down); btn.addEventListener("pointerup", up);
-        btn.addEventListener("pointercancel", up); btn.addEventListener("pointerleave", up);
-        g.appendChild(btn);
-      }
-      bar.appendChild(g);
-    }
-    root.appendChild(bar);
+    overlay = createTouchOverlay(root, {
+      press: (c) => game.input.press(c),
+      release: (c) => game.input.release(c),
+      onTouch: () => audio.init(),
+      dpad: { left: "KeyA", right: "KeyD", up: "KeyW", down: "KeyS" },
+      // JUMP/FIRE double as menu confirm, so they also hold Enter.
+      actions: [
+        { label: "JUMP", code: "Space", alsoPress: ["Enter"], primary: true },
+        { label: "FIRE", code: "KeyJ", alsoPress: ["Enter"], primary: true },
+        { label: "SWAP", code: "KeyK" },
+      ],
+      system: [{ label: "II", code: "KeyP" }],
+    });
+    document.addEventListener("fullscreenchange", syncOverlayMode);
+    syncOverlayMode();
   }
 
   // ---- events ----
@@ -149,6 +144,8 @@ export function mountSnapieInfoWar(element: HTMLElement, options: SnapieOptions 
       cancelAnimationFrame(raf);
       window.removeEventListener("message", onMessage);
       window.removeEventListener("keydown", unlock);
+      document.removeEventListener("fullscreenchange", syncOverlayMode);
+      overlay?.destroy();
       game.input.destroy();
       audio.music(null);
       root.remove();

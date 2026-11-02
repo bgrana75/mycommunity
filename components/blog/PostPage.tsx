@@ -1,7 +1,7 @@
 // app/page.tsx
 'use client';
 
-import { Box, Flex, Spinner } from '@chakra-ui/react';
+import { Alert, AlertIcon, Box, Button, Flex, Spinner } from '@chakra-ui/react';
 import PostSidebar from '@/components/blog/PostSidebar';
 import SnapList from '../homepage/SnapList';
 import SnapComposer from '../homepage/SnapComposer';
@@ -16,6 +16,9 @@ import { useHiveUser } from '@/contexts/UserContext';
 import { useSearchParams } from 'next/navigation';
 import { useAuthorMuteGate } from '@/hooks/useAuthorMuteGate';
 import MutedAuthorNotice from '@/components/shared/MutedAuthorNotice';
+import SnapCastBar from '@/components/homepage/SnapCastBar';
+import { useSnapCast } from '@/hooks/useSnapCast';
+import { useUserSettings } from '@/hooks/useUserSettings';
 
 interface PostPageProps {
   author: string
@@ -31,6 +34,7 @@ export default function PostPage({ author, permlink }: PostPageProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [post, setPost] = useState<Discussion | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [retry, setRetry] = useState(0);
   const [conversation, setConversation] = useState<Comment | undefined>();
   const [reply, setReply] = useState<Comment>();
   const [isOpen, setIsOpen] = useState(false);
@@ -44,21 +48,36 @@ export default function PostPage({ author, permlink }: PostPageProps) {
     hasMore: false,
   };
 
+  const { settings } = useUserSettings();
+  const [live, setLive] = useState(searchParams.get('snapcast') === '1');
+  const snapCast = useSnapCast({
+    author,
+    permlink,
+    enabled: live && !isEmbedMode,
+    sound: settings.snapCastSound,
+    updateComments: data.updateComments,
+  });
+
   useEffect(() => {
     async function loadPost() {
       setIsLoading(true);
+      setError(null);
       try {
         const post = await getPost(author, permlink);
-        setPost(post);
+        // Older nodes answer a missing post with an empty object.
+        if (!post.author) setError('Post not found');
+        else setPost(post);
       } catch (err) {
-        setError('Failed to load post');
+        // Current nodes throw "Post <author>/<permlink> does not exist".
+        const missing = err instanceof Error && /does not exist|assert exception/i.test(err.message);
+        setError(missing ? 'Post not found' : 'Failed to load post');
       } finally {
         setIsLoading(false);
       }
     }
 
     loadPost();
-  }, [author, permlink]);
+  }, [author, permlink, retry]);
 
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
@@ -81,16 +100,32 @@ export default function PostPage({ author, permlink }: PostPageProps) {
       json_metadata: '{}',
       title: '',
     } as unknown as Comment;
+    snapCast.markOwnReply();
     data.addComment(optimistic);
     setTimeout(() => data.updateComments(), 3000);
   };
 
   const handleReply = (_partial: Partial<Comment>) => {
+    snapCast.markOwnReply();
     setTimeout(() => {
       data.updateComments();
       setConversationRefreshTrigger(t => t + 1);
     }, 3000);
   };
+
+  if (error && !post) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Alert status="error" borderRadius="md" variant="solid">
+          <AlertIcon />
+          {error}
+          {error !== 'Post not found' && (
+            <Button ml={4} size="sm" onClick={() => setRetry(n => n + 1)}>Retry</Button>
+          )}
+        </Alert>
+      </Box>
+    );
+  }
 
   if (isLoading || muteGate.isChecking || (!post || !author || !permlink)) {
     return (
@@ -116,13 +151,31 @@ export default function PostPage({ author, permlink }: PostPageProps) {
     <Box bg="background" color="text" minH="100vh" p={isEmbedMode ? 2 : 4}>
       <Flex gap={6} align="flex-start">
         <Box flex="1" minW={0}>
-          <PostDetails
-            post={post}
-            isEmbedMode={isEmbedMode}
-            commentCount={commentsData.isLoading ? undefined : commentsData.comments.length}
-          />
+          {/* While live, the post (e.g. the livestream embed) stays pinned above
+              the scrolling replies, capped so it can't eat a phone screen. */}
+          <Box
+            {...(live && !isEmbedMode && !conversation
+              ? { position: 'sticky', top: 0, zIndex: 10, bg: 'background', maxH: '40vh', overflowY: 'auto' }
+              : {})}
+          >
+            <PostDetails
+              post={post}
+              isEmbedMode={isEmbedMode}
+              commentCount={commentsData.isLoading ? undefined : commentsData.comments.length}
+            />
+          </Box>
           {!isEmbedMode && !conversation ? (
             <>
+              <Box mt={3}>
+                <SnapCastBar
+                  author={author}
+                  permlink={permlink}
+                  live={live}
+                  onToggle={() => setLive(l => !l)}
+                  newCount={snapCast.newCount}
+                  onShowNew={snapCast.scrollToTop}
+                />
+              </Box>
               <SnapComposer pa={author} pp={permlink} onNewComment={handleTopLevelComment} post={true} onClose={() => {}} />
               <SnapList
                 author={author}

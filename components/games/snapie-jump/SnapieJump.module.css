@@ -191,6 +191,21 @@
   color: var(--hive-ink);
 }
 
+/* Short screens (a phone in landscape): the portrait layout is taller than the
+   screen and pushed PLAY off the bottom. Lay the title and the controls side by side. */
+@media (max-height: 520px) {
+  .idle {
+    flex-direction: row;
+    justify-content: center;
+    gap: 48px;
+    padding: 12px 24px;
+    overflow-y: auto;
+  }
+  .title { font-size: 2.6rem; -webkit-text-stroke: 2px var(--hive-ink); text-shadow: 0 4px 0 var(--hive-ink); }
+  .tagline { margin-top: 8px; font-size: 0.95rem; }
+  .idleBottom { margin-bottom: 0; gap: 8px; }
+}
+
 .btnHoney {
   font-family: var(--display);
   font-weight: 700;

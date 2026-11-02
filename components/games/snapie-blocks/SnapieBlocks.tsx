@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState, type ReactNode } from 'react';
 import { useFullscreen, usePortraitOrientation } from '@/hooks/useFullscreen';
+import { TouchControls } from '../shared/TouchControls';
 import { useWakeLock } from '@/hooks/useWakeLock';
 import { BLOCKS_BOARD_H, BLOCKS_BOARD_W, BLOCKS_HP_MAX } from '@/lib/games/blocks/constants';
 import { createBlocksEngine, pieceCells, type BlocksEngine, type BlocksInput } from '@/lib/games/blocks/engine';
@@ -275,17 +276,29 @@ export function SnapieBlocksBoard({
         </div>
       </div>
 
-      <div style={{ position: 'relative', border: `2px solid ${CYAN}`, background: PANEL, lineHeight: 0 }}>
+      <div
+        style={{
+          position: 'relative',
+          border: `2px solid ${CYAN}`,
+          background: PANEL,
+          lineHeight: 0,
+          // Fullscreen: the board gets the leftover screen height and is
+          // letterboxed in it. A tall 1:2 board at 100% width overflowed the
+          // screen in landscape.
+          ...(isFullscreen ? { flex: 1, minHeight: 0 } : null),
+        }}
+      >
         <canvas
           ref={canvasRef}
           width={BLOCKS_BOARD_W * CELL}
           height={BLOCKS_BOARD_H * CELL}
           style={{
             width: '100%',
-            height: 'auto',
+            height: isFullscreen ? '100%' : 'auto',
+            objectFit: 'contain',
             display: 'block',
             imageRendering: 'pixelated',
-            aspectRatio: `${BLOCKS_BOARD_W} / ${BLOCKS_BOARD_H}`,
+            aspectRatio: isFullscreen ? undefined : `${BLOCKS_BOARD_W} / ${BLOCKS_BOARD_H}`,
             background: PANEL,
           }}
         />
@@ -335,7 +348,8 @@ export function SnapieBlocksBoard({
 
       <div
         style={{
-          display: 'flex',
+          // Keyboard hints are noise on a phone, and the height is better spent on the board.
+          display: touch && isFullscreen ? 'none' : 'flex',
           justifyContent: 'space-between',
           gap: 8,
           padding: '8px 10px',
@@ -352,23 +366,20 @@ export function SnapieBlocksBoard({
       </div>
 
       {touch && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, marginTop: 8 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <TouchButton label="◀" aria="Move left" onDown={() => hold('left', true)} onUp={() => hold('left', false)} />
-            <TouchButton label="ROT" aria="Rotate" onDown={() => { latchRef.current.cw = true; }} onUp={() => undefined} />
-            <TouchButton label="▶" aria="Move right" onDown={() => hold('right', true)} onUp={() => hold('right', false)} />
-          </div>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <TouchButton label="▼" aria="Soft drop" onDown={() => hold('soft', true)} onUp={() => hold('soft', false)} />
-            <TouchButton label="DROP" aria="Hard drop" onDown={() => { latchRef.current.hard = true; }} onUp={() => undefined} accent />
-            <TouchButton
-              label={paused ? 'GO' : 'II'}
-              aria={paused ? 'Resume' : 'Pause'}
-              onDown={() => setPaused((value) => !value)}
-              onUp={() => undefined}
-            />
-          </div>
-        </div>
+        <TouchControls
+          // Portrait: the tall board fills the screen, so floating controls would cover the stack. Keep the bar and let the board shrink.
+          fullscreen={isFullscreen && !isPortrait}
+          dpad={{ left: 'left', right: 'right', down: 'soft' }}
+          actions={[{ label: 'DROP', code: 'hard', primary: true }, { label: 'ROT', code: 'rotate', primary: true }]}
+          system={[{ label: 'II', code: 'pause' }]}
+          press={(c) => {
+            if (c === 'hard') latchRef.current.hard = true;
+            else if (c === 'rotate') latchRef.current.cw = true;
+            else if (c === 'pause') setPaused((value) => !value);
+            else hold(c as 'left' | 'right' | 'soft', true);
+          }}
+          release={(c) => { if (c === 'left' || c === 'right' || c === 'soft') hold(c, false); }}
+        />
       )}
     </div>
   );
@@ -397,44 +408,3 @@ const overlayStyle: React.CSSProperties = {
   background: 'rgba(26,28,44,0.9)',
   lineHeight: 1.6,
 };
-
-function TouchButton({
-  label,
-  aria,
-  onDown,
-  onUp,
-  accent,
-}: {
-  label: string;
-  aria: string;
-  onDown: () => void;
-  onUp: () => void;
-  accent?: boolean;
-}) {
-  return (
-    <button
-      type="button"
-      aria-label={aria}
-      onPointerDown={(e) => {
-        e.preventDefault();
-        onDown();
-      }}
-      onPointerUp={onUp}
-      onPointerLeave={onUp}
-      onPointerCancel={onUp}
-      style={{
-        flex: 1,
-        height: 56,
-        fontFamily: PIXEL,
-        fontSize: label.length > 2 ? 8 : 14,
-        background: SHELL,
-        color: accent ? ORANGE : CYAN,
-        border: `2px solid ${accent ? ORANGE : CYAN}`,
-        touchAction: 'none',
-        cursor: 'pointer',
-      }}
-    >
-      {label}
-    </button>
-  );
-}

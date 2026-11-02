@@ -1,0 +1,33 @@
+diff --git a/dist/renderers/default/embedder/HtmlDOMParser.js b/dist/renderers/default/embedder/HtmlDOMParser.js
+index 5eadf10fe1323d1c1d75ee582d02a21b4a6f5660..c7778b83dd5fe5b963171eb4a6f1fe2482eb0738 100644
+--- a/dist/renderers/default/embedder/HtmlDOMParser.js
++++ b/dist/renderers/default/embedder/HtmlDOMParser.js
+@@ -221,13 +221,24 @@ class HtmlDOMParser {
+             const data = this.xmlSerializer.serializeToString(child);
+             const content = this.linkify(data);
+             if (this.mutate && content !== data) {
+-                const newChild = this.domParser.parseFromString(`<span>${content}</span>`);
++                // The parsed span is only a wrapper so the replacement can hold
++                // anchors. Insert its children where the text node was.
++                // appendChild would put them after every sibling, so a mention,
++                // hashtag, or bare URL before a markdown link renders the tail
++                // of the sentence first.
++                const parsed = this.domParser.parseFromString(`<span>${content}</span>`);
++                const wrapper = parsed.documentElement;
+                 const parent = child.parentNode;
+-                if (parent) {
+-                    parent.appendChild(newChild);
++                if (parent && wrapper) {
++                    const owner = child.ownerDocument;
++                    const fragment = owner.createDocumentFragment();
++                    Array.from(wrapper.childNodes).forEach((node) => {
++                        fragment.appendChild(owner.importNode(node, true));
++                    });
++                    parent.insertBefore(fragment, child);
+                     parent.removeChild(child);
+                 }
+-                return newChild;
++                return parsed;
+             }
+         }
+         catch (error) {

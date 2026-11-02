@@ -18,7 +18,21 @@ export interface SidecarFeedItem {
 export interface SidecarFeedResult {
     items: SidecarFeedItem[];
     hasMore: boolean;
+    /** Cursor for the next page — the created time of the last item the
+     *  sidecar *selected*, which can be later than the last item it managed
+     *  to hydrate. Absent from older sidecar builds. */
+    before?: string;
+    /** True when the sidecar could not be reached or answered badly. An
+     *  empty result with `failed` is an outage, not the end of the feed. */
+    failed?: boolean;
 }
+
+const FAILED: SidecarFeedResult = { items: [], hasMore: false, failed: true };
+
+// The sidecar hydrates every item in a page with a Hive RPC; when a node is
+// slow a deep page legitimately takes several seconds. 3s turned those
+// into silent "end of feed" responses.
+const SIDECAR_TIMEOUT_MS = 8000;
 
 /** Fetch + timeout + graceful-fallback wrapper around the external sidecar
  *  process's unfiltered, cursor-paginated /feed endpoint (see
@@ -33,11 +47,13 @@ export async function fetchSidecarFeed(params: { before?: string; limit: number 
         const qs = new URLSearchParams({ limit: String(params.limit) });
         if (params.before) qs.set('before', params.before);
         const res = await fetch(`${SIDECAR_URL}/feed?${qs.toString()}`, {
-            signal: AbortSignal.timeout(3000),
+            signal: AbortSignal.timeout(SIDECAR_TIMEOUT_MS),
         });
-        if (!res.ok) return { items: [], hasMore: false };
-        return await res.json();
+        if (!res.ok) return FAILED;
+        const data = await res.json();
+        if (!data || !Array.isArray(data.items)) return FAILED;
+        return data;
     } catch {
-        return { items: [], hasMore: false };
+        return FAILED;
     }
 }

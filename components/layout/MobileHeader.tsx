@@ -41,7 +41,13 @@ export default function MobileHeader({ onMePress }: MobileHeaderProps) {
       top={0}
       left={0}
       right={0}
-      h="56px"
+      // 56px of chrome, plus the notch inset when launched standalone.
+      // env() is 0 in a normal browser tab, so this stays 56px there.
+      h="calc(56px + env(safe-area-inset-top))"
+      pt="env(safe-area-inset-top)"
+      pl="max(16px, env(safe-area-inset-left))"
+      pr="max(16px, env(safe-area-inset-right))"
+      boxSizing="border-box"
       bg="surface"
       borderBottom="1px solid"
       borderBottomColor="surfaceBorder"
@@ -49,7 +55,6 @@ export default function MobileHeader({ onMePress }: MobileHeaderProps) {
       display={{ base: 'flex', sm: 'none' }}
       alignItems="center"
       justifyContent="space-between"
-      px={4}
       zIndex={998}
       boxShadow="0 2px 24px rgba(0,0,0,0.35)"
     >

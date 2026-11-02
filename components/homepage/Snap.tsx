@@ -1,12 +1,13 @@
-import { Box, Text, HStack, Button, Link, VStack, Flex, Wrap, WrapItem, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Textarea, Spinner, useToast } from '@chakra-ui/react';
+import { Button, Modal, ModalOverlay, ModalContent, ModalHeader, ModalBody, ModalFooter, Textarea, Spinner, useToast } from '@chakra-ui/react';
 import { Avatar } from '@/components/shared/Avatar';
 import { MoodBadgeIcon } from '@/components/shared/MoodBadgeIcon';
 import { useMoodBadges } from '@/hooks/useMoodBadges';
 import { Comment } from '@hiveio/dhive';
 import { ExtendedComment } from '@/hooks/useComments';
-import { FaRegComment, FaRegHeart, FaShare, FaHeart, FaEdit, FaRetweet } from "react-icons/fa";
+import { FaRegComment, FaEdit, FaRetweet, FaBroadcastTower } from "react-icons/fa";
 import { FaXTwitter } from "react-icons/fa6";
 import { MdTranslate } from "react-icons/md";
+import { requestSnapCast, isRecentlyActive } from "@/lib/snapcast/intent";
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useState, useMemo, memo, useCallback, useEffect } from 'react';
 import { getPostDate } from '@/lib/utils/GetPostDate';
@@ -164,6 +165,12 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
         if (setConversation) setConversation(comment);
     }
 
+    function handleSnapCast() {
+        if (!setConversation) return;
+        requestSnapCast(comment.author, comment.permlink);
+        setConversation(comment);
+    }
+
     async function handleVote(weight: number) {
         if (!user) {
             throw new Error('Please log in to vote');
@@ -292,29 +299,11 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
             setIsEditing(false);
         }
     }
+    const indented = level > 0 && level <= MAX_INDENT_LEVEL;
     return (
-        <Box pl={level > 0 && level <= MAX_INDENT_LEVEL ? 1 : 0} ml={level > 0 && level <= MAX_INDENT_LEVEL ? 2 : 0}>
-            <Box
-                bg="surface"
-                px={4}
-                pt={4}
-                pb={3}
-                mt={3}
-                mb={3}
-                border="tb1"
-                borderRadius="10px"
-                width="100%"
-                boxShadow="md"
-                backdropFilter="blur(16px)"
-                transition="all 0.18s ease"
-                _hover={{
-                    borderColor: 'rgba(28, 161, 241, 0.34)',
-                    boxShadow: 'lg',
-                    transform: 'translateY(-1px)',
-                }}
-            >
-                <Flex gap={3} align="flex-start">
-                    {/* Left column: avatar */}
+        <div className={indented ? 'snap-indent' : undefined}>
+            <article className="snap-card">
+                <div className="snap-row">
                     <Avatar
                         username={comment.author}
                         size="42px"
@@ -327,88 +316,53 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                         }
                     />
 
-                    {/* Right column: header + content + actions */}
-                    <Box flex={1} minW={0} pt="4px">
-                        {/* Header row: name · date, badges wrap to their own line if they don't fit */}
-                        <Flex align="flex-start" justify="space-between" mb={1}>
-                            <Wrap spacing={1} align="center" flex={1} minW={0}>
-                                <WrapItem>
-                                    <HStack spacing={1}>
-                                        <Link
-                                            as={NextLink}
+                    <div className="snap-main">
+                        <div className="snap-head">
+                            <ul className="snap-meta">
+                                <li>
+                                    <div className="snap-byline">
+                                        <NextLink
                                             href={`/@${comment.author}`}
-                                            fontWeight="semibold"
-                                            fontSize="sm"
-                                            lineHeight="24px"
-                                            minH="24px"
-                                            display="inline-flex"
-                                            alignItems="center"
-                                            noOfLines={1}
-                                            _hover={{ color: 'primary' }}
+                                            prefetch={false}
+                                            className="snap-author"
                                         >
                                             @{comment.author}
-                                        </Link>
-                                        <Text fontSize="sm" color="overlay.400" flexShrink={0}>·</Text>
-                                        <Text fontSize="sm" color="overlay.500" flexShrink={0} suppressHydrationWarning>{commentDate}</Text>
-                                    </HStack>
-                                </WrapItem>
-                                {getTier(comment.author) && <WrapItem><PatronBadge tier={getTier(comment.author)} /></WrapItem>}
-                                {comment.source === 'wave' && <WrapItem><WaveBadge /></WrapItem>}
-                                {comment.isDiscovery && comment.discoveryReason === 'trending' && <WrapItem><TrendingBadge /></WrapItem>}
-                                {comment.isDiscovery && comment.discoveryReason === 'resurrected' && <WrapItem><VaultBadge /></WrapItem>}
-                                {isSnapieCommunityPost(comment) && <WrapItem><SnapieCommunityBadge /></WrapItem>}
-                            </Wrap>
+                                        </NextLink>
+                                        <span className="snap-dot">·</span>
+                                        <span className="snap-date" suppressHydrationWarning>{commentDate}</span>
+                                    </div>
+                                </li>
+                                {getTier(comment.author) && <li><PatronBadge tier={getTier(comment.author)} /></li>}
+                                {comment.source === 'wave' && <li><WaveBadge /></li>}
+                                {comment.isDiscovery && comment.discoveryReason === 'trending' && <li><TrendingBadge /></li>}
+                                {comment.isDiscovery && comment.discoveryReason === 'resurrected' && <li><VaultBadge /></li>}
+                                {isSnapieCommunityPost(comment) && <li><SnapieCommunityBadge /></li>}
+                            </ul>
                             {canEdit && (
-                                <Box
-                                    as="button"
+                                <button
+                                    type="button"
+                                    className="snap-edit"
                                     onClick={() => setIsEditModalOpen(true)}
-                                    color="overlay.400"
-                                    _hover={{ color: 'text' }}
-                                    flexShrink={0}
-                                    ml={2}
                                     aria-label="Edit post"
                                 >
                                     <FaEdit size={12} />
-                                </Box>
+                                </button>
                             )}
-                        </Flex>
+                        </div>
 
-                        {/* NSFW gate */}
                         {isNsfw && !nsfwRevealed ? (
-                            <Flex
-                                direction="column"
-                                align="center"
-                                justify="center"
-                                gap={2}
-                                py={6}
-                                my={2}
-                                borderRadius="md"
-                                border="1px solid rgba(251,191,36,0.2)"
-                                bg="rgba(251,191,36,0.04)"
-                            >
-                                <Text fontSize="lg">⚠️</Text>
-                                <Text fontSize="sm" color="yellow.300" fontWeight="semibold">Sensitive content</Text>
-                                <Box
-                                    as="button"
-                                    fontSize="xs"
-                                    color="overlay.500"
-                                    _hover={{ color: 'primary' }}
-                                    onClick={() => setNsfwRevealed(true)}
-                                >
+                            <div className="snap-nsfw">
+                                <span style={{ fontSize: '18px' }}>⚠️</span>
+                                <span className="snap-nsfw-title">Sensitive content</span>
+                                <button type="button" className="snap-text-btn" onClick={() => setNsfwRevealed(true)}>
                                     Show anyway
-                                </Box>
-                            </Flex>
+                                </button>
+                            </div>
                         ) : (
                             <>
-                        {/* Media — gated so far-offscreen embeds/videos/images
-                            release their resources; see OffscreenGate. */}
                         {media && (
                             eagerMedia && hasMarkdownImage(media) ? (
                                 <>
-                                    {/* Photos in the first viewport are in the server HTML,
-                                        visible without hydration. Embeds on the same card
-                                        stay gated so their iframe is not on the critical path.
-                                        A 3speak CDN url inside markdown is still a photo. */}
                                     <MediaRenderer
                                         key={`media-${comment.permlink}`}
                                         mediaContent={media}
@@ -428,8 +382,6 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                             <OffscreenGate
                                 rootMargin={MEDIA_GATE_MARGIN}
                                 unmountedAspectRatio={
-                                    // 4/3 matches ImageWithFallback. Embeds size themselves,
-                                    // so reserving 4/3 for those would shift the card on mount.
                                     reserveMediaSpace && (isPlainFeedImageMedia(media) || hasMarkdownImage(media)) ? IMAGE_ASPECT_RATIO : undefined
                                 }
                             >
@@ -443,76 +395,37 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                             )
                         )}
 
-                        {/* Text content */}
                         {translatedText ? (
-                            <Box mb={2}>
-                                <Text fontSize="sm" whiteSpace="pre-wrap" wordBreak="break-word">{translatedText}</Text>
-                                <Text
-                                    as="button"
-                                    fontSize="xs"
-                                    color="gray.500"
-                                    mt={1}
-                                    _hover={{ color: 'primary' }}
+                            <div>
+                                <div className="snap-translated">{translatedText}</div>
+                                <button
+                                    type="button"
+                                    className="snap-text-btn snap-show-original"
                                     onClick={() => { translationCache.delete(comment.permlink); setTranslatedText(null); }}
                                 >
                                     Show original
-                                </Text>
-                            </Box>
+                                </button>
+                            </div>
                         ) : (
                             <>
                                 {renderedText && (
-                                    <Box
-                                        overflowX="hidden"
-                                        wordBreak="break-word"
+                                    <div
+                                        className={setConversation ? 'snap-body is-clickable' : 'snap-body'}
                                         dangerouslySetInnerHTML={{ __html: renderedText }}
                                         onClick={setConversation ? handleConversation : undefined}
-                                        cursor={setConversation ? 'pointer' : 'default'}
-                                        mb={1}
-                                        sx={{
-                                            '& p': { marginBottom: 2 },
-                                            '& a': {
-                                                color: 'primary',
-                                                textDecoration: 'underline',
-                                                cursor: 'pointer',
-                                                _hover: { color: 'accent' },
-                                            },
-                                            '& pre, & table': { overflowX: 'auto', maxWidth: '100%' },
-                                            '& img': { maxWidth: '100%', height: 'auto' },
-                                            '& ul': { paddingLeft: '1.5em', marginBottom: 2, listStyleType: 'disc' },
-                                            '& ol': { paddingLeft: '1.5em', marginBottom: 2, listStyleType: 'decimal' },
-                                            '& li': { marginBottom: '0.15em', lineHeight: '1.6' },
-                                            '& blockquote': {
-                                                borderLeft: '3px solid',
-                                                borderColor: 'border',
-                                                marginTop: '0.5em',
-                                                marginBottom: '0.5em',
-                                                marginLeft: 0,
-                                                paddingLeft: '0.75em',
-                                                paddingRight: '0.75em',
-                                                paddingTop: '0.25em',
-                                                paddingBottom: '0.25em',
-                                                fontStyle: 'italic',
-                                                color: 'secondary',
-                                                bg: 'muted',
-                                                borderRadius: '0 6px 6px 0',
-                                            },
-                                            '& blockquote p': { marginBottom: '0.25em' },
-                                            '& blockquote p:last-child': { marginBottom: 0 },
-                                        }}
                                     />
                                 )}
                                 {showTranslate && (
-                                    <HStack spacing={1} mb={2} cursor="pointer" color="gray.500" _hover={{ color: 'primary' }} onClick={handleTranslate} width="fit-content">
+                                    <button type="button" className="snap-translate" onClick={handleTranslate}>
                                         {isTranslating ? <Spinner size="xs" /> : <MdTranslate size={12} />}
-                                        <Text fontSize="xs">{isTranslating ? 'Translating...' : 'Translate'}</Text>
-                                    </HStack>
+                                        <span>{isTranslating ? 'Translating...' : 'Translate'}</span>
+                                    </button>
                                 )}
                             </>
                         )}
 
-                        {/* Hive post preview cards */}
                         {hivePostUrls.length > 0 && (
-                            <VStack spacing={2} align="stretch" mt={2}>
+                            <div className="snap-stack">
                                 {hivePostUrls.map(({ author, permlink }, index) => (
                                     <HivePostPreview
                                         key={`${author}-${permlink}-${index}`}
@@ -520,22 +433,20 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                                         permlink={permlink}
                                     />
                                 ))}
-                            </VStack>
+                            </div>
                         )}
 
-                        {/* Hangout preview cards */}
                         {hangoutRoomNames.length > 0 && (
-                            <VStack spacing={2} align="stretch" mt={2}>
+                            <div className="snap-stack">
                                 {hangoutRoomNames.map((roomName, index) => (
                                     <HangoutPreviewCard key={`${roomName}-${index}`} roomName={roomName} />
                                 ))}
-                            </VStack>
+                            </div>
                         )}
                             </>
                         )}
 
-                        {/* Actions */}
-                        <Flex wrap="wrap" justify="space-between" align="center" mt={3} width="100%" gap={2} pr={2}>
+                        <div className="snap-actions">
                             <VoteControls
                                 initialVoted={comment.active_votes?.some(item => item.voter === user) ?? false}
                                 initialVoteCount={comment.active_votes?.length ?? comment.voteCount ?? 0}
@@ -545,33 +456,49 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                                 author={comment.author}
                                 permlink={comment.permlink}
                             />
-                            <HStack spacing={{ base: 4, md: 6 }}>
-                                <HStack spacing={1} cursor="pointer" onClick={handleReplyModal}>
+                            <div className="snap-action-group">
+                                <button type="button" className="snap-action" onClick={handleReplyModal} aria-label="Reply">
                                     <FaRegComment />
-                                </HStack>
+                                </button>
                                 {setConversation && (
-                                    <Text fontWeight="bold" cursor="pointer" onClick={handleConversation}>
+                                    <button
+                                        type="button"
+                                        className="snap-action snap-children"
+                                        onClick={handleConversation}
+                                        aria-label="Open conversation"
+                                    >
                                         {comment.children}
-                                    </Text>
+                                    </button>
                                 )}
-                                <HStack spacing={1} cursor="pointer" onClick={handleReSnap}>
+                                {setConversation && (
+                                    <button
+                                        type="button"
+                                        className={`snap-action snap-cast${isRecentlyActive(comment) ? ' snap-cast-active' : ''}`}
+                                        onClick={handleSnapCast}
+                                        aria-label="Open as Snap-Cast (live)"
+                                        title="Snap-Cast: follow replies live"
+                                    >
+                                        <FaBroadcastTower />
+                                    </button>
+                                )}
+                                <button type="button" className="snap-action" onClick={handleReSnap}>
                                     <FaRetweet />
-                                    <Text fontSize="sm" display={{ base: 'none', sm: 'inline' }}>Re-Snap/Share</Text>
-                                </HStack>
-                                <HStack spacing={1} cursor="pointer" onClick={handleShareOnX} color="overlay.500" _hover={{ color: 'white' }}>
+                                    <span className="snap-resnap-label">Re-Snap/Share</span>
+                                </button>
+                                <button type="button" className="snap-action snap-x" onClick={handleShareOnX} aria-label="Share on X">
                                     <FaXTwitter />
-                                </HStack>
-                            </HStack>
-                            <Text fontWeight="bold" fontSize="sm">
+                                </button>
+                            </div>
+                            <span className="snap-payout">
                                 {payoutDisplay}
-                            </Text>
-                        </Flex>
+                            </span>
+                        </div>
                         <PileTray author={comment.author} permlink={comment.permlink} targetType="snap" />
-                    </Box>
-                </Flex>
-            </Box>
-            
-            {/* Edit Modal */}
+                    </div>
+                </div>
+            </article>
+
+            {isEditModalOpen && (
             <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} size="xl">
                 <ModalOverlay />
                 <ModalContent>
@@ -601,10 +528,10 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                     </ModalFooter>
                 </ModalContent>
             </Modal>
-            
-            {/* Render replies recursively */}
+            )}
+
             {replies && replies.length > 0 && (
-                <VStack spacing={2} align="stretch" mt={2}>
+                <div className="snap-stack">
                     {replies.map((reply: Comment) => (
                         <Snap
                             key={reply.permlink}
@@ -612,12 +539,12 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                             onOpen={onOpen}
                             setReply={setReply}
                             setConversation={setConversation}
-                            level={level + 1} // Increment level for indentation
+                            level={level + 1}
                         />
                     ))}
-                </VStack>
+                </div>
             )}
-        </Box>
+        </div>
     );
 }, (prevProps, nextProps) => {
     // Only re-render if the comment permlink or active_votes length changes

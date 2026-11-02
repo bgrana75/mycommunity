@@ -1,4 +1,5 @@
 import type { Metadata } from 'next';
+import { notFound } from 'next/navigation';
 import { metadataForSlug } from '../[...slug]/metadata';
 import ProfileView from '../[...slug]/views/ProfileView';
 
@@ -14,6 +15,6 @@ export async function generateMetadata(props: PageProps): Promise<Metadata> {
 export default async function ProfileRoute(props: PageProps) {
   const params = await props.params;
   const username = decodeURIComponent(params.username);
-  if (!username.startsWith('@')) return null;
+  if (!username.startsWith('@')) notFound();
   return <ProfileView username={username.substring(1)} />;
 }

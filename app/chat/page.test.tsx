@@ -14,6 +14,7 @@ import { OPEN_CHAT_EVENT } from '@/lib/chat/openChat';
 const mocks = vi.hoisted(() => ({
   isLoggedIn: false,
   username: null as string | null,
+  isLoading: false,
   openLoginModal: vi.fn(),
 }));
 
@@ -22,6 +23,10 @@ vi.mock('@/hooks/useCurrentUser', () => ({
     isLoggedIn: mocks.isLoggedIn,
     username: mocks.username,
   }),
+}));
+
+vi.mock('@/contexts/SnapieAuthContext', () => ({
+  useSnapieAuth: () => ({ isLoading: mocks.isLoading }),
 }));
 
 vi.mock('@/contexts/LoginModalContext', () => ({
@@ -61,6 +66,7 @@ function renderPage() {
 beforeEach(() => {
   mocks.isLoggedIn = false;
   mocks.username = null;
+  mocks.isLoading = false;
   mocks.openLoginModal.mockReset();
 });
 
@@ -82,6 +88,15 @@ describe('guest /chat', () => {
     renderPage();
     fireEvent.click(screen.getByRole('button', { name: 'Log in' }));
     expect(mocks.openLoginModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('holds the gate while the session check is in flight', () => {
+    mocks.isLoading = true;
+    renderPage();
+
+    expect(screen.getByRole('status').textContent).toMatch(/Checking session/);
+    expect(screen.queryByRole('heading', { name: 'Sign in to chat' })).toBeNull();
+    expect(screen.queryByRole('button', { name: 'Log in' })).toBeNull();
   });
 
   it('does not open the chat panel for a logged-out visitor', () => {

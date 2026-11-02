@@ -87,7 +87,7 @@ export default function LoginModal({
   loginOptions,
   forceShowProviders,
 }: Props) {
-  const [view, setView] = useState<View>('providers')
+  const [view, setView] = useState<View>(initialView)
   const [emailMode, setEmailMode] = useState<EmailMode>('register')
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')

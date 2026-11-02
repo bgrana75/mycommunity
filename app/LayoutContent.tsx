@@ -3,7 +3,6 @@ import { Box, Flex } from '@chakra-ui/react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
-import Sidebar from '@/components/layout/Sidebar';
 import MobileHeader from '@/components/layout/MobileHeader';
 import BottomTabBar from '@/components/layout/BottomTabBar';
 import MeSheet from '@/components/layout/MeSheet';
@@ -17,6 +16,7 @@ import { useShowInterestPicker } from '@/hooks/useShowInterestPicker';
 import { isPointsEnabledFor } from '@/lib/points/config';
 import { AiohaSessionRestore } from '@/lib/aioha/facade-react-ui';
 
+const Sidebar = dynamic(() => import('@/components/layout/Sidebar'), { ssr: false });
 const ChatPanel = dynamic(() => import('@/components/chat/ChatPanel'), { ssr: false });
 const HangoutModal = dynamic(() => import('@/components/hangouts/HangoutModal'), { ssr: false });
 const EmancipationBanner = dynamic(() => import('@/components/auth/EmancipationBanner'), { ssr: false });
@@ -72,6 +72,16 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   const [chatActivated, setChatActivated] = useState(false);
   const [chatUnreadCount, setChatUnreadCount] = useState(0);
   const [isMeSheetOpen, setIsMeSheetOpen] = useState(false);
+  // Desktop/tablet nav stays out of the phone hydration commit. The slot
+  // reserves its width from the first paint so the feed does not jump.
+  const [showDesktopSidebar, setShowDesktopSidebar] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(min-width: 30em)');
+    const apply = () => setShowDesktopSidebar(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    return () => mq.removeEventListener('change', apply);
+  }, []);
   const popoutRef = useRef<Window | null>(null);
   if ((isChatOpen || isChatMinimized || isChatPopoutMode) && !chatActivated) {
     setChatActivated(true);
@@ -188,13 +198,14 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
 
   // On mobile, pad content away from the fixed header and tab bar.
   // Skip padding on shorts (full-screen immersive) and embed/popout modes.
-  // The tab bar itself is 60px, but on notched devices its own safe-area
-  // padding (see BottomTabBar) pushes its actual top edge higher than that —
-  // so content needs to clear 60px + the safe-area inset, plus a bit of
-  // breathing room, or the last bit of a short page (e.g. a post's only
-  // comment) ends up permanently hidden behind the fixed bar with nowhere
-  // left to scroll to reveal it.
-  const mobilePaddingTop = !isEmbedMode && !isChatPopoutMode && !isShortsPage ? { base: '56px', sm: '0' } : undefined;
+  // The header is 56px and the tab bar is 60px, but in standalone mode their
+  // safe-area padding (see MobileHeader / BottomTabBar) grows them by the
+  // notch and home-indicator insets. Content has to clear that same inset,
+  // plus a bit of breathing room under the tab bar, or the last bit of a
+  // short page (e.g. a post's only comment) ends up permanently hidden
+  // behind the fixed bar with nowhere left to scroll to reveal it.
+  // env(safe-area-inset-*) is 0 in a normal browser tab.
+  const mobilePaddingTop = !isEmbedMode && !isChatPopoutMode && !isShortsPage ? { base: 'calc(56px + env(safe-area-inset-top))', sm: '0' } : undefined;
   const mobilePaddingBottom = !isEmbedMode && !isChatPopoutMode && !isShortsPage ? { base: 'calc(76px + env(safe-area-inset-bottom))', sm: '0' } : undefined;
 
   return (
@@ -211,7 +222,11 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
       <Box maxW="1320px" mx="auto" h="100dvh">
         <Flex direction={{ base: 'column', sm: 'row' }} h="100dvh">
           {!isEmbedMode && !isChatPopoutMode && (
-            <Sidebar isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatUnreadCount={chatUnreadCount} />
+            <div className={pathname === '/compose' ? 'snapie-sidebar-slot is-compact' : 'snapie-sidebar-slot'}>
+              {showDesktopSidebar && (
+                <Sidebar isChatOpen={isChatOpen} setIsChatOpen={setIsChatOpen} chatUnreadCount={chatUnreadCount} />
+              )}
+            </div>
           )}
           <Box
             id="app-scroll-container"

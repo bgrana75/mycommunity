@@ -10,12 +10,22 @@ import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
 import SidebarEventsWidget from '@/components/hangouts/SidebarEventsWidget';
 import TrendingMarketsWidget from '@/components/layout/TrendingMarketsWidget';
 import ContainerVoteWidget from '@/components/layout/ContainerVoteWidget';
+import WitnessBeeWidget from '@/components/layout/WitnessBeeWidget';
 import WhoToFollowWidget from '@/components/layout/WhoToFollowWidget';
 import { Divider as ChakraDivider } from '@chakra-ui/react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { isDiscoveryEnabledFor } from '@/lib/discovery/config';
 import { interleaveCandidates } from '@/lib/discovery/interleave';
+import {
+  acceptLongReadPage,
+  qualifiesAsLongRead,
+  LONG_READS_BLEND_FETCH,
+  LONG_READS_BLEND_KEEP,
+  LONG_READS_MAX_PAGES,
+  LONG_READS_PAGE_SIZE,
+  LONG_READS_TARGET,
+} from '@/lib/blog/longReads';
 
 const communityTag = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
 
@@ -42,6 +52,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
   const [mutedLoaded, setMutedLoaded] = useState(false);
   const [communityStats, setCommunityStats] = useState<CommunityStats | null>(null);
   const [blendCandidates, setBlendCandidates] = useState<Discussion[]>([]);
+  const [hasMore, setHasMore] = useState(true);
   const sidebarRef = useRef<HTMLDivElement>(null);
   const isFetching = useRef(false);
   const mutedSetRef = useRef<Set<string>>(new Set());
@@ -64,7 +75,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
 
   const params = useRef({
     tag,
-    limit: 8,
+    limit: LONG_READS_PAGE_SIZE,
     start_author: '',
     start_permlink: '',
   });
@@ -82,8 +93,9 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
     let cancelled = false;
 
     async function loadBlendCandidates() {
+      const now = new Date();
       const trendingPromise: Promise<Discussion[]> = tag
-        ? findPosts('trending', { tag, limit: 4 }).catch(() => [])
+        ? findPosts('trending', { tag, limit: LONG_READS_BLEND_FETCH }).catch(() => [])
         : Promise.resolve([]);
 
       const showForYou = isDiscoveryEnabledFor(username) && settings.interestTags.length > 0;
@@ -92,7 +104,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
       // call with no mute filtering at all, so that side is filtered below
       // against the same mutedSetRef the base chronological fetch already uses.
       const forYouPromise: Promise<Discussion[]> = showForYou
-        ? fetch(`/api/discovery/blog-foryou?limit=4&tags=${encodeURIComponent(settings.interestTags.join(','))}&username=${encodeURIComponent(username!)}`, { cache: 'no-store' })
+        ? fetch(`/api/discovery/blog-foryou?limit=${LONG_READS_BLEND_FETCH}&tags=${encodeURIComponent(settings.interestTags.join(','))}&username=${encodeURIComponent(username!)}`, { cache: 'no-store' })
             .then(res => res.json())
             .then(data => (Array.isArray(data.items) ? data.items as Discussion[] : []))
             .catch(() => [])
@@ -101,13 +113,29 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
       const [trending, forYou] = await Promise.all([trendingPromise, forYouPromise]);
       if (cancelled) return;
 
+      // Same recency, length, and test-post rules as the chronological list.
+      // Fetch extra rows, then keep the previous blend size of each source.
+      function takeQualifying(posts: Discussion[]): Discussion[] {
+        const picked: Discussion[] = [];
+        const localSeen = new Set<string>();
+        for (const post of posts) {
+          const key = `${post.author}/${post.permlink}`;
+          const isMuted = mutedSetRef.current.has((post.author || '').toLowerCase());
+          const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+          if (localSeen.has(key) || !post.author || post.parent_author || isMuted || isMutedTag) continue;
+          if (!qualifiesAsLongRead(post, { now })) continue;
+          localSeen.add(key);
+          picked.push(post);
+          if (picked.length >= LONG_READS_BLEND_KEEP) break;
+        }
+        return picked;
+      }
+
       const seen = new Set<string>();
       const merged: Discussion[] = [];
-      for (const post of [...trending, ...forYou]) {
+      for (const post of [...takeQualifying(trending), ...takeQualifying(forYou)]) {
         const key = `${post.author}/${post.permlink}`;
-        const isMuted = mutedSetRef.current.has((post.author || '').toLowerCase());
-        const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
-        if (seen.has(key) || !post.author || post.parent_author || isMuted || isMutedTag) continue;
+        if (seen.has(key)) continue;
         seen.add(key);
         merged.push(post);
       }
@@ -160,14 +188,14 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
     setIsLoading(true);
 
     try {
-      const MIN_POSTS_TO_SHOW = 8;
       let allFetchedPosts: Discussion[] = [];
       let attempts = 0;
-      const MAX_ATTEMPTS = 5;
+      let exhausted = false;
+      const now = new Date();
 
-      while (allFetchedPosts.length < MIN_POSTS_TO_SHOW && attempts < MAX_ATTEMPTS) {
+      while (allFetchedPosts.length < LONG_READS_TARGET && attempts < LONG_READS_MAX_PAGES) {
         const posts = await findPosts(query, params.current);
-        if (posts.length === 0) break;
+        attempts++;
 
         // seenKeysRef dedupes against EVERY post ever added so far — from
         // this same loop's earlier iterations, from prior fetchPosts() calls
@@ -175,27 +203,36 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
         // You candidates. Hive's cursor pagination can also legitimately
         // re-return the start_author/start_permlink post as the first item
         // of the next page, which this same check also catches.
-        const topLevelPosts = posts.filter((post: Discussion) => {
-          const isTopLevel = !post.parent_author;
-          const isMuted = mutedSetRef.current.has(post.author.toLowerCase());
-          const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
-          const isDuplicate = seenKeysRef.current.has(postKey(post));
-          return isTopLevel && !isMuted && !isMutedTag && !isDuplicate;
+        const { add, resumeAfter, exhausted: pageExhausted } = acceptLongReadPage<Discussion>(posts, allFetchedPosts.length, {
+          now,
+          pageSize: params.current.limit,
+          target: LONG_READS_TARGET,
+          include: (post) => {
+            const isTopLevel = !post.parent_author;
+            const isMuted = mutedSetRef.current.has((post.author || '').toLowerCase());
+            const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+            const isDuplicate = seenKeysRef.current.has(postKey(post));
+            return isTopLevel && !isMuted && !isMutedTag && !isDuplicate;
+          },
         });
-        topLevelPosts.forEach((post: Discussion) => seenKeysRef.current.add(postKey(post)));
+        add.forEach((post) => seenKeysRef.current.add(postKey(post)));
+        if (resumeAfter) seenKeysRef.current.add(postKey(resumeAfter));
+        allFetchedPosts = [...allFetchedPosts, ...add];
 
-        allFetchedPosts = [...allFetchedPosts, ...topLevelPosts];
+        if (pageExhausted || !resumeAfter) {
+          exhausted = true;
+          break;
+        }
 
-        const lastPost = posts[posts.length - 1];
         params.current = {
           tag,
-          limit: 8,
-          start_author: lastPost?.author || '',
-          start_permlink: lastPost?.permlink || '',
+          limit: LONG_READS_PAGE_SIZE,
+          start_author: resumeAfter.author || '',
+          start_permlink: resumeAfter.permlink || '',
         };
-        attempts++;
       }
 
+      if (exhausted) setHasMore(false);
       setAllPosts((prevPosts) => [...prevPosts, ...allFetchedPosts]);
     } catch (error) {
       console.log(error);
@@ -212,7 +249,8 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
   useEffect(() => {
     setMutedLoaded(false);
     setAllPosts([]);
-    params.current = { tag, limit: 8, start_author: '', start_permlink: '' };
+    setHasMore(true);
+    params.current = { tag, limit: LONG_READS_PAGE_SIZE, start_author: '', start_permlink: '' };
     seenKeysRef.current.clear();
     hasInterleavedRef.current = false;
     mutedAccountsManager.getMutedList(hiveUser?.name).then(mutedSet => {
@@ -286,6 +324,8 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
         </>
       )}
 
+      <WitnessBeeWidget />
+
       <ContainerVoteWidget />
 
       <WhoToFollowWidget engagedAuthors={engagedAuthors} />
@@ -307,7 +347,12 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
         >
           Long Reads
         </Text>
-        <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="list" />
+        <PostInfiniteScroll allPosts={allPosts} fetchPosts={fetchPosts} viewMode="list" hasMore={hasMore} />
+        {!isLoading && allPosts.length === 0 && !hasMore && (
+          <Text fontSize="sm" color="overlay.500" px={2} pb={4}>
+            No recent long reads
+          </Text>
+        )}
       </Box>
     </Box>
   );

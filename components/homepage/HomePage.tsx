@@ -30,18 +30,28 @@ import { afterLcpPaint } from '@/lib/perf/afterLcpPaint';
 const RightSidebar = dynamic(() => import('@/components/layout/RightSideBar'), { ssr: false });
 const SnapReplyModal = dynamic(() => import('@/components/homepage/SnapReplyModal'), { ssr: false });
 
-/** Sidebar JS (post cards, swiper) waits until the LCP image has painted.
- *  On a phone the sidebar is display:none; this only changes when its
- *  scripts start. */
+/** Right column (post cards, swiper) waits until the LCP image has painted,
+ *  and never mounts below the md breakpoint. Phones were downloading Swiper
+ *  for a column that stays display:none. */
 function DeferredRightSidebar({ engagedAuthors }: { engagedAuthors: Set<string> }) {
   const [ready, setReady] = useState(false);
   useEffect(() => {
+    const mq = window.matchMedia('(min-width: 48em)');
     let cancel = false;
-    afterLcpPaint().then(() => {
-      if (!cancel) setReady(true);
-    });
+    const apply = () => {
+      if (!mq.matches) {
+        setReady(false);
+        return;
+      }
+      afterLcpPaint().then(() => {
+        if (!cancel && mq.matches) setReady(true);
+      });
+    };
+    apply();
+    mq.addEventListener('change', apply);
     return () => {
       cancel = true;
+      mq.removeEventListener('change', apply);
     };
   }, []);
   if (!ready) return null;

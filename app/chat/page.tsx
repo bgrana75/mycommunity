@@ -1,11 +1,11 @@
 'use client';
 
-import { Box, Button, Heading, Icon, Text, VStack } from '@chakra-ui/react';
+import { Box, Button, Heading, Icon, Text } from '@chakra-ui/react';
 import { useEffect } from 'react';
-import NextLink from 'next/link';
-import { FiLogIn, FiMessageSquare, FiUserPlus } from 'react-icons/fi';
+import { FiMessageSquare } from 'react-icons/fi';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
-import { useLoginModal } from '@/contexts/LoginModalContext';
+import { useSnapieAuth } from '@/contexts/SnapieAuthContext';
+import { SessionStatus, SignInGate } from '@/components/shared/SignInGate';
 import { requestOpenChat } from '@/lib/chat/openChat';
 
 /**
@@ -17,7 +17,7 @@ import { requestOpenChat } from '@/lib/chat/openChat';
  */
 export default function ChatPage() {
   const { isLoggedIn, username } = useCurrentUser();
-  const { openLoginModal } = useLoginModal();
+  const { isLoading } = useSnapieAuth();
 
   useEffect(() => {
     if (!isLoggedIn || !username) return;
@@ -25,39 +25,15 @@ export default function ChatPage() {
   }, [isLoggedIn, username]);
 
   if (!isLoggedIn || !username) {
+    // Hold the gate until session restore settles, so a returning user is
+    // not told to sign in while their session is still coming back.
+    if (isLoading) return <SessionStatus label="Checking session" />;
     return (
-      <Box maxW="480px" mx="auto" px={6} py={16} textAlign="center">
-        <Icon as={FiMessageSquare} boxSize={8} color="primary" mb={4} />
-        <Heading as="h1" size="md" mb={2}>Sign in to chat</Heading>
-        <Text color="overlay.500" fontSize="sm" mb={6}>
-          Log in with Google, email, or your Hive wallet to join conversations.
-        </Text>
-        <VStack spacing={3}>
-          <Button
-            w="full"
-            maxW="280px"
-            colorScheme="blue"
-            borderRadius="12px"
-            leftIcon={<Icon as={FiLogIn} />}
-            onClick={openLoginModal}
-          >
-            Log in
-          </Button>
-          <Button
-            w="full"
-            maxW="280px"
-            variant="outline"
-            color="text"
-            borderColor="rgba(28, 161, 241, 0.25)"
-            borderRadius="12px"
-            leftIcon={<Icon as={FiUserPlus} />}
-            as={NextLink}
-            href="/join"
-          >
-            Create account
-          </Button>
-        </VStack>
-      </Box>
+      <SignInGate
+        icon={FiMessageSquare}
+        title="Sign in to chat"
+        message="Log in with Google, email, or your Hive wallet to join conversations."
+      />
     );
   }
 

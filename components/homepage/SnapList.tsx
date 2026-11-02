@@ -91,6 +91,9 @@ interface InfiniteScrollData {
    *  empty while `hasMore` is still true (more unscanned history exists),
    *  so the empty state can't rely on `!hasMore` alone anymore. */
   hasFetchedOnce?: boolean;
+  /** True when the last page fetch failed after retries. `hasMore` stays
+   *  true so the feed can resume; this only drives a visible retry prompt. */
+  loadError?: boolean;
   refresh?: () => void; // Function to refresh the feed
   /** Reconciles one comment's optimistic vote data against the real settled
    *  chain value — see the matching helper in useSnaps.ts/useProfileSnaps.ts
@@ -115,7 +118,7 @@ export default function SnapList(
     optimizeHomeLcp = false,
     paintedCount = 0,
 }: SnapListProps) {
-  const { comments, loadNextPage, isLoading, hasMore, hasFetchedOnce, refresh, refreshComment } = data
+  const { comments, loadNextPage, isLoading, hasMore, hasFetchedOnce, loadError, refresh, refreshComment } = data
   // Older data sources (useComments, useProfileSnaps) don't track this yet —
   // fall back to the previous "!hasMore means done" inference for them.
   const fetchComplete = hasFetchedOnce ?? !hasMore;
@@ -436,7 +439,13 @@ export default function SnapList(
       </Box>
       {hasMore && (
         <Box ref={sentinelRef} display="flex" justifyContent="center" alignItems="center" py={5}>
-          <Spinner size="xl" color="primary" />
+          {loadError && !isLoading ? (
+            <Button size="sm" variant="outline" onClick={() => loadNextPageRef.current()}>
+              Couldn&apos;t load more snaps. Tap to retry
+            </Button>
+          ) : (
+            <Spinner size="xl" color="primary" />
+          )}
         </Box>
       )}
     </>

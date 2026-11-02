@@ -46,6 +46,7 @@ export default function MeSheet({ isOpen, onClose, onToggleChat, chatUnreadCount
         border="1px solid"
         borderColor="surfaceBorder"
         maxH="82dvh"
+        pb="env(safe-area-inset-bottom)"
       >
         <DrawerBody p={0} overflowY="auto">
           {/* Drag handle */}

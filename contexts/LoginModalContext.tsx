@@ -62,13 +62,10 @@ export async function fetchAndStoreAccount(username: string): Promise<HiveAccoun
 export function LoginModalProvider({ children }: { children: ReactNode }) {
   const [isOpen, setIsOpen] = useState(false)
   const [initialView, setInitialView] = useState<'providers' | 'hive-wallet'>('providers')
-  const [mounted, setMounted] = useState(false)
   const [loginProof] = useState(() => Math.floor(Date.now() / 1000).toString())
   const { user: aiohaUser } = useAioha()
   const { setHiveUser } = useHiveUser()
   const { setSnapieUser, isSnapieLoggedIn } = useSnapieAuth()
-
-  useEffect(() => { setMounted(true) }, [])
 
   const openLoginModal = useCallback(() => { setInitialView('providers'); setIsOpen(true) }, [])
   const openLoginModalToWallets = useCallback(() => { setInitialView('hive-wallet'); setIsOpen(true) }, [])
@@ -135,7 +132,10 @@ export function LoginModalProvider({ children }: { children: ReactNode }) {
   return (
     <LoginModalContext.Provider value={value}>
       {children}
-      {mounted && (
+      {/* @aioha/react-ui draws Keychain, Peak Vault, HiveAuth, and Ledger as
+          <a> with no href even while its own modal is closed. Keep that tree
+          out of the document until login is actually open. */}
+      {isOpen && (
         <LoginModal
           displayed={isOpen}
           initialView={initialView}

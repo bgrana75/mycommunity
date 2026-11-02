@@ -23,6 +23,7 @@ import {
 import { LEVELS } from "./game/levels";
 import Image from "next/image";
 import { useFullscreen, usePortraitOrientation } from "@/hooks/useFullscreen";
+import { TouchControls } from "../shared/TouchControls";
 import { useWakeLock } from "@/hooks/useWakeLock";
 import snapieVictory from "./assets/snapie-victory.png";
 import type {
@@ -129,18 +130,6 @@ const S = {
     padding: 8,
     fontSize: 9,
     pointerEvents: "none",
-  } as CSSProperties,
-  pad: {
-    fontFamily: font,
-    fontSize: 14,
-    width: 52,
-    height: 52,
-    color: PAPER,
-    background: "rgba(244,244,244,0.08)",
-    border: `2px solid ${PAPER}`,
-    borderRadius: 4,
-    touchAction: "none",
-    cursor: "pointer",
   } as CSSProperties,
 };
 
@@ -336,16 +325,6 @@ export const PuffQuest = forwardRef<PuffQuestControls, PuffQuestProps>(function 
       window.removeEventListener("keyup", up);
     };
   }, [keyboard]);
-
-  const touch = (key: InputKey) => ({
-    onPointerDown: (e: React.PointerEvent) => {
-      e.preventDefault();
-      gameRef.current?.setKey(key, true);
-    },
-    onPointerUp: () => gameRef.current?.setKey(key, false),
-    onPointerLeave: () => gameRef.current?.setKey(key, false),
-    onPointerCancel: () => gameRef.current?.setKey(key, false),
-  });
 
   const rootStyle = useMemo(
     () =>
@@ -595,37 +574,13 @@ export const PuffQuest = forwardRef<PuffQuestControls, PuffQuestProps>(function 
       </div>
 
       {(showTouchControls === true || (showTouchControls === "auto" && isTouch)) && (
-        <div
-          style={{
-            marginTop: 12,
-            flexShrink: 0,
-            display: "flex",
-            alignItems: "center",
-            justifyContent: "space-between",
-            gap: 16,
-            userSelect: "none",
-          }}
-        >
-          <div style={{ display: "flex", gap: 8 }}>
-            <button style={S.pad} {...touch("left")} aria-label="Left">
-              ←
-            </button>
-            <button style={S.pad} {...touch("right")} aria-label="Right">
-              →
-            </button>
-            <button style={S.pad} {...touch("down")} aria-label="Swallow">
-              ↓
-            </button>
-          </div>
-          <div style={{ display: "flex", gap: 8 }}>
-            <button style={{ ...S.pad, borderColor: ORANGE, color: ORANGE }} {...touch("action")} aria-label="Inhale or attack">
-              X
-            </button>
-            <button style={{ ...S.pad, borderColor: ORANGE, color: ORANGE }} {...touch("jump")} aria-label="Jump">
-              ▲
-            </button>
-          </div>
-        </div>
+        <TouchControls
+          fullscreen={isFullscreen}
+          dpad={{ left: "left", right: "right", down: "down" }}
+          actions={[{ label: "X", code: "action", primary: true }, { label: "JUMP", code: "jump", primary: true }]}
+          press={(c) => gameRef.current?.setKey(c as InputKey, true)}
+          release={(c) => gameRef.current?.setKey(c as InputKey, false)}
+        />
       )}
     </div>
   );

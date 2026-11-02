@@ -64,9 +64,11 @@ export const SnapieInfoWar = forwardRef<SnapieControls, SnapieInfoWarProps>(func
     <div
       ref={wrap}
       className={props.className}
-      style={{ width: "100%", position: "relative", background: isFullscreen ? "#05000a" : undefined, display: isFullscreen ? "flex" : undefined, flexDirection: "column", justifyContent: "center", minHeight: isFullscreen ? "100vh" : undefined }}
+      style={{ width: "100%", position: "relative", background: isFullscreen ? "#05000a" : undefined, display: isFullscreen ? "flex" : undefined, flexDirection: "column", justifyContent: "center", alignItems: isFullscreen ? "center" : undefined, height: isFullscreen ? "100dvh" : undefined }}
     >
-      <div ref={host} style={{ width: "100%" }} />
+      {/* Fullscreen: the largest 16:9 box that fits the screen, so the picture is
+          letterboxed instead of overflowing (the controls float over the screen). */}
+      <div ref={host} style={{ width: isFullscreen ? "min(100vw, calc(100dvh * 384 / 216))" : "100%" }} />
       {fullscreenSupported && (
         <button
           type="button"

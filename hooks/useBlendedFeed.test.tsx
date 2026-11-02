@@ -61,6 +61,7 @@ beforeEach(() => {
 describe('useBlendedFeed.refreshComment', () => {
   it("patches only the matching item's vote/payout fields, leaving others and array order untouched", async () => {
     const fetchMock = vi.fn(async () => ({
+      ok: true,
       json: async () => ({
         items: [
           feedItem('target', { active_votes: [{ voter: 'alice' }] }),
@@ -102,6 +103,7 @@ describe('useBlendedFeed.refreshComment', () => {
 
   it('leaves the existing data in place if the refetch fails', async () => {
     const fetchMock = vi.fn(async () => ({
+      ok: true,
       json: async () => ({ items: [feedItem('target')], hasMore: false }),
     }));
     vi.stubGlobal('fetch', fetchMock);
@@ -120,9 +122,50 @@ describe('useBlendedFeed.refreshComment', () => {
   });
 });
 
+describe('useBlendedFeed failure handling', () => {
+  it('keeps hasMore true and flags loadError when the feed endpoint fails', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    const fetchMock = vi.fn(async () => ({
+      ok: false,
+      status: 502,
+      json: async () => ({ items: [], hasMore: true, error: true }),
+    }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useBlendedFeed());
+    await act(async () => { await vi.advanceTimersByTimeAsync(5000); });
+
+    await waitFor(() => expect(result.current.loadError).toBe(true));
+    expect(result.current.hasMore).toBe(true);
+    // initial attempt + 2 in-request retries
+    expect(fetchMock.mock.calls.length).toBe(3);
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+});
+
 describe('useBlendedFeed mute filters', () => {
+  it('shows a fetched page even when the mute list never resolves', async () => {
+    vi.useFakeTimers({ shouldAdvanceTime: true });
+    vi.mocked(mutedAccountsManager.getMutedList).mockImplementation(() => new Promise(() => {}));
+    vi.stubGlobal('fetch', vi.fn(async () => ({
+      ok: true,
+      status: 200,
+      json: async () => ({ items: [feedItem('p1')], hasMore: true }),
+    })));
+
+    const { result } = renderHook(() => useBlendedFeed());
+    await act(async () => { await vi.advanceTimersByTimeAsync(7000); });
+
+    await waitFor(() => expect(result.current.comments.map(c => c.permlink)).toEqual(['p1']));
+    expect(result.current.isLoading).toBe(false);
+    vi.unstubAllGlobals();
+    vi.useRealTimers();
+  });
+
   it('refetches once muted tags hydrate, and drops posts carrying that tag', async () => {
     const fetchMock = vi.fn(async () => ({
+      ok: true,
       json: async () => ({
         items: [
           feedItem('keep', { json_metadata: JSON.stringify({ tags: ['photography'] }) }),
@@ -151,6 +194,7 @@ describe('useBlendedFeed mute filters', () => {
 
   it('loads the signed-in mute list when username arrives after mount', async () => {
     const fetchMock = vi.fn(async () => ({
+      ok: true,
       json: async () => ({ items: [feedItem('a')], hasMore: false }),
     }));
     vi.stubGlobal('fetch', fetchMock);
@@ -170,6 +214,7 @@ describe('useBlendedFeed mute filters', () => {
 
   it('drops a muted author from the loaded page immediately', async () => {
     const fetchMock = vi.fn(async () => ({
+      ok: true,
       json: async () => ({
         items: [
           feedItem('keep', { author: 'goodauthor' }),
@@ -192,11 +237,47 @@ describe('useBlendedFeed mute filters', () => {
     vi.unstubAllGlobals();
   });
 
+  it('keeps fetching pages in one load when a long mute list hides most of each page (#284)', async () => {
+    vi.mocked(mutedAccountsManager.getMutedList).mockResolvedValue(new Set(['spam1', 'spam2']));
+
+    let calls = 0;
+    const fetchMock = vi.fn(async () => {
+      const page = calls;
+      calls += 1;
+      const ts = (n: number) => `2026-08-${String(28 - n).padStart(2, '0')}T00:00:00`;
+      return {
+        ok: true,
+        json: async () => ({
+          items: [
+            feedItem(`keep-${page}`, { author: 'keeper', created: ts(page * 3) }),
+            feedItem(`spam-${page}-a`, { author: 'spam1', created: ts(page * 3 + 1) }),
+            feedItem(`spam-${page}-b`, { author: 'spam2', created: ts(page * 3 + 2) }),
+          ],
+          hasMore: true,
+        }),
+      };
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const { result } = renderHook(() => useBlendedFeed({ username: 'viewer' }));
+
+    // A mute list that strips 2 of every 3 items used to leave just one
+    // visible item per load, looking stuck. One load now keeps asking the
+    // sidecar for more pages (bounded by the page cap) instead of settling
+    // for a near-empty page.
+    await waitFor(() => expect(result.current.comments.length).toBeGreaterThan(1));
+    await waitFor(() => expect(fetchMock.mock.calls.length).toBeGreaterThan(1));
+    expect(result.current.comments.every(c => c.author === 'keeper')).toBe(true);
+    expect(result.current.hasMore).toBe(true);
+    vi.unstubAllGlobals();
+  });
+
   it('does not let a superseded fetch restore the pagination cursor', async () => {
     const fetchMock = vi.fn(async (url: string) => {
       const before = new URL(String(url), 'http://localhost').searchParams.get('before');
       if (before === '2026-08-01T00:00:00') {
         return {
+          ok: true,
           json: async () => ({
             items: [feedItem('stale-page', { created: '2026-07-01T00:00:00' })],
             hasMore: true,
@@ -204,6 +285,7 @@ describe('useBlendedFeed mute filters', () => {
         };
       }
       return {
+        ok: true,
         json: async () => ({
           items: [feedItem('fresh-page', { created: '2026-08-01T00:00:00' })],
           hasMore: true,
@@ -287,6 +369,7 @@ describe('useBlendedFeed initial server page', () => {
 
   it('continues infinite scroll from the server before cursor', async () => {
     const fetchMock = vi.fn(async (_url: string) => ({
+      ok: true,
       json: async () => ({
         items: [
           feedItem('older', { created: '2026-08-29T00:00:00' }),
@@ -313,9 +396,9 @@ describe('useBlendedFeed initial server page', () => {
     const fetchMock = vi.fn(async (url: string) => {
       const before = new URL(String(url), 'http://localhost').searchParams.get('before');
       if (before) {
-        return { json: async () => ({ items: [feedItem('paged')], hasMore: false }) };
+        return { ok: true, json: async () => ({ items: [feedItem('paged')], hasMore: false }) };
       }
-      return { json: async () => ({ items: [feedItem('personal')], hasMore: false }) };
+      return { ok: true, json: async () => ({ items: [feedItem('personal')], hasMore: false }) };
     });
     vi.stubGlobal('fetch', fetchMock);
 

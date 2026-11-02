@@ -17,6 +17,8 @@ pnpm typecheck
 pnpm test
 ```
 
+Or run all four plus the production build with `pnpm qa`. The full QA flow — manual browser checks, the mobile/responsive checklist and the games checklist — is in [docs/qa.md](docs/qa.md), and the pull request template mirrors it. Games must follow [docs/games-mobile.md](docs/games-mobile.md).
+
 `pnpm typecheck` writes the gitignored `next-env.d.ts` (ambient types for static asset imports) and then runs `tsc --noEmit`, matching CI. A fresh checkout fails `tsc` alone because that file is not committed.
 
 ## Feed and performance changes

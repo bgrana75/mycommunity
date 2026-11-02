@@ -43,6 +43,7 @@ export const MAX_IMAGE_BYTES = 10 * 1024 * 1024;
 const PUBLIC_MESSAGE: Record<number, string> = {
     400: 'Invalid image url',
     403: 'Image host is not allowed',
+    404: 'Image not found',
     413: 'Image is too large',
     415: 'Unsupported image type',
     502: 'Image fetch failed',
@@ -136,6 +137,15 @@ export type ProxiedImage = {
 export const HIVE_PLACEHOLDER_SHA256: ReadonlySet<string> = new Set();
 
 const HIVE_IMAGE_HOST = 'images.hive.blog';
+
+/**
+ * Hivemoji renders any `:word:` the post-body regex matches, including
+ * plain text (a time like `10:30:00` yields `:30:`), as an `<img>` pointed
+ * here — most never existed, so a miss is routine, not a dead link worth
+ * chasing. Skip it: the Hive-cache retry would only add a second request
+ * that also misses (unlike a real CDN image Hive may have already cached).
+ */
+const HIVEMOJI_HOST = 'hivemoji.hivelytics.io';
 
 /** Failures worth one Hive-cache retry. Policy rejections are not. */
 const HIVE_FALLBACK_CODES = new Set([
@@ -549,7 +559,12 @@ async function fetchProxiedOnce(
             continue;
         }
 
-        if (upstream.status !== 200) throw new ImageProxyError(502, 'upstream-status');
+        if (upstream.status !== 200) {
+            if (upstream.status === 404 && normalizeHostname(current.hostname) === HIVEMOJI_HOST) {
+                throw new ImageProxyError(404, 'hivemoji-missing');
+            }
+            throw new ImageProxyError(502, 'upstream-status');
+        }
         return acceptImage(upstream);
     }
 

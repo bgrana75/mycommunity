@@ -371,11 +371,10 @@ function buildOverlay(mode: ColorMode) {
 
 function buildTheme(colors: Palette, mode: ColorMode) {
     return extendTheme({
-        // Chakra's own color-mode flag, deliberately pinned and never toggled —
+        // Chakra's own color-mode flag (must live under `config`, or the server renders light and mismatches the client), deliberately pinned and never toggled —
         // see app/providers.tsx for why light/dark is driven entirely by our own
         // `colorMode` user setting instead of Chakra's internal mechanism.
-        initialColorMode: 'dark',
-        useSystemColorMode: false,
+        config: { initialColorMode: 'dark', useSystemColorMode: false },
         colors: { ...colors, overlay: buildOverlay(mode) },
         ...sharedBase,
         borders: {

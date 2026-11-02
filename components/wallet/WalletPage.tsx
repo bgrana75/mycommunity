@@ -403,13 +403,15 @@ export default function WalletPage({ username }: WalletPageProps) {
   const hbdSavingsBalance = hiveAccount?.savings_hbd_balance ? String(extractNumber(String(hiveAccount.savings_hbd_balance))) : '0.000';
   const isOwnWallet = user === username;
 
-  const totalUSD = prices
+  // Hive Power arrives after the account and prices, so a total before then
+  // would be missing it. Show a placeholder until every part is in.
+  const totalUSD = prices && hivePower !== undefined
     ? (parseFloat(balance) * prices.hive) +
       (parseFloat(hbdBalance) * prices.hbd) +
       (parseFloat(hivePower || '0') * prices.hive) +
       (parseFloat(savingsBalance) * prices.hive) +
       (parseFloat(hbdSavingsBalance) * prices.hbd)
-    : 0;
+    : null;
 
   return (
     <Box color="text" maxW="container.lg" mx="auto" w="100%" overflowX="hidden">
@@ -666,7 +668,7 @@ export default function WalletPage({ username }: WalletPageProps) {
                   lineHeight={1}
                   mb={2}
                 >
-                  ${totalUSD.toFixed(2)}
+                  {totalUSD === null ? '—' : `$${totalUSD.toFixed(2)}`}
                 </Heading>
                 <Text fontSize="xs" color={textMuted}>USD equivalent across all holdings</Text>
               </Box>

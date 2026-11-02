@@ -61,3 +61,7 @@ packages/*/dist/*.d.ts
 .claude/settings.local.json
 .claude/launch.json
 
+
+# playwright
+/test-results/
+/playwright-report/

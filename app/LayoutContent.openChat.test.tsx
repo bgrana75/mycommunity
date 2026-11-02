@@ -74,7 +74,11 @@ Object.defineProperty(window, 'matchMedia', {
   writable: true,
   configurable: true,
   value: (query: string) => ({
-    matches: query.includes('max-width: 479px') ? phone.matches : false,
+    matches: query.includes('max-width: 479px')
+      ? phone.matches
+      : query.includes('30em')
+        ? !phone.matches
+        : false,
     media: query,
     onchange: null,
     addListener: vi.fn(),
@@ -116,7 +120,7 @@ describe('chat shell', () => {
       </ChakraProvider>,
     );
 
-    expect(screen.getByText('Site nav')).toBeTruthy();
+    expect(await screen.findByText('Site nav')).toBeTruthy();
     expect(screen.getByRole('heading', { name: 'Sign in to chat' })).toBeTruthy();
     expect(screen.queryByText('Chat panel')).toBeNull();
 

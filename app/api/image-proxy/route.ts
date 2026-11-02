@@ -1,25 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { checkRateLimit, trustedClientIp, type RateLimitEntry } from '@/lib/http/rateLimit';
 import { fetchProxiedImage, ImageProxyError, probeProxiedImage } from '@/lib/images/imageProxy';
 
 export const runtime = 'nodejs';
 
-// In-memory IP limiter — resets on cold start, same pattern as translate.
-// 60/min rather than translate's 10/min: a feed scroll loads many thumbnails.
+// In-memory IP limiter — resets on cold start. Keyed on the trusted client IP
+// (see lib/http/rateLimit). 60/min rather than translate's 10/min: a feed
+// scroll loads many thumbnails.
 const RATE_LIMIT = 60;
 const RATE_WINDOW_MS = 60_000;
-const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
-
-function checkRateLimit(ip: string): boolean {
-    const now = Date.now();
-    const entry = rateLimitMap.get(ip);
-    if (!entry || now > entry.resetAt) {
-        rateLimitMap.set(ip, { count: 1, resetAt: now + RATE_WINDOW_MS });
-        return true;
-    }
-    if (entry.count >= RATE_LIMIT) return false;
-    entry.count++;
-    return true;
-}
+const rateLimitMap = new Map<string, RateLimitEntry>();
 
 function probeJson(ok: boolean): NextResponse {
     // Always 200. A missing cover must not be a failed resource in the
@@ -57,8 +47,8 @@ function probeJson(ok: boolean): NextResponse {
  */
 export async function GET(request: NextRequest) {
     const probe = request.nextUrl.searchParams.get('probe') === '1';
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ?? 'unknown';
-    if (!checkRateLimit(ip)) {
+    const ip = trustedClientIp(request.headers);
+    if (!checkRateLimit(rateLimitMap, ip, RATE_LIMIT, RATE_WINDOW_MS)) {
         if (probe) return probeJson(false);
         return new NextResponse('Too many requests', {
             status: 429,

@@ -33,6 +33,9 @@ export interface UserSettings {
      *  null means "never voted yet," which is also the signal to fall back
      *  to that surface's original hardcoded default. */
     lastVoteWeight: number | null;
+    /** Play a soft beep when a new reply lands during a Snap-Cast. Off by
+     *  default — sound should always be opt-in. */
+    snapCastSound: boolean;
 }
 
 const defaults: UserSettings = {
@@ -43,6 +46,7 @@ const defaults: UserSettings = {
     lastSeenChangelogId: null,
     mutedTags: [],
     lastVoteWeight: null,
+    snapCastSound: false,
 };
 
 function load(): UserSettings {

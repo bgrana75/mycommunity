@@ -332,6 +332,7 @@ export default function NotificationsComp({ username }: NotificationCompProps) {
             <Button
               leftIcon={<Icon as={FiCheckCircle} />}
               size="sm"
+              aria-label="Mark all notifications as read"
               onClick={handleMarkAllAsRead}
               isLoading={markingAsRead}
             >

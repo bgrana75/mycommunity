@@ -94,6 +94,43 @@ jobs:
           CHAT_JWT_SECRET: ci-build-placeholder
         run: pnpm build
 
+  e2e:
+    # Phone-sized browser checks (docs/qa.md). Not in the deploy `needs` yet: let it
+    # prove stable for a while, then add it there to make it a gate.
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9.15.9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm exec playwright install --with-deps chromium
+      - name: Build (games on, same as the e2e server expects)
+        env:
+          CHAT_JWT_SECRET: ci-build-placeholder
+          NEXT_PUBLIC_ENABLE_GAMES: 'true'
+          NEXT_PUBLIC_ENABLE_POINTS: 'true'
+        run: pnpm build
+      - name: Playwright
+        env:
+          CHAT_JWT_SECRET: ci-build-placeholder
+        run: pnpm e2e
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: playwright-report
+          path: |
+            playwright-report/
+            test-results/
+          retention-days: 7
+
   deploy-staging:
     needs: [lint, typecheck, test, build]
     # Only after a real push to staging — same fork-PR reasoning as below.

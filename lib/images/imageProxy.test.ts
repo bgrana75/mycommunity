@@ -289,6 +289,24 @@ describe('fetchProxiedImage', () => {
         }))).rejects.toMatchObject({ status: 502, code: 'upstream-status' });
     });
 
+    it('reports a missing Hivemoji as 404 without retrying through Hive', async () => {
+        const request = vi.fn(async () => upstream({ status: 404, body: Buffer.from('{"message":"Not Found"}'), contentType: 'application/json' }));
+        await expect(fetchProxiedImage('https://hivemoji.hivelytics.io/@speedtuning/@speedtuning', deps({
+            request,
+        }))).rejects.toMatchObject({ status: 404, code: 'hivemoji-missing' });
+        expect(request).toHaveBeenCalledTimes(1);
+    });
+
+    it('still treats a non-404 Hivemoji failure as a retryable upstream error', async () => {
+        const request = vi.fn(async (target: URL) => {
+            if (target.hostname === 'images.hive.blog') return upstream({ status: 200 });
+            return upstream({ status: 500, body: Buffer.from('oops'), contentType: 'text/plain' });
+        });
+        const image = await fetchProxiedImage('https://hivemoji.hivelytics.io/@meno/@meno', deps({ request }));
+        expect(image.fallback).toBe('hive');
+        expect(request).toHaveBeenCalledTimes(2);
+    });
+
     it('rejects a body whose declared length is over the limit', async () => {
         const request = vi.fn(async () => upstream({
             status: 200,

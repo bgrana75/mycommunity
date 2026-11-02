@@ -82,7 +82,7 @@ async function fetchComments(
             return comments;
         }
     } catch (error) {
-        console.error("Failed to fetch comments:", error);
+        console.error("Failed to fetch comments:", error instanceof Error ? error.message : error);
         return [];
     }
 }

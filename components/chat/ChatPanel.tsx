@@ -65,6 +65,7 @@ import { useMoodBadges } from '@/hooks/useMoodBadges';
 import { transferEncryptedMemoWithAioha } from '@/lib/hive/aioha';
 import GiphySelector from '@/components/homepage/GiphySelector';
 import type { IGif } from '@giphy/js-types';
+import { playNotificationChime as playChime } from '@/lib/utils/notificationChime';
 
 interface ChatPanelProps {
   isOpen: boolean;
@@ -1207,25 +1208,7 @@ export default function ChatPanel({
 
   const playNotificationChime = useCallback(() => {
     if (!hasInteractedRef.current) return;
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      const now = ctx.currentTime;
-      const osc = ctx.createOscillator();
-      const gain = ctx.createGain();
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(920, now);
-      osc.frequency.exponentialRampToValueAtTime(720, now + 0.14);
-      gain.gain.setValueAtTime(0.0001, now);
-      gain.gain.exponentialRampToValueAtTime(0.055, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.0001, now + 0.20);
-      osc.connect(gain);
-      gain.connect(ctx.destination);
-      osc.start(now);
-      osc.stop(now + 0.22);
-      setTimeout(() => ctx.close().catch(() => {}), 280);
-    } catch {}
+    playChime();
   }, []);
 
   useEffect(() => {

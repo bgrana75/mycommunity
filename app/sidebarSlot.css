@@ -1,0 +1,41 @@
+/* Reserves the left nav column at the same widths Sidebar uses
+   (72px from 30em, 260px from 48em) before that chunk mounts.
+   Phones keep the slot out of layout so the feed does not shift. */
+
+.snapie-sidebar-slot {
+  display: none;
+  box-sizing: border-box;
+}
+
+@media (min-width: 30em) {
+  .snapie-sidebar-slot {
+    display: block;
+    width: 72px;
+    flex: 0 0 72px;
+    height: 100vh;
+    position: sticky;
+    top: 0;
+    align-self: flex-start;
+    /* Sidebar itself paints this background (plus its own border-right)
+       once it mounts, but the slot needs it too: Sidebar is client-only
+       (ssr: false, see LayoutContent) so there is a brief gap between first
+       paint and the chunk loading where the slot would otherwise be empty.
+       Giving it the sidebar's background up front means that gap reads as
+       "still loading" rather than a blank column next to the feed. Border
+       is left to Sidebar itself so the two don't stack into a double line
+       once it mounts. */
+    background: var(--chakra-colors-surface);
+  }
+}
+
+@media (min-width: 48em) {
+  .snapie-sidebar-slot {
+    width: 260px;
+    flex-basis: 260px;
+  }
+
+  .snapie-sidebar-slot.is-compact {
+    width: 72px;
+    flex-basis: 72px;
+  }
+}

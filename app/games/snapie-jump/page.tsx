@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLoginModal } from '@/contexts/LoginModalContext';
 import { usePointsSummary } from '@/hooks/usePointsSummary';
+import { PointsSkippedNotice } from '@/components/games/PointsSkippedNotice';
 import { GAMES_FEATURE_FLAG } from '@/lib/points/config';
 import { SnapieJump } from '@/components/games/snapie-jump';
 import { saveGameScore } from '@/lib/games/scoreClient';
@@ -157,6 +158,7 @@ export default function SnapieJumpPage() {
         <Text color="fg.muted">
           Balance: <strong>{points?.balance ?? '—'}</strong> Snapie Points
         </Text>
+        <PointsSkippedNotice username={username} />
       </VStack>
 
       {/* Snapie Jump is a vertical game that fills its container, so give it a

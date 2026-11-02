@@ -4,12 +4,14 @@ import { FiHome, FiBook, FiPlay, FiPlus, FiCreditCard } from 'react-icons/fi';
 import NextLink from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
+import { useLoginModal } from '@/contexts/LoginModalContext';
 import { useUnclaimedRewards } from '@/hooks/useUnclaimedRewards';
 
 export default function BottomTabBar() {
   const pathname = usePathname();
   const router = useRouter();
-  const { username } = useCurrentUser();
+  const { username, isLoggedIn } = useCurrentUser();
+  const { openLoginModal } = useLoginModal();
   const hasUnclaimed = useUnclaimedRewards();
   const walletHref = username ? `/@${username}/wallet` : '/wallet';
 
@@ -21,6 +23,10 @@ export default function BottomTabBar() {
   }
 
   function handleComposeTap() {
+    if (!isLoggedIn) {
+      openLoginModal();
+      return;
+    }
     if (pathname.startsWith('/blog')) {
       router.push('/compose');
     } else if (pathname === '/') {
@@ -32,6 +38,13 @@ export default function BottomTabBar() {
     } else {
       router.push('/?focus=composer');
     }
+  }
+
+  // There is no wallet to open for a guest, so ask them to log in instead.
+  function handleWalletClick(e: React.MouseEvent) {
+    if (isLoggedIn) return;
+    e.preventDefault();
+    openLoginModal();
   }
 
   // Hide on immersive pages
@@ -49,6 +62,9 @@ export default function BottomTabBar() {
       right={0}
       h="calc(60px + env(safe-area-inset-bottom))"
       pb="env(safe-area-inset-bottom)"
+      pl="env(safe-area-inset-left)"
+      pr="env(safe-area-inset-right)"
+      boxSizing="border-box"
       bg="surface"
       borderTop="1px solid"
       borderTopColor="surfaceBorder"
@@ -70,6 +86,7 @@ export default function BottomTabBar() {
           <Box
             as="button"
             onClick={handleComposeTap}
+            aria-label="Compose"
             display="flex"
             alignItems="center"
             justifyContent="center"
@@ -92,7 +109,7 @@ export default function BottomTabBar() {
         <Tab href="/shorts" icon={FiPlay} label="Shorts" active={isActive('/shorts')} />
 
         {/* Wallet */}
-        <Tab href={walletHref} icon={FiCreditCard} label="Wallet" active={isActive('/wallet')} dot={hasUnclaimed} />
+        <Tab href={walletHref} icon={FiCreditCard} label="Wallet" active={isActive('/wallet')} dot={hasUnclaimed} onClick={handleWalletClick} />
       </Flex>
     </Box>
   );
@@ -114,6 +131,7 @@ function Tab({ href, icon, label, active, dot, onClick }: TabProps) {
     <Flex
       as={NextLink}
       href={href}
+      prefetch={false}
       onClick={onClick}
       flex={1}
       direction="column"

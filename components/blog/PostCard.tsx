@@ -12,6 +12,7 @@ import { useRouter } from 'next/navigation';
 import InteractionBar from '@/components/shared/InteractionBar';
 import TopicSearchBadge from '@/components/shared/TopicSearchBadge';
 import type { PostDiscoveryReason } from '@/lib/discovery/postInterestPool';
+import { decodeHtmlEntities } from '@/lib/utils/htmlEntities';
 
 interface PostCardProps {
     post: Discussion & { discoveryReason?: PostDiscoveryReason };
@@ -60,7 +61,7 @@ export default function PostCard({ post, compact = false }: PostCardProps) {
     // (e.g. an image gallery laid out as `| ![img](url) |` rows) otherwise
     // leaves literal `|` characters and `| - |` separator-row artifacts in
     // the excerpt once the cell contents themselves are stripped away.
-    const snippet = safeBody
+    const strippedSnippet = safeBody
         .replace(/<[^>]*>/g, ' ')
         .replace(/!\s*\[[^\]]*]\s*\([^)]*\)/g, ' ')
         .replace(/\[([^\]]+)\]\s*\(([^)]*)\)/g, '$1')
@@ -68,9 +69,8 @@ export default function PostCard({ post, compact = false }: PostCardProps) {
         .replace(/[-*_]{3,}/g, ' ')
         .replace(/\|/g, ' ')
         .replace(/#{1,6}\s*/g, '')
-        .replace(/[*_~`>]/g, '')
-        .replace(/\s+/g, ' ')
-        .trim();
+        .replace(/[*_~`>]/g, '');
+    const snippet = decodeHtmlEntities(strippedSnippet).replace(/\s+/g, ' ').trim();
 
     // **State to control how many images to show initially**
     const [visibleImages, setVisibleImages] = useState<number>(3); // Start with 3 images

@@ -1,4 +1,4 @@
-import { Box, Button, Flex, Icon, Slider, SliderTrack, SliderFilledTrack, SliderThumb, HStack, Text, useToast } from '@chakra-ui/react';
+import { Box, Button, Flex, Slider, SliderTrack, SliderFilledTrack, SliderThumb, useToast } from '@chakra-ui/react';
 import { memo, useState } from 'react';
 import { FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useRememberedVoteWeight } from '@/hooks/useRememberedVoteWeight';
@@ -97,22 +97,26 @@ const VoteControls = memo(({ initialVoted, initialVoteCount, onVote, onVoteOptim
         );
     }
 
+    const canOpenVoters = Boolean(author && permlink && voteCount > 0);
+
     return (
         <>
-            <HStack spacing={0}>
-                <Button variant="ghost" onClick={toggleSlider} px={2}>
-                    <Icon as={voted ? FaHeart : FaRegHeart} color={voted ? "red.400" : undefined} />
-                </Button>
-                <Button
-                    variant="ghost"
-                    px={1}
-                    isDisabled={!author || !permlink || voteCount === 0}
+            <div className="snap-vote-row">
+                <button type="button" className="snap-vote-btn" onClick={toggleSlider} aria-label="Vote">
+                    {voted
+                        ? <FaHeart className="snap-vote-heart is-voted" aria-hidden />
+                        : <FaRegHeart className="snap-vote-heart" aria-hidden />}
+                </button>
+                <button
+                    type="button"
+                    className="snap-vote-btn is-count"
+                    disabled={!canOpenVoters}
                     onClick={() => setShowVotersModal(true)}
                 >
                     {voteCount}
-                </Button>
-            </HStack>
-            {author && permlink && (
+                </button>
+            </div>
+            {showVotersModal && author && permlink && (
                 <VotersModal
                     isOpen={showVotersModal}
                     onClose={() => setShowVotersModal(false)}

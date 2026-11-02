@@ -30,7 +30,9 @@ export function useHbdSavingsInterest(hiveAccount: any): HbdSavingsInterest {
         const rateBps = props.hbd_interest_rate || 0; // basis points, e.g. 2000 = 20%
         setAnnualRatePct(rateBps / 100);
 
-        const accSeconds = parseInt(hiveAccount.savings_hbd_seconds || '0');
+        // savings_hbd_seconds is accumulated in chain units (0.001 HBD x seconds),
+        // while savingsBalance is in whole HBD, so convert before adding.
+        const accSeconds = parseInt(hiveAccount.savings_hbd_seconds || '0') / 1000;
         const lastUpdate = new Date(hiveAccount.savings_hbd_seconds_last_update + 'Z').getTime();
         const elapsedSeconds = Math.max(0, (Date.now() - lastUpdate) / 1000);
         const totalHbdSeconds = accSeconds + savingsBalance * elapsedSeconds;

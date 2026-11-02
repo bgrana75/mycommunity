@@ -1,19 +1,20 @@
 import type { Metadata } from "next";
 import { extractImageUrls } from "./extractImageUrls";
 import { getHiveAvatarUrl } from "./avatarUtils";
+import { decodeHtmlEntities } from "./htmlEntities";
 
 const SITE_NAME = "Snapie";
 const MAX_DESCRIPTION_LENGTH = 200;
 
 function stripMarkdown(text: string): string {
-  return text
+  const stripped = text
+    .replace(/<[^>]+>/g, ' ')                // HTML tags, including malformed ones like "<center <div ...>"
     .replace(/!\s*\[.*?\]\s*\(.*?\)/g, '')   // remove images (tolerates stray whitespace, e.g. "! [alt] (url)")
     .replace(/\[([^\]]*)\]\s*\(.*?\)/g, '$1') // links → text only
     .replace(/https?:\/\/\S+/g, '')          // bare (non-markdown) URLs, e.g. a raw video-embed link
     .replace(/\|/g, ' ')                     // markdown table pipes
-    .replace(/[#*>`~_\-]/g, '')              // strip markdown chars
-    .replace(/\n+/g, ' ')                    // collapse newlines
-    .trim();
+    .replace(/[#*>`~_\-]/g, '');             // strip markdown chars
+  return decodeHtmlEntities(stripped).replace(/\s+/g, ' ').trim();
 }
 
 function truncate(text: string, max: number): string {

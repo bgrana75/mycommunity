@@ -16,7 +16,31 @@ function isAllowedOrigin(origin: string): boolean {
   }
 }
 
+// Single-segment routes that exist under app/. app/loading.tsx streams the
+// shell before a page can call notFound(), so an unknown /segment would be a
+// 200 soft 404; middleware answers it with a real 404 instead. A test keeps
+// this list in sync with the app/ directory.
+export const TOP_LEVEL_ROUTES = [
+  'api', 'blog', 'changelog', 'chat', 'compose', 'edit', 'explore', 'factory',
+  'games', 'hangouts', 'join', 'leaderboard', 'profile', 'settings', 'shorts',
+  'support', 'test-sanitize',
+];
+
 export function middleware(req: NextRequest) {
+  const segments = req.nextUrl.pathname.split('/');
+  if (segments.length === 2 && segments[1] && !/^[@_]|\./.test(segments[1]) && !TOP_LEVEL_ROUTES.includes(segments[1])) {
+    return NextResponse.rewrite(new URL('/_not-found', req.url), { status: 404 });
+  }
+
+  // Hive account names are lowercase, so /@SNAPIE is the same page as /@snapie.
+  // Only the username segment is lowercased; permlinks are case-sensitive.
+  const [, user, ...rest] = req.nextUrl.pathname.split('/');
+  if (user.startsWith('@') && user !== user.toLowerCase()) {
+    const url = req.nextUrl.clone();
+    url.pathname = ['', user.toLowerCase(), ...rest].join('/');
+    return NextResponse.redirect(url, 308);
+  }
+
   const origin = req.headers.get('origin') ?? '';
   const allowed = isAllowedOrigin(origin);
 
@@ -49,5 +73,12 @@ function corsHeaders(origin: string, allowed: boolean): Record<string, string> {
 }
 
 export const config = {
-  matcher: ['/api/chat/:path*', '/api/upload-image'],
+  matcher: [
+    // One bare segment: not an @user, not a file (has a dot), not /_next.
+    '/:segment([^/.@_][^/.]*)',
+    '/api/chat/:path*',
+    '/api/upload-image',
+    // Only /@names containing an uppercase letter, so other pages skip middleware.
+    '/:user(@[^/]*[A-Z][^/]*)/:path*',
+  ],
 };

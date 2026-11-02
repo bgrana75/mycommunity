@@ -25,6 +25,92 @@ export interface ChangelogEntry {
 // only things a user would actually notice belong here.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-10-29',
+    date: '2026-10-29',
+    title: 'Small fixes',
+    items: [
+      { type: 'fix', text: 'Sharing a profile or post link now shows the proper preview card far more reliably, instead of sometimes falling back to a generic one.' },
+      { type: 'fix', text: 'The home feed no longer gets stuck on "Loading..." at the bottom when the connection to Hive is slow or flaky.' },
+      { type: 'fix', text: 'A post that fails to load now offers a Retry button, and missing posts reliably say "Post not found".' },
+      { type: 'improvement', text: 'Press Escape to close an open conversation.' },
+      { type: 'fix', text: 'Mistyped page addresses like /wallet now return a proper "not found" instead of looking like a blank page.' },
+    ],
+  },
+  {
+    id: '2026-10-28',
+    date: '2026-10-28',
+    title: 'Not-found fixes',
+    items: [
+      { type: 'fix', text: 'Mistyped API addresses now return a proper "not found" response instead of a blank page.' },
+    ],
+  },
+  {
+    id: '2026-10-22',
+    date: '2026-10-22',
+    title: 'Feed and composer fixes',
+    items: [
+      { type: 'fix', text: 'The home feed no longer looks stuck when you have a long mute list — it keeps loading further pages instead of showing almost nothing new.' },
+      { type: 'fix', text: "The emoji picker on the home composer no longer pops up over the Post button on narrow screens, and the Post button no longer shifts width once you're signed in." },
+      { type: 'fix', text: "A snap with something that looks like an emoji but isn't (like a time such as 10:30) no longer shows a broken image." },
+    ],
+  },
+  {
+    id: '2026-10-17',
+    date: '2026-10-17',
+    title: 'Information War on phones',
+    items: [
+      { type: 'fix', text: 'Snapie Jump\'s title screen now fits a phone held sideways, so the PLAY button is no longer cut off.' },
+      { type: 'improvement', text: 'Rush, Puff Quest and Blocks now have the same floating touch controls as Information War when you go fullscreen on a phone, so they no longer take up space under the game. Blocks\' board also fits the screen in landscape now.' },
+      { type: 'fix', text: 'Snapie: Information War is playable on phones in fullscreen again. The picture now fits your screen and the controls float over it instead of disappearing.' },
+    ],
+  },
+  {
+    id: '2026-10-16',
+    date: '2026-10-16',
+    title: 'Wallet interest fix',
+    items: [
+      { type: 'fix', text: 'Shared post links now show the post\'s own title and preview, including links with a community in the address, and previews no longer show raw HTML or codes like "&emsp;".' },
+      { type: 'improvement', text: 'The Games page now shows your Snapie Points balance when you are signed in, so you do not have to open a game to see it.' },
+      { type: 'fix', text: 'The wallet\'s Estimated Account Value no longer flashes a too-low total while your Hive Power is still loading; it shows a dash until the full amount is ready.' },
+      { type: 'fix', text: 'On phones, the big + button and the Wallet tab now ask you to log in when you are signed out, instead of doing nothing (or opening an empty page). The + button also has a proper name for screen readers.' },
+      { type: 'fix', text: 'Typing a username in capital letters in the address (like snapie.io/@SNAPIE) now takes you straight to the right profile instead of a slow, half-empty page.' },
+      { type: 'fix', text: 'Searching Explore for a tag with no posts now says "No posts found" instead of spinning forever, and the search box limits very long queries.' },
+      { type: 'fix', text: 'Opening a profile or post that does not exist now says "User not found" or "Post not found" instead of an endless spinner (or, for some usernames, a blank profile with zero followers).' },
+      { type: 'improvement', text: 'Long Reads in the sidebar now only shows recent posts (last 30 days) with real substance (about 300 words or more), so old or tiny test posts no longer take up the list. If nothing qualifies you will see "No recent long reads".' },
+      { type: 'fix', text: 'Opening Chat while you are signed in no longer briefly flashes the "Sign in to chat" screen while your session is being restored.' },
+      { type: 'fix', text: 'On Rush, Jump, Blast and Information War, if you skip the Snapie Points signature the game now tells you points are off and gives you an "Enable Snapie Points" button, instead of just showing a balance of 0.' },
+      { type: 'fix', text: 'Mistyped links like snapie.io/wallet or a username without the @ now show a proper "page not found" instead of a blank page.' },
+      { type: 'fix', text: 'The pending interest shown on your HBD savings was wildly overstated (about 1000 times too high). It now shows the real amount you can claim.' },
+      { type: 'fix', text: 'Logged-out visitors no longer hit a hidden page error on load, which could make the first paint flicker between styles.' },
+    ],
+  },
+  {
+    id: '2026-10-15',
+    date: '2026-10-15',
+    title: 'Meet Snapie the witness bee',
+    items: [
+      { type: 'feature', text: 'On desktop, a little cyborg bee now sits at the top of the right column and hammers out hexagons every time the Snapie witness signs a block. Tap the bee to see it in action.' },
+    ],
+  },
+  {
+    id: '2026-10-12',
+    date: '2026-10-12',
+    title: 'Snap-Cast: snap along in real time',
+    items: [
+      { type: 'feature', text: 'Snap-Cast: tap the broadcast icon on any snap (or "Go live" inside a conversation) to follow its replies live. New snaps appear on their own within a few seconds, the original snap — and any livestream in it — stays pinned on top, and you can turn on a soft beep for each new reply. Copy the Snap-Cast link to invite friends straight into the live thread. Threads with fresh replies show a pulsing icon.' },
+    ],
+  },
+  {
+    id: '2026-10-09',
+    date: '2026-10-09',
+    title: 'Short snaps stay in order',
+    items: [
+      { type: 'feature', text: 'Snapie can now be installed as an app on your phone or computer. Add it to your home screen and it opens full-screen, with the header and tab bar kept clear of the notch and home indicator.' },
+      { type: 'fix', text: 'A short snap that mixes an @mention or #hashtag with a link now keeps the sentence in the order it was written, instead of showing the end of the sentence first.' },
+      { type: 'improvement', text: 'The home feed loads noticeably faster on phones — the desktop sidebar and its data no longer load until there is room to show it.' },
+    ],
+  },
+  {
     id: '2026-10-08',
     date: '2026-10-08',
     title: 'Snapie: Information War joins Games',

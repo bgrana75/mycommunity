@@ -21,10 +21,21 @@ export default function useHiveAccount(username: string) {
             return
         }
         const handleGetHiveAccount = async () => {
-            setIsLoading(true)
             setError(null)
+            // Hive account names are 3-16 chars; anything else 400s at the node.
+            if (username.length < 3 || username.length > 16) {
+                setHiveAccount(null)
+                setError("User not found")
+                return
+            }
+            setIsLoading(true)
             try {
                 const userData = await HiveClient.database.getAccounts([username])
+                if (!userData[0]) {
+                    setHiveAccount(null)
+                    setError("User not found")
+                    return
+                }
                 const userAccount: HiveAccount = {
                     ...userData[0],
                 }

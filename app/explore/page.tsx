@@ -130,6 +130,7 @@ export default function ExplorePage() {
         <InputGroup flex={1}>
           <Input
             placeholder="Search any tag or community..."
+            maxLength={50}
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}

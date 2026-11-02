@@ -8,6 +8,10 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { isSnapContainer, isWaveContainer } from '@/lib/utils/snapUtils';
 import { getPayoutValue } from '@/lib/hive/client-functions';
+import { useSnapCast } from '@/hooks/useSnapCast';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { hasSnapCastRequest, clearSnapCastRequest } from '@/lib/snapcast/intent';
+import SnapCastBar from './SnapCastBar';
 
 type SortOrder = 'new' | 'top';
 
@@ -32,8 +36,21 @@ const Conversation = ({ comment, setConversation, onOpen, setReply, refreshTrigg
     const router = useRouter();
     const { comments, isLoading, error, updateComments, addComment } = useComments(comment.author, comment.permlink, true, hiveUser?.name);
 
+    const { settings } = useUserSettings();
+    const [live, setLive] = useState(() => hasSnapCastRequest(comment.author, comment.permlink));
+    useEffect(() => { clearSnapCastRequest(); }, []);
+    const snapCast = useSnapCast({
+        author: comment.author,
+        permlink: comment.permlink,
+        enabled: live,
+        sound: settings.snapCastSound,
+        updateComments,
+    });
+    const { markOwnReply } = snapCast;
+
     useEffect(() => {
         if (pendingReply) {
+            markOwnReply();
             addComment(pendingReply);
             onConsumedPendingReply?.();
         }
@@ -56,18 +73,22 @@ const Conversation = ({ comment, setConversation, onOpen, setReply, refreshTrigg
     useEffect(() => {
         if (refreshTrigger !== lastRefreshTrigger.current) {
             lastRefreshTrigger.current = refreshTrigger;
+            markOwnReply();
             if (refreshTrigger && refreshTrigger > 0) updateComments();
         }
-    }, [refreshTrigger, updateComments]);
+    }, [refreshTrigger, updateComments, markOwnReply]);
 
+    // A live thread is always newest-first so new snaps land right under the
+    // parent instead of being ranked somewhere out of view.
+    const effectiveSort: SortOrder = live ? 'new' : sortOrder;
     const replies = useMemo(() => {
         return [...comments].sort((a, b) => {
-            if (sortOrder === 'top') {
+            if (effectiveSort === 'top') {
                 return parseFloat(getPayoutValue(b)) - parseFloat(getPayoutValue(a));
             }
             return new Date(b.created).getTime() - new Date(a.created).getTime();
         });
-    }, [comments, sortOrder]);
+    }, [comments, effectiveSort]);
 
     function handleReplyModal() {
         setReply(comment);
@@ -77,6 +98,19 @@ const Conversation = ({ comment, setConversation, onOpen, setReply, refreshTrigg
     function onBackClick() {
         setConversation(undefined)
     }
+
+    useEffect(() => {
+        const onKeyDown = (e: KeyboardEvent) => {
+            // Leave Escape to any open modal/popover/input that already owns it.
+            if (e.key !== 'Escape' || e.defaultPrevented) return;
+            if (document.querySelector('[role="dialog"]')) return;
+            const tag = (e.target as HTMLElement | null)?.tagName;
+            if (tag === 'INPUT' || tag === 'TEXTAREA') return;
+            setConversation(undefined);
+        };
+        window.addEventListener('keydown', onKeyDown);
+        return () => window.removeEventListener('keydown', onKeyDown);
+    }, [setConversation]);
 
     if (isLoading) {
         return (
@@ -108,7 +142,21 @@ const Conversation = ({ comment, setConversation, onOpen, setReply, refreshTrigg
                     <Text>Replying to @{comment.parent_author}</Text>
                 </HStack>
             )}
-            <Snap comment={comment} onOpen={onOpen} setReply={setReply} />
+            <SnapCastBar
+                author={comment.author}
+                permlink={comment.permlink}
+                live={live}
+                onToggle={() => setLive(l => !l)}
+                newCount={snapCast.newCount}
+                onShowNew={snapCast.scrollToTop}
+            />
+            {/* While live the parent (e.g. the livestream embed) stays pinned
+                above the scrolling replies; capped so it can't eat a phone. */}
+            <Box
+                {...(live ? { position: 'sticky', top: 0, zIndex: 10, bg: 'muted', maxH: '40vh', overflowY: 'auto' } : {})}
+            >
+                <Snap comment={comment} onOpen={onOpen} setReply={setReply} />
+            </Box>
             <Divider my={4} />
             <HStack justify="space-between" mt={3} onClick={handleReplyModal}>
                 <HStack>
@@ -129,7 +177,7 @@ const Conversation = ({ comment, setConversation, onOpen, setReply, refreshTrigg
                 </Button>
             </HStack>
             <Divider my={4} />
-            {replies.length > 1 && (
+            {!live && replies.length > 1 && (
                 <HStack spacing={2} mb={3}>
                     {(['new', 'top'] as const).map(opt => (
                         <Button

@@ -1,20 +1,16 @@
 'use client';
 import { Box, Button, Heading, HStack, Link as ChakraLink, Text, VStack, useToast } from '@chakra-ui/react';
 import NextLink from 'next/link';
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
+import { useEffect, useState } from 'react';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useLoginModal } from '@/contexts/LoginModalContext';
 import { usePointsSummary } from '@/hooks/usePointsSummary';
+import { PointsSkippedNotice } from '@/components/games/PointsSkippedNotice';
 import { GAMES_FEATURE_FLAG } from '@/lib/points/config';
 import { saveGameScore } from '@/lib/games/scoreClient';
 import { notEnoughPointsToast } from '@/components/shared/NotEnoughPointsToast';
-import type { SnapieResult, SnapieEvent } from '@/components/games/snapie-info-war';
-
-const SnapieInfoWar = dynamic(
-  () => import('@/components/games/snapie-info-war').then((m) => m.SnapieInfoWar),
-  { ssr: false },
-);
+import { SnapieInfoWar } from '@/components/games/snapie-info-war/SnapieInfoWar';
+import type { SnapieResult, SnapieEvent } from '@/components/games/snapie-info-war/types';
 
 export default function SnapieInfoWarPage() {
   const { username, isLoggedIn } = useCurrentUser();
@@ -22,10 +18,17 @@ export default function SnapieInfoWarPage() {
   const points = usePointsSummary(username);
   const toast = useToast();
 
-  const [sessionId, setSessionId] = useState<string>(() => crypto.randomUUID());
+  // Assigned after mount so server and client render the same tree.
+  // crypto.randomUUID() during render diverges, and the shell mounts only
+  // once this id exists. The canvas engine still loads in an effect.
+  const [sessionId, setSessionId] = useState<string | null>(null);
   const [lastResult, setLastResult] = useState<SnapieResult | null>(null);
   const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error' | 'duplicate'>('idle');
   const [savedPointsAwarded, setSavedPointsAwarded] = useState(0);
+
+  useEffect(() => {
+    setSessionId((current) => current ?? crypto.randomUUID());
+  }, []);
 
   if (!GAMES_FEATURE_FLAG) {
     return (
@@ -162,17 +165,20 @@ export default function SnapieInfoWarPage() {
         <Text color="fg.muted">
           Balance: <strong>{points?.balance ?? '—'}</strong> Snapie Points
         </Text>
+        <PointsSkippedNotice username={username} />
       </VStack>
 
       <Box w="full" flex={1}>
-        <SnapieInfoWar
-          playerName={username || undefined}
-          sessionId={sessionId}
-          autoStart
-          onEvent={handleGameEvent}
-          onResult={handleGameResult}
-          resultSlot={resultSlot}
-        />
+        {sessionId && (
+          <SnapieInfoWar
+            playerName={username || undefined}
+            sessionId={sessionId}
+            autoStart
+            onEvent={handleGameEvent}
+            onResult={handleGameResult}
+            resultSlot={resultSlot}
+          />
+        )}
       </Box>
     </VStack>
   );

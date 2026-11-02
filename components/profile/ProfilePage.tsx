@@ -229,14 +229,6 @@ export default function ProfilePage({ username, initialAccount = null, initialPr
   // A server seed already has the header. Waiting on the client mute check
   // and the account refetch would put a spinner in the first HTML again.
   const seeded = initialAccount != null && initialProfile != null;
-  if (!hiveAccount || (!seeded && (isLoading || muteGate.isChecking))) {
-    return (
-      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
-        <Spinner size="xl" color="primary" />
-      </Box>
-    );
-  }
-
   if (error && !hiveAccount) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
@@ -244,6 +236,14 @@ export default function ProfilePage({ username, initialAccount = null, initialPr
           <AlertIcon />
           {error}
         </Alert>
+      </Box>
+    );
+  }
+
+  if (!hiveAccount || (!seeded && (isLoading || muteGate.isChecking))) {
+    return (
+      <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
+        <Spinner size="xl" color="primary" />
       </Box>
     );
   }
