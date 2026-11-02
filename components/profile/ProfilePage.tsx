@@ -45,9 +45,16 @@ interface ProfilePageProps {
   /** Server-rendered header. Without it the first paint is a spinner. */
   initialAccount?: ProfileSeedAccount | null;
   initialProfile?: any;
+  /** First snaps page with bodyHtml for the initial HTML. */
+  initialSnaps?: ExtendedComment[];
 }
 
-export default function ProfilePage({ username, initialAccount = null, initialProfile = null }: ProfilePageProps) {
+export default function ProfilePage({
+  username,
+  initialAccount = null,
+  initialProfile = null,
+  initialSnaps = [],
+}: ProfilePageProps) {
   const { username: user } = useCurrentUser();
   const { hiveAccount: fetchedAccount, isLoading, error } = useHiveAccount(username);
   const hiveAccount = fetchedAccount ?? initialAccount;
@@ -88,7 +95,7 @@ export default function ProfilePage({ username, initialAccount = null, initialPr
   const profilePoints = usePointsSummary(POINTS_FEATURE_FLAG ? username : null);
 
   // Snaps tab state
-  const profileSnaps = useProfileSnaps(username);
+  const profileSnaps = useProfileSnaps(username, initialSnaps);
   const [conversation, setConversation] = useState<Comment | undefined>();
   const [reply, setReply] = useState<ExtendedComment | undefined>();
   const [isReplyOpen, setIsReplyOpen] = useState(false);

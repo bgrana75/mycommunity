@@ -23,16 +23,19 @@ import { useUserSettings } from '@/hooks/useUserSettings';
 interface PostPageProps {
   author: string
   permlink: string
+  /** Server-fetched post so title/body are in the first HTML (no Loading spinner). */
+  initialPost?: Discussion | null
 }
 
-export default function PostPage({ author, permlink }: PostPageProps) {
+export default function PostPage({ author, permlink, initialPost = null }: PostPageProps) {
   const searchParams = useSearchParams();
   const isEmbedMode = searchParams.get('embed') === 'true';
   const { hiveUser } = useHiveUser();
   const muteGate = useAuthorMuteGate(author);
 
+  const seeded = initialPost != null;
   const [isLoading, setIsLoading] = useState(false);
-  const [post, setPost] = useState<Discussion | null>(null);
+  const [post, setPost] = useState<Discussion | null>(initialPost);
   const [error, setError] = useState<string | null>(null);
   const [retry, setRetry] = useState(0);
   const [conversation, setConversation] = useState<Comment | undefined>();
@@ -60,24 +63,28 @@ export default function PostPage({ author, permlink }: PostPageProps) {
 
   useEffect(() => {
     async function loadPost() {
-      setIsLoading(true);
+      // Keep the seeded post on screen while a background refresh runs.
+      if (!seeded || retry > 0) setIsLoading(true);
       setError(null);
       try {
-        const post = await getPost(author, permlink);
+        const next = await getPost(author, permlink);
         // Older nodes answer a missing post with an empty object.
-        if (!post.author) setError('Post not found');
-        else setPost(post);
+        if (!next.author) {
+          if (!seeded) setError('Post not found');
+        } else {
+          setPost(next);
+        }
       } catch (err) {
         // Current nodes throw "Post <author>/<permlink> does not exist".
         const missing = err instanceof Error && /does not exist|assert exception/i.test(err.message);
-        setError(missing ? 'Post not found' : 'Failed to load post');
+        if (!seeded) setError(missing ? 'Post not found' : 'Failed to load post');
       } finally {
         setIsLoading(false);
       }
     }
 
     loadPost();
-  }, [author, permlink, retry]);
+  }, [author, permlink, retry, seeded]);
 
   const onOpen = () => setIsOpen(true);
   const onClose = () => setIsOpen(false);
@@ -127,7 +134,9 @@ export default function PostPage({ author, permlink }: PostPageProps) {
     );
   }
 
-  if (isLoading || muteGate.isChecking || (!post || !author || !permlink)) {
+  // Seeded HTML already has the post. Waiting on mute/refetch would put a
+  // spinner back in the first paint for crawlers and Lighthouse.
+  if ((!seeded && (isLoading || muteGate.isChecking)) || !post || !author || !permlink) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" height="100vh">
         <Spinner size="xl" color="primary" />

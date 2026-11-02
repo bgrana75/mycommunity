@@ -27,6 +27,20 @@ export async function loadProfileSeed(username: string): Promise<{
     }
 }
 
+/**
+ * True when Hive has an account, false when it does not, 'unknown' when the
+ * node is unreachable. Used to hard-404 missing profiles without 404ing on a
+ * slow seed timeout for a real account.
+ */
+export async function accountExists(username: string): Promise<boolean | 'unknown'> {
+    try {
+        const accounts = await HiveClient.database.getAccounts([username]);
+        return Boolean(Array.isArray(accounts) && accounts[0]);
+    } catch {
+        return 'unknown';
+    }
+}
+
 async function lookup(username: string) {
     const [accounts, profile] = await Promise.all([
         HiveClient.database.getAccounts([username]),
