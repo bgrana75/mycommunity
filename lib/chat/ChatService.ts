@@ -126,7 +126,18 @@ class ChatService {
     return !!this.currentToken();
   }
 
+  /** Owner of the stored session token. Re-read from localStorage for the
+   *  same reason as currentToken(): other modules (points' ensureSessionToken,
+   *  authenticatedFetch) delete `hive-chat-token` without touching
+   *  `hive-chat-token-user`, so the in-memory copy kept naming an owner for a
+   *  token that no longer exists. No stored token means no owner. */
   getTokenUsername(): string | null {
+    if (typeof window === 'undefined') return this.tokenUsername;
+    if (!localStorage.getItem(TOKEN_KEY)) {
+      this.tokenUsername = null;
+      return null;
+    }
+    this.tokenUsername = localStorage.getItem(TOKEN_USER_KEY);
     return this.tokenUsername;
   }
 

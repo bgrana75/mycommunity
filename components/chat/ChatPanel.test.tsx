@@ -486,3 +486,104 @@ describe('ChatPanel rejected session', () => {
     expect(rejectedSend).toBeTruthy();
   });
 });
+
+describe('ChatPanel conversation list loading (#267)', () => {
+  const never = () => new Promise<never>(() => {});
+
+  async function mountPanel() {
+    const { default: ChatPanel } = await import('./ChatPanel');
+    return render(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={vi.fn()} />
+      </ChakraProvider>,
+    );
+  }
+
+  it('shows a spinner, not "No conversations yet", while the lists are loading', async () => {
+    mocks.getChannels.mockImplementation(never);
+    mocks.getConversations.mockImplementation(never);
+    await mountPanel();
+
+    expect(await screen.findByLabelText('Loading conversations')).toBeTruthy();
+    expect(screen.queryByText('No conversations yet')).toBeNull();
+  });
+
+  it('shows public channels even when the authed conversations call never resolves', async () => {
+    mocks.getConversations.mockImplementation(never);
+    await mountPanel();
+
+    expect(await screen.findByText('#general')).toBeTruthy();
+    expect(screen.queryByText('No conversations yet')).toBeNull();
+  });
+
+  it('keeps public channels, explains the failure, and retries when conversations fail', async () => {
+    mocks.getConversations.mockRejectedValueOnce(new Error('HTTP 500'));
+    await mountPanel();
+
+    expect(await screen.findByText('#general')).toBeTruthy();
+    expect(await screen.findByText('Could not load your DMs and groups.')).toBeTruthy();
+    expect(screen.queryByText('No conversations yet')).toBeNull();
+
+    fireEvent.click(screen.getByRole('button', { name: 'Retry' }));
+
+    expect(await screen.findByText('dm-preview', { exact: false })).toBeTruthy();
+    await waitFor(() => expect(screen.queryByText('Could not load your DMs and groups.')).toBeNull());
+  });
+
+  it('shows an error state instead of an empty one when every request fails', async () => {
+    mocks.getChannels.mockRejectedValue(new Error('network'));
+    mocks.getConversations.mockRejectedValue(new Error('network'));
+    await mountPanel();
+
+    expect(await screen.findByText('Conversations unavailable')).toBeTruthy();
+    expect(screen.getByText('Could not load conversations.')).toBeTruthy();
+    expect(screen.queryByText('No conversations yet')).toBeNull();
+  });
+
+  it('says "No conversations yet" only after a load that really returned nothing', async () => {
+    mocks.getChannels.mockResolvedValue([]);
+    mocks.getConversations.mockResolvedValue([]);
+    await mountPanel();
+
+    expect(await screen.findByText('No conversations yet')).toBeTruthy();
+  });
+
+  it('keeps DMs already on screen when reopening and conversations fail', async () => {
+    const { default: ChatPanel } = await import('./ChatPanel');
+    const onClose = vi.fn();
+    const view = render(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+    expect(await screen.findByText('dm-preview', { exact: false })).toBeTruthy();
+
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen={false} onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    let resolveChannels: (channels: unknown) => void = () => {};
+    mocks.getChannels.mockImplementation(
+      () => new Promise(resolve => { resolveChannels = resolve; }),
+    );
+    mocks.getConversations.mockRejectedValue(new Error('HTTP 500'));
+
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    expect(await screen.findByText('dm-preview', { exact: false })).toBeTruthy();
+
+    resolveChannels([
+      { _id: 'general', name: 'general', type: 'channel', isPublic: true, memberCount: 2 },
+    ]);
+
+    expect(await screen.findByText('Could not load your DMs and groups.')).toBeTruthy();
+    expect(screen.getByText('#general')).toBeTruthy();
+    expect(screen.getByText('dm-preview', { exact: false })).toBeTruthy();
+  });
+});

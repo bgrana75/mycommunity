@@ -737,6 +737,28 @@ function ConversationRow({ conv, isActive, onClick }: { conv: Conversation; isAc
   );
 }
 
+/** DMs and private groups already on screen. Public rows come from the channel list. */
+function directConversations(list: Conversation[]): Conversation[] {
+  return list.filter(c => c.type === 'dm' || !c.isPublic);
+}
+
+/** Public rows currently shown, so a missing channel response can keep them. */
+function channelsFromConversations(list: Conversation[]): Channel[] {
+  return list
+    .filter(c => c.isPublic && c.type !== 'dm')
+    .map(c => ({
+      _id: c._id,
+      name: c.name,
+      description: c.description,
+      type: c.type,
+      conversationKind: c.type === 'group' ? 'group' : 'channel',
+      isPublic: true,
+      owner: c.owner,
+      members: c.members || [],
+      memberCount: c.memberCount ?? 0,
+    }));
+}
+
 export default function ChatPanel({
   isOpen,
   onClose,
@@ -755,6 +777,13 @@ export default function ChatPanel({
   const [authError, setAuthError] = useState<string>('');
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  // The list starts empty, so "no rows" cannot mean "nothing to show" until a
+  // load has actually finished. Without this the panel printed "No
+  // conversations yet" while the request was still in flight, and forever
+  // after a failed one (both calls used to be `.catch(() => [])`).
+  const [listLoad, setListLoad] = useState<{ status: 'loading' | 'ready' | 'error'; notice: string }>({ status: 'loading', notice: '' });
+  const [listReloadNonce, setListReloadNonce] = useState(0);
+  const listLoadSeqRef = useRef(0);
   const [activeConversationId, setActiveConversationId] = useState<string>(
     process.env.NEXT_PUBLIC_CHAT_DEFAULT_CHANNEL || 'general'
   );
@@ -932,12 +961,16 @@ export default function ChatPanel({
 
   const reloadConversations = useCallback(async () => {
     if (!isOpen || !isAuthed) return;
+    // Background refresh: a failed call keeps what is on screen. Treating a
+    // transient error as "no conversations" used to wipe every DM from the
+    // list until the next successful poll.
     const [pubChannels, convs] = await Promise.all([
-      chatService.getChannels().catch(() => [] as Channel[]),
-      chatService.getConversations().catch(() => [] as Conversation[]),
+      chatService.getChannels().catch(() => null),
+      chatService.getConversations().catch(() => null),
     ]);
-    setChannels(pubChannels);
-    setConversations(mergeConversations(convs, pubChannels));
+    if (pubChannels) setChannels(pubChannels);
+    if (!pubChannels && !convs) return;
+    setConversations(prev => mergeConversations(convs ?? prev, pubChannels ?? []));
   }, [isAuthed, isOpen, mergeConversations]);
 
   const reloadPreferences = useCallback(async () => {
@@ -950,17 +983,82 @@ export default function ChatPanel({
   }, [isAuthed]);
 
   // ── Load conversations/channels on open ────────────────────────────────
+  // Public channels and the signed-in user's conversations are independent:
+  // each is applied the moment it lands, so a slow or failing authed call can
+  // never hide #General. A result that has not arrived (or failed) stays
+  // null and the rows already on screen are kept, so reopening or Retry
+  // cannot flash the list down to channels-only. A newer load supersedes an
+  // older one, so a late response from a previous isAuthed value cannot
+  // overwrite fresh state.
   useEffect(() => {
     if (!isOpen) return;
-    Promise.all([
-      chatService.getChannels().catch(() => [] as Channel[]),
-      isAuthed ? chatService.getConversations().catch(() => [] as Conversation[]) : Promise.resolve([] as Conversation[]),
-    ]).then(([pubChannels, convs]) => {
-      setChannels(pubChannels);
-      setConversations(mergeConversations(convs, pubChannels));
+    const seq = ++listLoadSeqRef.current;
+    const superseded = () => listLoadSeqRef.current !== seq;
+    let pubChannels: Channel[] | null = null;
+    let convs: Conversation[] | null = null;
+    const apply = () => {
+      if (pubChannels != null) setChannels(pubChannels);
+      if (pubChannels == null && convs == null) return;
+      setConversations(prev => mergeConversations(
+        convs ?? directConversations(prev),
+        pubChannels ?? channelsFromConversations(prev),
+      ));
+    };
+
+    setListLoad(prev => ({ status: 'loading', notice: prev.notice }));
+    if (!isAuthed) {
+      // Drop the previous account's rows; only public channels remain.
+      convs = [];
+      apply();
+    }
+
+    const channelsLoad = chatService.getChannels().then(
+      result => {
+        if (superseded()) return null;
+        pubChannels = result;
+        apply();
+        return null;
+      },
+      (err: unknown) => (superseded() ? null : err),
+    );
+    const convsLoad = isAuthed
+      ? chatService.getConversations().then(
+        result => {
+          if (superseded()) return null;
+          convs = result;
+          apply();
+          return null;
+        },
+        (err: unknown) => (superseded() ? null : err),
+      )
+      : Promise.resolve(null);
+
+    Promise.all([channelsLoad, convsLoad]).then(([channelsErr, convsErr]) => {
+      if (superseded()) return;
+      if (channelsErr && convsErr) {
+        setListLoad({ status: 'error', notice: 'Could not load conversations.' });
+      } else if (channelsErr) {
+        setListLoad({ status: 'error', notice: 'Could not load public channels.' });
+      } else if (convsErr) {
+        const expired = convsErr instanceof Error && convsErr.message === 'CHAT_UNAUTHORIZED';
+        setListLoad({
+          status: 'error',
+          notice: expired
+            ? 'Your chat session expired. Reconnect to see your DMs and groups.'
+            : 'Could not load your DMs and groups.',
+        });
+      } else {
+        setListLoad({ status: 'ready', notice: '' });
+      }
     });
+
     if (isAuthed) reloadPreferences();
-  }, [isOpen, isAuthed, mergeConversations, reloadPreferences]);
+    return () => {
+      // Closing or re-running invalidates this load; a stale `loading` would
+      // otherwise stick if the panel reopens before it settles.
+      if (listLoadSeqRef.current === seq) listLoadSeqRef.current++;
+    };
+  }, [isOpen, isAuthed, mergeConversations, reloadPreferences, listReloadNonce]);
 
   useEffect(() => {
     if (!conversations.length) return;
@@ -984,6 +1082,10 @@ export default function ChatPanel({
       setFirstItemIndex(CHAT_LIST_INDEX_ORIGIN);
       setMessages([]);
       setConversations([]);
+      // logout() only changes isAuthed when the old token was still live. If
+      // it had already expired nothing else re-runs the load effect, and the
+      // list stayed empty until the panel was closed and reopened.
+      setListReloadNonce(n => n + 1);
     }
   }, [user]);
 
@@ -2095,9 +2197,23 @@ export default function ChatPanel({
             {!!panelError && (
               <Text fontSize="xs" color="red.300" px={1}>{panelError}</Text>
             )}
+            {!!listLoad.notice && listLoad.status !== 'loading' && (
+              <Flex align="center" justify="space-between" gap={2} px={2} py={1} borderRadius="8px" bg="overlay.50" role="alert">
+                <Text fontSize="xs" color="red.300">{listLoad.notice}</Text>
+                <Button size="xs" variant="ghost" colorScheme="blue" onClick={() => setListReloadNonce(n => n + 1)}>
+                  Retry
+                </Button>
+              </Flex>
+            )}
             {conversations.length === 0 ? (
               <Flex flex="1" align="center" justify="center" py={6}>
-                <Text fontSize="xs" color="overlay.500">No conversations yet</Text>
+                {listLoad.status === 'loading' ? (
+                  <Spinner color="blue.300" size="sm" aria-label="Loading conversations" />
+                ) : (
+                  <Text fontSize="xs" color="overlay.500">
+                    {listLoad.status === 'error' ? 'Conversations unavailable' : 'No conversations yet'}
+                  </Text>
+                )}
               </Flex>
             ) : (
               conversations.map(conv => (
