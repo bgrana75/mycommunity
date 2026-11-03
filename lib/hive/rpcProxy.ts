@@ -1,7 +1,9 @@
 /**
  * Server-side Hive RPC proxy: one node at a time, failing over only when
  * the node itself is unhealthy. JSON-RPC application errors are the caller's
- * result and are returned as-is.
+ * result and are returned as-is. The one exception to "one node" is
+ * bridge.unread_notifications, which is cross-checked against a second node
+ * because a lagging node reports a stale (inflated) unread count.
  */
 
 const BEACON_URL = 'https://beacon.peakd.com/api/nodes'
@@ -11,9 +13,16 @@ const NODE_CACHE_TTL_MS = 5 * 60 * 1000
 
 /** Per-attempt budget. Transport failures return immediately; a hung socket waits this long. */
 export const ATTEMPT_TIMEOUT_MS = 8000
+/**
+ * Budget for the unread_notifications second opinion. It shares the caller's
+ * batch, which aborts well before a full extra attempt, so this stays short.
+ */
+export const CROSS_CHECK_TIMEOUT_MS = 3000
 /** Skip a node that just failed so the next call does not start on it. */
 export const FAILURE_COOLDOWN_MS = 60_000
 const MAX_NODES_PER_CALL = 6
+/** Extra nodes tried to get a second opinion on unread_notifications. */
+const MAX_CROSS_CHECK_ATTEMPTS = 2
 
 const EXCLUDED_HOSTS = ['api.deathwing.me']
 // Live again (HTTP 200) but beacon score stays under MIN_SCORE and it has
@@ -185,9 +194,162 @@ export type DispatchOptions = {
 }
 
 /**
+ * One attempt against one node. Marks the node failed (cooldown) on transport
+ * errors, timeouts, HTTP 5xx and unparseable bodies. Success bookkeeping is left
+ * to the caller so a cross-check call cannot change which node leads.
+ */
+async function attemptNode(
+  node: string,
+  payload: unknown,
+  fetchImpl: FetchLike,
+  timeoutMs: number,
+  now: () => number,
+): Promise<RpcDispatchResult> {
+  try {
+    const res = await fetchWithTimeout(
+      fetchImpl,
+      node,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      },
+      timeoutMs,
+    )
+
+    if (res.status >= 500) {
+      await res.body?.cancel().catch(() => undefined)
+      noteFailure(node, now())
+      return { ok: false }
+    }
+
+    let data: unknown
+    try {
+      data = await res.json()
+    } catch {
+      noteFailure(node, now())
+      return { ok: false }
+    }
+
+    if (res.ok || isJsonRpcApplicationError(data)) return { ok: true, data }
+
+    noteFailure(node, now())
+    return { ok: false }
+  } catch {
+    noteFailure(node, now())
+    return { ok: false }
+  }
+}
+
+type RpcItem = Record<string, unknown>
+type UnreadState = { lastread?: unknown; unread?: unknown }
+
+/** `bridge.unread_notifications`, in either JSON-RPC shape a client may send. */
+function isUnreadNotificationsCall(item: unknown): boolean {
+  if (!item || typeof item !== 'object') return false
+  const { method, params } = item as RpcItem
+  if (method === 'bridge.unread_notifications') return true
+  return (
+    method === 'call' &&
+    Array.isArray(params) &&
+    params[0] === 'bridge' &&
+    params[1] === 'unread_notifications'
+  )
+}
+
+function unreadResult(item: unknown): UnreadState | null {
+  if (!item || typeof item !== 'object') return null
+  const result = (item as RpcItem).result
+  if (!result || typeof result !== 'object') return null
+  return result as UnreadState
+}
+
+function hiveTime(value: unknown): number {
+  if (typeof value !== 'string') return NaN
+  // Hive timestamps carry no zone and are UTC.
+  return Date.parse(/(?:Z|[+-]\d\d:?\d\d)$/.test(value) ? value : `${value}Z`)
+}
+
+/**
+ * Choose between two nodes' answers to the same unread_notifications call.
+ * A node whose notification index lags reports an older `lastread` and so a
+ * much larger `unread` (the bell showing 99+ after "mark all read"). The newer
+ * `lastread` wins; on a tie the smaller count does. Returns `first` when the
+ * answers cannot be compared.
+ */
+export function pickFreshestUnreadItem(first: unknown, second: unknown): unknown {
+  const a = unreadResult(first)
+  const b = unreadResult(second)
+  if (!a) return b ? second : first
+  if (!b) return first
+
+  const aTime = hiveTime(a.lastread)
+  const bTime = hiveTime(b.lastread)
+  if (Number.isFinite(aTime) && Number.isFinite(bTime) && aTime !== bTime) {
+    return bTime > aTime ? second : first
+  }
+  if (typeof a.unread === 'number' && typeof b.unread === 'number' && b.unread < a.unread) {
+    return second
+  }
+  return first
+}
+
+/**
+ * Ask later nodes for just the unread_notifications calls in `body` and keep
+ * the fresher answer for each. Nodes this call already tried (they timed out
+ * or 5xx'd before one answered) are not asked again, and neither is a node
+ * still in cooldown. A single node's stale answer is otherwise the app's
+ * truth, because the proxy sticks to the last node that succeeded.
+ * Best effort, on CROSS_CHECK_TIMEOUT_MS: with no later node reachable the
+ * first answer is returned.
+ */
+async function crossCheckUnreadNotifications(
+  body: unknown,
+  data: unknown,
+  answeredBy: string,
+  candidates: string[],
+  fetchImpl: FetchLike,
+  now: () => number,
+): Promise<unknown> {
+  const isBatch = Array.isArray(body)
+  const requests: unknown[] = isBatch ? body : [body]
+  const checks = requests.filter(isUnreadNotificationsCall)
+  if (checks.length === 0) return data
+  if (isBatch !== Array.isArray(data)) return data
+
+  const payload = isBatch ? checks : checks[0]
+  const answeredAt = candidates.indexOf(answeredBy)
+  const at = now()
+  const others = (answeredAt === -1 ? [] : candidates.slice(answeredAt + 1))
+    .filter((node) => (cooldownUntil.get(node) ?? 0) <= at)
+    .slice(0, MAX_CROSS_CHECK_ATTEMPTS)
+  for (const node of others) {
+    const outcome = await attemptNode(node, payload, fetchImpl, CROSS_CHECK_TIMEOUT_MS, now)
+    if (!outcome.ok) continue
+
+    const otherItems: unknown[] = Array.isArray(outcome.data) ? outcome.data : [outcome.data]
+    const otherById = new Map<unknown, unknown>()
+    for (const item of otherItems) {
+      if (item && typeof item === 'object') otherById.set((item as RpcItem).id, item)
+    }
+
+    if (!isBatch) return pickFreshestUnreadItem(data, otherItems[0])
+
+    const checkIds = new Set(checks.map((check) => (check as RpcItem).id))
+    return (data as unknown[]).map((item) => {
+      const id = item && typeof item === 'object' ? (item as RpcItem).id : undefined
+      if (!checkIds.has(id) || !otherById.has(id)) return item
+      return pickFreshestUnreadItem(item, otherById.get(id))
+    })
+  }
+  return data
+}
+
+/**
  * POST `body` to one node at a time. Fail over on transport errors, timeouts,
  * and HTTP 5xx. A JSON-RPC error object (the node understood the call and
- * rejected it) is returned unchanged.
+ * rejected it) is returned unchanged. Calls to `bridge.unread_notifications`
+ * are cross-checked against a second node (see crossCheckUnreadNotifications).
  */
 export async function dispatchHiveRpc(
   body: unknown,
@@ -200,41 +362,19 @@ export async function dispatchHiveRpc(
   const candidates = orderNodesForAttempt(nodes, now())
 
   for (const node of candidates) {
-    try {
-      const res = await fetchWithTimeout(
-        fetchImpl,
-        node,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(body),
-        },
-        timeoutMs,
-      )
+    const outcome = await attemptNode(node, body, fetchImpl, timeoutMs, now)
+    if (!outcome.ok) continue
 
-      if (res.status >= 500) {
-        await res.body?.cancel().catch(() => undefined)
-        noteFailure(node, now())
-        continue
-      }
-
-      let data: unknown
-      try {
-        data = await res.json()
-      } catch {
-        noteFailure(node, now())
-        continue
-      }
-
-      if (res.ok || isJsonRpcApplicationError(data)) {
-        noteSuccess(node)
-        return { ok: true, data }
-      }
-
-      noteFailure(node, now())
-    } catch {
-      noteFailure(node, now())
-    }
+    noteSuccess(node)
+    const data = await crossCheckUnreadNotifications(
+      body,
+      outcome.data,
+      node,
+      candidates,
+      fetchImpl,
+      now,
+    )
+    return { ok: true, data }
   }
 
   return { ok: false }
