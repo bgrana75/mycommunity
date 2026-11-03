@@ -29,6 +29,7 @@ export const CHANGELOG: ChangelogEntry[] = [
     date: '2026-10-29',
     title: 'Small fixes',
     items: [
+      { type: 'fix', text: 'Sharing a profile or post link now shows the proper preview card far more reliably, instead of sometimes falling back to a generic one.' },
       { type: 'fix', text: 'The home feed no longer gets stuck on "Loading..." at the bottom when the connection to Hive is slow or flaky.' },
       { type: 'fix', text: 'A post that fails to load now offers a Retry button, and missing posts reliably say "Post not found".' },
       { type: 'improvement', text: 'Press Escape to close an open conversation.' },

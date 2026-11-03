@@ -263,6 +263,10 @@ This script normalizes missing fields in existing `channels` and `chatusers` doc
 - This project is deployable on Vercel or any Node-compatible host.
 - Ensure all required env vars are configured in your deployment platform.
 - For chat push notifications in production, both server-side and client-side Firebase env vars must be present.
+- Production and staging must be served through Cloudflare. The per-visitor rate limits take the client address only from `cf-connecting-ip` (see `lib/http/rateLimit.ts`); `x-forwarded-for` is client-controlled and is never trusted. A request without that header (a direct `pnpm start` or Docker deployment, or a hit on the origin that bypasses Cloudflare) gets the address `unknown`:
+  - `/api/image-proxy`, `/api/feed-lcp` and the games session route key on the address alone, so on such a host all visitors share each route's limit.
+  - `/api/feedback` keys on the address plus the Hive username (`lib/feedback/limit.ts`), so signed-in users keep their own buckets and only guests share one.
+  - `/api/snapie-auth` does not limit locally. It forwards the address to snapie-auth as `X-Forwarded-For`, and sends no such header when the address is `unknown`.
 
 ## Troubleshooting
 

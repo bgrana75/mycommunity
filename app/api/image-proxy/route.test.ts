@@ -25,7 +25,7 @@ const JPEG = Buffer.from([0xff, 0xd8, 0xff, 0xe0, 0x00, 0x10]);
 
 function call(path: string, ip = '203.0.113.10') {
     return GET(new NextRequest(new URL(path, 'http://127.0.0.1:3310'), {
-        headers: { 'x-forwarded-for': ip },
+        headers: { 'cf-connecting-ip': ip },
     }));
 }
 
@@ -35,6 +35,37 @@ afterEach(() => {
 });
 
 describe('GET /api/image-proxy', () => {
+    const rateLimitedUrl = `/api/image-proxy?url=${encodeURIComponent('https://i.imgur.com/TyZjlBu.jpg')}`;
+
+    it('does not mint new rate-limit buckets by rotating x-forwarded-for', async () => {
+        vi.mocked(fetchProxiedImage).mockResolvedValue({ body: JPEG, contentType: 'image/jpeg' });
+        const statuses: number[] = [];
+        for (let i = 0; i < 61; i++) {
+            const res = await GET(new NextRequest(new URL(rateLimitedUrl, 'http://127.0.0.1:3310'), {
+                headers: {
+                    'cf-connecting-ip': '203.0.113.50',
+                    'x-forwarded-for': `198.51.100.${i}, 203.0.113.50`,
+                },
+            }));
+            statuses.push(res.status);
+        }
+        expect(statuses.slice(0, 60).every((s) => s === 200)).toBe(true);
+        expect(statuses[60]).toBe(429);
+    });
+
+    it('shares one "unknown" bucket when cf-connecting-ip is missing, whatever x-forwarded-for says', async () => {
+        vi.mocked(fetchProxiedImage).mockResolvedValue({ body: JPEG, contentType: 'image/jpeg' });
+        const statuses: number[] = [];
+        for (let i = 0; i < 61; i++) {
+            const res = await GET(new NextRequest(new URL(rateLimitedUrl, 'http://127.0.0.1:3310'), {
+                headers: { 'x-forwarded-for': `198.51.100.${i}` },
+            }));
+            statuses.push(res.status);
+        }
+        expect(statuses.slice(0, 60).every((s) => s === 200)).toBe(true);
+        expect(statuses[60]).toBe(429);
+    });
+
     it('serves image bytes and marks a Hive-cache fallback', async () => {
         vi.mocked(fetchProxiedImage).mockResolvedValue({
             body: JPEG,
