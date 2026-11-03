@@ -779,6 +779,10 @@ export default function ChatPanel({
   const { username: user } = useCurrentUser();
   const isMobile = useBreakpointValue({ base: true, md: false });
   const isTablet = useBreakpointValue({ base: false, md: true, lg: false }) ?? false;
+  // Same cutoff as the fixed mobile header and bottom tab bar (`sm` = 480px).
+  // Below that, the sheet used to cover both, so there was no way out except
+  // a 24px icon.
+  const isPhone = useBreakpointValue({ base: true, sm: false });
 
   const [authState, setAuthState] = useState<'idle' | 'connecting' | 'done' | 'error'>('idle');
   const [authError, setAuthError] = useState<string>('');
@@ -1826,6 +1830,10 @@ export default function ChatPanel({
   const panelBottom = isPopoutWindow ? '0' : (isMobile ? '0' : '0');
   const panelRight = isPopoutWindow ? '0' : (isMobile ? '0' : '16px');
   const borderRadius = isPopoutWindow ? '0' : (isMobile ? '20px 20px 0 0' : '16px 16px 0 0');
+  // Phone: sit between the fixed header and the tab bar, inside the safe area,
+  // so both stay tappable and the close control is never under the notch.
+  const phoneTop = 'calc(56px + env(safe-area-inset-top))';
+  const phoneBottom = 'calc(60px + env(safe-area-inset-bottom))';
   const isDesktopSplit = !isMobile && !isTablet;
   const isTabletLayout = isTablet;
   const showList = isMobile ? mobileView === 'list' : true;
@@ -1892,8 +1900,8 @@ export default function ChatPanel({
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {isMobile && (
+      {/* Tablet sheet backdrop. Phones leave the header and tab bar uncovered. */}
+      {isMobile && !isPhone && (
         <Box
           position="fixed" inset="0" zIndex={1399}
           bg="blackAlpha.600"
@@ -1903,19 +1911,22 @@ export default function ChatPanel({
       )}
 
       <Box
+        data-chat-mobile-shell={isPhone ? 'true' : undefined}
         position="fixed"
-        bottom={panelBottom}
-        right={panelRight}
-        w={panelW}
-        h={panelH}
-        maxH={isPopoutWindow ? '100vh' : (isMobile ? '85vh' : 'calc(100vh - 24px)')}
-        zIndex={1400}
+        top={isPhone ? phoneTop : undefined}
+        bottom={isPhone ? phoneBottom : panelBottom}
+        left={isPhone ? 0 : undefined}
+        right={isPhone ? 0 : panelRight}
+        w={isPhone ? 'auto' : panelW}
+        h={isPhone ? 'auto' : panelH}
+        maxH={isPhone ? 'none' : (isPopoutWindow ? '100vh' : (isMobile ? '85vh' : 'calc(100vh - 24px)'))}
+        zIndex={isPhone ? 997 : 1400}
         display="flex"
         flexDirection="column"
         cursor={isResizing ? 'nwse-resize' : 'default'}
         bg="surface"
         backdropFilter="blur(16px)"
-        borderRadius={borderRadius}
+        borderRadius={isPhone ? '16px' : borderRadius}
         border="1px solid"
         borderColor="overlay.100"
         borderBottom={isPopoutWindow ? '1px solid' : 'none'}
@@ -1964,18 +1975,38 @@ export default function ChatPanel({
           borderColor="overlay.100"
           flexShrink={0}
         >
-          <HStack spacing={2}>
+          <HStack spacing={2} minW={0}>
+            {isPhone && (
+              <Button
+                aria-label="Close chat"
+                leftIcon={<FiArrowLeft />}
+                size="sm"
+                variant="ghost"
+                color="text"
+                fontWeight="700"
+                flexShrink={0}
+                minH="44px"
+                minW="44px"
+                px={2}
+                onClick={onClose}
+              >
+                Close
+              </Button>
+            )}
             {isMobile && mobileView === 'thread' && (
               <IconButton
                 aria-label="Back to conversations"
                 icon={<FiArrowLeft />}
-                size="xs"
+                size={isPhone ? 'sm' : 'xs'}
                 variant="ghost"
                 color="overlay.700"
+                minW={isPhone ? '44px' : undefined}
+                minH={isPhone ? '44px' : undefined}
+                flexShrink={0}
                 onClick={() => setMobileView('list')}
               />
             )}
-            <Text fontSize="sm" fontWeight="700" color="text" letterSpacing="0.02em">
+            <Text fontSize="sm" fontWeight="700" color="text" letterSpacing="0.02em" noOfLines={1}>
               {showList && !showThread ? 'Conversations' : (activeConversation?.type === 'channel' ? `#${activeConversation?.name}` : activeConversation?.name || 'Chat')}
             </Text>
             {showThread && activeConversation?.type === 'dm' && (
@@ -2088,15 +2119,19 @@ export default function ChatPanel({
                 </Button>
               </Tooltip>
             )}
-            <IconButton
-              aria-label="Close chat"
-              icon={<FiX />}
-              size="xs"
-              variant="ghost"
-              color="overlay.500"
-              _hover={{ color: 'white', bg: 'overlay.100' }}
-              onClick={onClose}
-            />
+            {!isPhone && (
+              <IconButton
+                aria-label="Close chat"
+                icon={<FiX />}
+                size={isMobile ? 'md' : 'xs'}
+                variant="ghost"
+                color={isMobile ? 'text' : 'overlay.500'}
+                minW={isMobile ? '44px' : undefined}
+                minH={isMobile ? '44px' : undefined}
+                _hover={{ color: 'white', bg: 'overlay.100' }}
+                onClick={onClose}
+              />
+            )}
           </HStack>
         </Flex>
 
@@ -2482,7 +2517,7 @@ export default function ChatPanel({
                 gap={2}
                 align="center"
                 flexShrink={0}
-                pb={isTabletLayout ? 'calc(8px + env(safe-area-inset-bottom))' : 'calc(12px + env(safe-area-inset-bottom))'}
+                pb={isPhone ? '12px' : (isTabletLayout ? 'calc(8px + env(safe-area-inset-bottom))' : 'calc(12px + env(safe-area-inset-bottom))')}
                 direction="column"
               >
                 {confirmBlockUser && (

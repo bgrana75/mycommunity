@@ -1,12 +1,13 @@
 'use client'
 import { Box, Flex } from '@chakra-ui/react';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { Suspense, useState, useEffect, useCallback, useRef, useLayoutEffect } from 'react';
 import dynamic from 'next/dynamic';
 import MobileHeader from '@/components/layout/MobileHeader';
 import BottomTabBar from '@/components/layout/BottomTabBar';
 import MeSheet from '@/components/layout/MeSheet';
 import { chatService } from '@/lib/chat/ChatService';
+import { chatCloseDestination } from '@/lib/chat/closeChat';
 import { OPEN_CHAT_EVENT } from '@/lib/chat/openChat';
 import { useHangout } from '@/contexts/HangoutContext';
 import { useUserSettings } from '@/hooks/useUserSettings';
@@ -27,6 +28,17 @@ const DebugConsole = dynamic(() => import('@/components/debug/DebugConsole'), { 
 
 export default function LayoutContent({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
+  const router = useRouter();
+  const isPhone = usePhoneLayout();
+  const isPhoneRef = useRef(isPhone);
+  isPhoneRef.current = isPhone;
+  const seenPathRef = useRef<string | null>(null);
+  // The document's first history entry is the landing visit. Later entries
+  // created by in-app navigations are marked so Close can tell them from a
+  // direct /chat visit the user backed onto. Refs stay out of render: React
+  // may replay a render and a write there would not match the history entry.
+  const landingHistoryRef = useRef(true);
+  const historyPoppedRef = useRef(false);
   const isShortsPage = pathname === '/shorts';
   // useSearchParams() on this component bails the layout's suspense boundary
   // out to client rendering (`BAILOUT_TO_CLIENT_SIDE_RENDERING`), so the home
@@ -106,6 +118,27 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     setIsChatMinimized(false);
   }, [isChatPopoutMode]);
 
+  useEffect(() => {
+    const onPop = () => { historyPoppedRef.current = true; };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
+  }, []);
+
+  useEffect(() => {
+    if (landingHistoryRef.current) {
+      landingHistoryRef.current = false;
+      return;
+    }
+    if (historyPoppedRef.current) {
+      historyPoppedRef.current = false;
+      return;
+    }
+    const current = window.history.state;
+    const base = current && typeof current === 'object' ? current as Record<string, unknown> : {};
+    if (base.snapieInApp === true) return;
+    window.history.replaceState({ ...base, snapieInApp: true }, '');
+  }, [pathname]);
+
   // /chat asks for the existing panel once a session exists. Guests stay on
   // the page's sign-in gate; opening the overlay on mobile would cover it.
   useEffect(() => {
@@ -116,6 +149,46 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
     window.addEventListener(OPEN_CHAT_EVENT, open);
     return () => window.removeEventListener(OPEN_CHAT_EVENT, open);
   }, []);
+
+  // Phone chrome (header, tab bar) stays tappable, but the panel still covers
+  // the page underneath it. Leaving the route has to drop the panel or the
+  // next page opens hidden behind chat. Desktop keeps the panel across
+  // navigations.
+  useEffect(() => {
+    const seen = seenPathRef.current;
+    if (seen === null) {
+      seenPathRef.current = pathname;
+      return;
+    }
+    if (seen === pathname) return;
+    seenPathRef.current = pathname;
+    if (!isPhoneRef.current || pathname === '/chat') return;
+    setIsChatOpen(false);
+    setIsChatMinimized(false);
+  }, [pathname]);
+
+  const routerRef = useRef(router);
+  routerRef.current = router;
+
+  const closeChat = useCallback(() => {
+    setIsChatOpen(false);
+    setIsChatMinimized(false);
+    // Read the viewport at click time. DevTools device mode can change the
+    // width without the state hook having flushed yet.
+    const phoneNow = typeof window !== 'undefined'
+      && window.matchMedia('(max-width: 479px)').matches;
+    const historyState = window.history.state;
+    const fromInAppNavigation = !!historyState
+      && typeof historyState === 'object'
+      && (historyState as { snapieInApp?: unknown }).snapieInApp === true;
+    const action = chatCloseDestination({
+      isPhone: phoneNow,
+      pathname,
+      fromInAppNavigation,
+    });
+    if (action === 'back') routerRef.current.back();
+    else if (action === 'home') routerRef.current.replace('/');
+  }, [pathname]);
 
   // Close MeSheet when navigating
   useEffect(() => { setIsMeSheetOpen(false); }, [pathname]);
@@ -226,7 +299,7 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
           {/* Chat panel (all screen sizes). Loaded on first open. */}
           {chatActivated && <ChatPanel
             isOpen={isChatOpen}
-            onClose={() => setIsChatOpen(false)}
+            onClose={closeChat}
             isMinimized={isChatMinimized}
             onMinimize={() => setIsChatMinimized(true)}
             onRestore={() => { setIsChatMinimized(false); setIsChatOpen(true); }}
@@ -261,6 +334,23 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
       <DebugConsole />
     </Box>
   );
+}
+
+/** Matches BottomTabBar / MobileHeader, which render only below the `sm` breakpoint (480px). */
+function usePhoneLayout() {
+  const [isPhone, setIsPhone] = useState(false);
+  useEffect(() => {
+    const mq = window.matchMedia('(max-width: 479px)');
+    const apply = () => setIsPhone(mq.matches);
+    apply();
+    mq.addEventListener('change', apply);
+    window.addEventListener('resize', apply);
+    return () => {
+      mq.removeEventListener('change', apply);
+      window.removeEventListener('resize', apply);
+    };
+  }, []);
+  return isPhone;
 }
 
 function LayoutQueryFlags({ onChange }: { onChange: (flags: { embed: boolean; chatPopout: boolean }) => void }) {
