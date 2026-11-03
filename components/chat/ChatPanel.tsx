@@ -739,12 +739,14 @@ function ConversationRow({ conv, isActive, onClick }: { conv: Conversation; isAc
 
 /**
  * Rows already on screen to keep while the conversations call is pending or
- * failed: DMs, private groups, and public rows the fresh channel list still
+ * failed: DMs, every group, and public channels the fresh channel list still
  * has (they carry lastMessage and unread counts that Channel data lacks).
+ * Groups are never in that list (/api/chat/channels returns channels only),
+ * so only the conversations call can drop them.
  */
 function keptConversations(list: Conversation[], channels: Channel[] | null): Conversation[] {
   const live = new Set((channels ?? []).map(ch => ch._id));
-  return list.filter(c => c.type === 'dm' || !c.isPublic || live.has(c._id));
+  return list.filter(c => c.type !== 'channel' || !c.isPublic || live.has(c._id));
 }
 
 /** Public rows currently shown, so a missing channel response can keep them. */

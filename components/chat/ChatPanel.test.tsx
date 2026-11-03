@@ -589,4 +589,39 @@ describe('ChatPanel conversation list loading (#267)', () => {
     expect(screen.getByText('general-preview', { exact: false })).toBeTruthy();
     expect(screen.queryByText('#random')).toBeNull();
   });
+
+  it('keeps public groups when reopening and only the channel list loads', async () => {
+    mocks.getConversations.mockResolvedValue([
+      { _id: 'general', name: 'general', type: 'channel', isPublic: true, lastMessage: message('g49', 'carol', 'general-preview') },
+      { _id: 'hikers', name: 'hikers', type: 'group', isPublic: true, members: ['alice', 'bob'], lastMessage: message('h1', 'bob', 'group-preview') },
+    ]);
+    const { default: ChatPanel } = await import('./ChatPanel');
+    const onClose = vi.fn();
+    const view = render(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+    expect(await screen.findByText('group-preview', { exact: false })).toBeTruthy();
+
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen={false} onClose={onClose} />
+      </ChakraProvider>,
+    );
+    // The channel list never includes groups.
+    mocks.getChannels.mockResolvedValue([
+      { _id: 'general', name: 'general', type: 'channel', isPublic: true, memberCount: 2 },
+    ]);
+    mocks.getConversations.mockRejectedValue(new Error('HTTP 500'));
+    view.rerender(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    expect(await screen.findByText('Could not load your DMs and groups.')).toBeTruthy();
+    expect(screen.getByText('group-preview', { exact: false })).toBeTruthy();
+    expect(screen.getByText('general-preview', { exact: false })).toBeTruthy();
+  });
 });
