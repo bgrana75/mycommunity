@@ -41,7 +41,7 @@ describe('useCurrencyDisplay', () => {
   it('keeps the sync HBD value until async conversion finishes', async () => {
     process.env.NEXT_PUBLIC_DISPLAY_CURRENCY = 'R$';
     let resolveConvert!: (value: string) => void;
-    vi.mocked(convertHBDToDisplayCurrency).mockReturnValue(
+    vi.mocked(convertHBDToDisplayCurrency).mockReturnValueOnce(
       new Promise<string>((resolve) => {
         resolveConvert = resolve;
       }),
@@ -56,5 +56,23 @@ describe('useCurrencyDisplay', () => {
 
     resolveConvert('R$10.00');
     await waitFor(() => expect(result.current).toBe('R$10.00'));
+    // A fresh post object each render must not restart conversion for the same amount.
+    await new Promise((resolve) => setTimeout(resolve, 20));
+    expect(result.current).toBe('R$10.00');
+    expect(convertHBDToDisplayCurrency).toHaveBeenCalledTimes(1);
+  });
+
+  it('converts again when the payout amount changes', async () => {
+    process.env.NEXT_PUBLIC_DISPLAY_CURRENCY = 'R$';
+    const created = new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString().replace('Z', '');
+    const { result, rerender } = renderHook(
+      ({ delta }) => useCurrencyDisplay({ created, pending_payout_value: '2.000 HBD' }, delta),
+      { initialProps: { delta: 0 } },
+    );
+
+    await waitFor(() => expect(result.current).toBe('R$2.00'));
+    rerender({ delta: 0.5 });
+    await waitFor(() => expect(result.current).toBe('R$2.50'));
+    expect(convertHBDToDisplayCurrency).toHaveBeenCalledTimes(2);
   });
 });

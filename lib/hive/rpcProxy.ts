@@ -106,16 +106,31 @@ export function selectBeaconNodes(data: unknown): string[] | null {
 
 type FetchLike = (input: string, init?: RequestInit) => Promise<Response>
 
-async function fetchWithTimeout(
+/**
+ * Fetch and read the response under one timer. The timer covers `read` too: a
+ * node that sends headers and then stalls the body must not outlive timeoutMs.
+ */
+async function fetchWithTimeout<T>(
   fetchImpl: FetchLike,
   url: string,
   init: RequestInit,
   timeoutMs: number,
-): Promise<Response> {
+  read: (res: Response) => Promise<T>,
+): Promise<T> {
   const controller = new AbortController()
+  const timedOut = new Promise<never>((_resolve, reject) => {
+    controller.signal.addEventListener('abort', () => {
+      const error = new Error('The operation was aborted')
+      error.name = 'AbortError'
+      reject(error)
+    })
+  })
   const timer = setTimeout(() => controller.abort(), timeoutMs)
   try {
-    return await fetchImpl(url, { ...init, signal: controller.signal })
+    return await Promise.race([
+      fetchImpl(url, { ...init, signal: controller.signal }).then(read),
+      timedOut,
+    ])
   } finally {
     clearTimeout(timer)
   }
@@ -126,19 +141,17 @@ export async function getHiveRpcNodes(fetchImpl: FetchLike = fetch): Promise<str
     return nodeCache.nodes
   }
   try {
-    const res = await fetchWithTimeout(
+    const data = await fetchWithTimeout(
       fetchImpl,
       BEACON_URL,
       { method: 'GET' },
       BEACON_TIMEOUT_MS,
+      async (res): Promise<unknown> => (res.ok ? res.json() : null),
     )
-    if (res.ok) {
-      const data: unknown = await res.json()
-      const nodes = selectBeaconNodes(data)
-      if (nodes) {
-        nodeCache = { nodes, at: Date.now() }
-        return nodes
-      }
+    const nodes = selectBeaconNodes(data)
+    if (nodes) {
+      nodeCache = { nodes, at: Date.now() }
+      return nodes
     }
   } catch {
     /* fall through to the hardcoded list */
@@ -206,7 +219,7 @@ async function attemptNode(
   now: () => number,
 ): Promise<RpcDispatchResult> {
   try {
-    const res = await fetchWithTimeout(
+    const outcome = await fetchWithTimeout(
       fetchImpl,
       node,
       {
@@ -215,26 +228,19 @@ async function attemptNode(
         body: JSON.stringify(payload),
       },
       timeoutMs,
+      async (res): Promise<RpcDispatchResult> => {
+        if (res.status >= 500) {
+          await res.body?.cancel().catch(() => undefined)
+          return { ok: false }
+        }
+        // Throws on an unparseable body, which counts as a failure below.
+        const data: unknown = await res.json()
+        if (res.ok || isJsonRpcApplicationError(data)) return { ok: true, data }
+        return { ok: false }
+      },
     )
-
-    if (res.status >= 500) {
-      await res.body?.cancel().catch(() => undefined)
-      noteFailure(node, now())
-      return { ok: false }
-    }
-
-    let data: unknown
-    try {
-      data = await res.json()
-    } catch {
-      noteFailure(node, now())
-      return { ok: false }
-    }
-
-    if (res.ok || isJsonRpcApplicationError(data)) return { ok: true, data }
-
-    noteFailure(node, now())
-    return { ok: false }
+    if (!outcome.ok) noteFailure(node, now())
+    return outcome
   } catch {
     noteFailure(node, now())
     return { ok: false }

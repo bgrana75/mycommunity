@@ -585,5 +585,8 @@ describe('ChatPanel conversation list loading (#267)', () => {
     expect(await screen.findByText('Could not load your DMs and groups.')).toBeTruthy();
     expect(screen.getByText('#general')).toBeTruthy();
     expect(screen.getByText('dm-preview', { exact: false })).toBeTruthy();
+    // Public rows still listed keep their preview; ones the server dropped go.
+    expect(screen.getByText('general-preview', { exact: false })).toBeTruthy();
+    expect(screen.queryByText('#random')).toBeNull();
   });
 });

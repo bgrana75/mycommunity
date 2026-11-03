@@ -314,6 +314,26 @@ describe('unread_notifications cross-check', () => {
     expect(CROSS_CHECK_TIMEOUT_MS * 2).toBeLessThan(ATTEMPT_TIMEOUT_MS * 2)
   })
 
+  it('bounds a cross-check whose body stalls after the headers arrive', async () => {
+    vi.useFakeTimers()
+    const calls: string[] = []
+    const fetchImpl = vi.fn(async (url: string) => {
+      calls.push(url)
+      if (url === A) return jsonResponse(STALE)
+      const stalled = new ReadableStream<Uint8Array>({
+        start(controller) {
+          controller.enqueue(new TextEncoder().encode('{"jsonrpc":'))
+        },
+      })
+      return new Response(stalled, { headers: { 'content-type': 'application/json' } })
+    })
+
+    const pending = dispatchHiveRpc(unreadCall, [A, B], { fetchImpl })
+    await vi.advanceTimersByTimeAsync(CROSS_CHECK_TIMEOUT_MS)
+    await expect(pending).resolves.toEqual({ ok: true, data: STALE })
+    expect(calls).toEqual([A, B])
+  })
+
   it('does not contact a second node for other methods', async () => {
     const calls: string[] = []
     const fetchImpl = nodesReturning({ [A]: { jsonrpc: '2.0', result: 1, id: 1 } }, calls)

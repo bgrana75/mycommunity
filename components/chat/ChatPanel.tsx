@@ -737,9 +737,14 @@ function ConversationRow({ conv, isActive, onClick }: { conv: Conversation; isAc
   );
 }
 
-/** DMs and private groups already on screen. Public rows come from the channel list. */
-function directConversations(list: Conversation[]): Conversation[] {
-  return list.filter(c => c.type === 'dm' || !c.isPublic);
+/**
+ * Rows already on screen to keep while the conversations call is pending or
+ * failed: DMs, private groups, and public rows the fresh channel list still
+ * has (they carry lastMessage and unread counts that Channel data lacks).
+ */
+function keptConversations(list: Conversation[], channels: Channel[] | null): Conversation[] {
+  const live = new Set((channels ?? []).map(ch => ch._id));
+  return list.filter(c => c.type === 'dm' || !c.isPublic || live.has(c._id));
 }
 
 /** Public rows currently shown, so a missing channel response can keep them. */
@@ -1000,7 +1005,7 @@ export default function ChatPanel({
       if (pubChannels != null) setChannels(pubChannels);
       if (pubChannels == null && convs == null) return;
       setConversations(prev => mergeConversations(
-        convs ?? directConversations(prev),
+        convs ?? keptConversations(prev, pubChannels),
         pubChannels ?? channelsFromConversations(prev),
       ));
     };

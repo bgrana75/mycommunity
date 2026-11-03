@@ -21,7 +21,8 @@ async function cachedLookup<T>(key: string, lookup: () => Promise<T | null>): Pr
     pending = lookup()
       .then((value) => {
         if (value) {
-          if (cache.size >= MAX_ENTRIES) cache.delete(cache.keys().next().value!);
+          // Refreshing an existing key reuses its slot; only a new key evicts.
+          if (!cache.has(key) && cache.size >= MAX_ENTRIES) cache.delete(cache.keys().next().value!);
           cache.set(key, { value, at: Date.now() });
         }
         return value;

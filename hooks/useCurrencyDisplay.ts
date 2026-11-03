@@ -21,7 +21,10 @@ function formatUsd(amount: number): string {
  */
 export function useCurrencyDisplay(post: any, optimisticDeltaHBD: number = 0): string {
   const targetCurrency = process.env.NEXT_PUBLIC_DISPLAY_CURRENCY?.trim() || '';
-  const syncDisplay = formatUsd(hbdDisplayAmount(post, optimisticDeltaHBD));
+  // Effects key on the number, not `post`: callers often pass a fresh post
+  // object every render, which would otherwise restart conversion forever.
+  const amount = hbdDisplayAmount(post, optimisticDeltaHBD);
+  const syncDisplay = formatUsd(amount);
   const [converted, setConverted] = useState<string | null>(null);
 
   useEffect(() => {
@@ -34,7 +37,6 @@ export function useCurrencyDisplay(post: any, optimisticDeltaHBD: number = 0): s
     setConverted(null);
 
     (async () => {
-      const amount = hbdDisplayAmount(post, optimisticDeltaHBD);
       const result = await convertHBDToDisplayCurrency(amount, targetCurrency);
       if (!cancelled) setConverted(result);
     })();
@@ -42,7 +44,7 @@ export function useCurrencyDisplay(post: any, optimisticDeltaHBD: number = 0): s
     return () => {
       cancelled = true;
     };
-  }, [post, targetCurrency, optimisticDeltaHBD]);
+  }, [amount, targetCurrency]);
 
   if (!targetCurrency) return syncDisplay;
   return converted ?? syncDisplay;
