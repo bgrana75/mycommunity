@@ -487,6 +487,28 @@ describe('ChatPanel rejected session', () => {
   });
 });
 
+describe('ChatPanel phone close control', () => {
+  it('shows a Close control in the safe area and calls onClose', async () => {
+    const onClose = vi.fn();
+    const { default: ChatPanel } = await import('./ChatPanel');
+    render(
+      <ChakraProvider>
+        <ChatPanel isOpen onClose={onClose} />
+      </ChakraProvider>,
+    );
+
+    const close = await screen.findByRole('button', { name: 'Close chat' });
+    expect(close.textContent).toContain('Close');
+    expect(document.querySelector('[data-chat-mobile-shell="true"]')).toBeTruthy();
+    const css = [...document.querySelectorAll('style')].map((node) => node.textContent || '').join('\n');
+    expect(css).toContain('env(safe-area-inset-top)');
+    expect(css).toContain('env(safe-area-inset-bottom)');
+
+    fireEvent.click(close);
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe('ChatPanel conversation list loading (#267)', () => {
   const never = () => new Promise<never>(() => {});
 
