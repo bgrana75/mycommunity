@@ -157,6 +157,58 @@ describe('sync', () => {
     expect(store.getState().prefs).toEqual(newer);
   });
 
+  it('does not upload an edit made while the server copy is still loading', async () => {
+    const store = createContentFilterStore({ storage: memStorage(), saveDelayMs: 10 });
+    let release!: (p: ContentFilterPrefs) => void;
+    const remote = fakeRemote(null);
+    remote.load.mockImplementationOnce(() => new Promise(r => { release = r; }));
+    const sync = store.setSyncUser('alice', remote);
+    for (let i = 0; i < 10 && remote.load.mock.calls.length === 0; i++) await Promise.resolve();
+    store.addRule({ kind: 'tag', tag: 'local' });
+    await vi.advanceTimersByTimeAsync(50);
+    expect(remote.save).not.toHaveBeenCalled();
+    release({ ...emptyPrefs(), rules: [{ kind: 'tag', tag: 'other-device' }], updatedAt: 5 });
+    await sync;
+    // First sync on this device: union, so the other device's rule survives.
+    expect(remote.saves).toHaveLength(1);
+    expect(remote.saves[0].rules).toEqual([{ kind: 'tag', tag: 'other-device' }, { kind: 'tag', tag: 'local' }]);
+  });
+
+  it('after a failed load, an edit retries the load and merges before uploading', async () => {
+    const store = createContentFilterStore({ storage: memStorage(), saveDelayMs: 10 });
+    const remote = fakeRemote({ ...emptyPrefs(), rules: [{ kind: 'tag', tag: 'other-device' }], updatedAt: 5 });
+    remote.load.mockRejectedValueOnce(new Error('offline'));
+    await store.setSyncUser('alice', remote);
+    expect(remote.save).not.toHaveBeenCalled();
+
+    store.addRule({ kind: 'tag', tag: 'local' });
+    await vi.advanceTimersByTimeAsync(50);
+    expect(remote.load).toHaveBeenCalledTimes(2);
+    expect(remote.saves).toHaveLength(1);
+    expect(remote.saves[0].rules).toEqual([{ kind: 'tag', tag: 'other-device' }, { kind: 'tag', tag: 'local' }]);
+    expect(store.getState().prefs.rules).toHaveLength(2);
+  });
+
+  it('flush does nothing before the server copy is merged', async () => {
+    const store = createContentFilterStore({ storage: memStorage() });
+    const remote = fakeRemote(null);
+    remote.load.mockRejectedValueOnce(new Error('offline'));
+    await store.setSyncUser('alice', remote);
+    await store.flush();
+    expect(remote.save).not.toHaveBeenCalled();
+  });
+
+  it("starts a never-synced account empty instead of uploading the previous account's rules", async () => {
+    const storage = memStorage({ [KEY]: JSON.stringify({ prefs: { rules: [{ kind: 'tag', tag: 'alices' }], presets: ['games'], updatedAt: 99 }, syncedFor: 'alice' }) });
+    const store = createContentFilterStore({ storage });
+    const remote = fakeRemote(null);
+    await store.setSyncUser('bob', remote);
+    expect(store.getState().prefs.rules).toEqual([]);
+    expect(store.getState().prefs.presets).toEqual([]);
+    expect(remote.save).not.toHaveBeenCalled();
+    expect(JSON.parse(storage.data[KEY]).syncedFor).toBe('bob');
+  });
+
   it('stays local-only when the server is unreachable', async () => {
     const onError = vi.fn();
     const store = createContentFilterStore({ storage: memStorage(), onError, readLegacyTags: () => ['keep'] });

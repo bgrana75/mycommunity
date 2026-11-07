@@ -30,7 +30,7 @@ const visible = snaps.filter(s => !hide(s)); // any object with json_metadata (s
 `createContentFilterStore` owns persistence, legacy migration and sync:
 
 - **Storage:** plug in anything with `getItem`/`setItem` (sync or async).
-- **Sync:** `setSyncUser(username, remote)`. On a device's first sync for an account, local and server rules are unioned, so nobody loses mutes. After that it's last-write-wins on `updatedAt`. If the server rejects an upload as stale, the store adopts the server copy. A device that synced a *different* account takes the new account's server copy instead of leaking the old one's mutes.
+- **Sync:** `setSyncUser(username, remote)`. On a device's first sync for an account, local and server rules are unioned, so nobody loses mutes. After that it's last-write-wins on `updatedAt`. If the server rejects an upload as stale, the store adopts the server copy. A device that synced a *different* account takes the new account's server copy, or starts empty if it has none, so the old account's mutes never leak. Nothing is uploaded until the account's server copy has been loaded and merged. Edits made during a load, or after a failed load, wait for the merge, and a failed load is retried on the next edit.
 - **Uploads** are debounced (800 ms). Call `flush()` before the app backgrounds.
 
 Server API (snapie.io):

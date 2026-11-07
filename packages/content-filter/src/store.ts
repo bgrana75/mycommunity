@@ -78,6 +78,13 @@ export function createContentFilterStore(opts: ContentFilterStoreOptions): Conte
   let saveTimer: ReturnType<typeof setTimeout> | null = null;
   let hydratePromise: Promise<void> | null = null;
   let syncGen = 0;
+  // Account whose server copy has been loaded and merged into `state.prefs`.
+  // Uploads are only allowed for that account: uploading before the merge
+  // would overwrite rules saved from other devices with this device's copy.
+  let mergedFor: string | null = null;
+  // In-flight load+merge for the current sync generation, so edits during a
+  // load (or after a failed one) don't start a second.
+  let reconciling: Promise<void> | null = null;
   const listeners = new Set<() => void>();
 
   const build = (prefs: ContentFilterPrefs, catalog: PresetCatalog, patch: Partial<ContentFilterState> = {}): ContentFilterState => ({
@@ -127,7 +134,7 @@ export function createContentFilterStore(opts: ContentFilterStoreOptions): Conte
 
   const pushNow = async () => {
     if (saveTimer) { clearTimeout(saveTimer); saveTimer = null; }
-    if (!remote || !state.syncUser) return;
+    if (!remote || !state.syncUser || mergedFor !== state.syncUser) return;
     const user = state.syncUser;
     try {
       const newer = await remote.save(state.prefs);
@@ -143,6 +150,13 @@ export function createContentFilterStore(opts: ContentFilterStoreOptions): Conte
 
   const schedulePush = () => {
     if (!remote || !state.syncUser) return;
+    if (mergedFor !== state.syncUser) {
+      // Not merged yet: a load is in flight (its merge will pick this edit up
+      // and upload it) or the last one failed (retry it, which uploads after
+      // merging). Never upload an unmerged copy.
+      if (!reconciling) void reconcile(syncGen);
+      return;
+    }
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => { void pushNow(); }, saveDelay);
   };
@@ -186,45 +200,65 @@ export function createContentFilterStore(opts: ContentFilterStoreOptions): Conte
     return hydratePromise;
   };
 
+  /** Loads the server copy for the current account, merges it into local
+   *  state, and uploads the result if it differs. Sets `mergedFor` only once
+   *  the merge has happened; on failure uploads stay blocked until a retry. */
+  const reconcile = (gen: number): Promise<void> => {
+    const run = (async () => {
+      const user = state.syncUser;
+      const r = remote;
+      if (!user || !r) return;
+      await hydrate();
+      let server: ContentFilterPrefs | null;
+      try {
+        server = await r.load();
+      } catch (err) {
+        onError(err);
+        return; // stay local-only; the next edit retries the load
+      }
+      if (gen !== syncGen) return; // user switched while loading
+
+      let merged: ContentFilterPrefs;
+      if (syncedFor !== null && syncedFor !== user) {
+        // Device last synced a different account: never carry that account's
+        // rules over. Take this account's own copy, or start empty.
+        merged = server ?? emptyPrefs();
+      } else if (!server) {
+        merged = state.prefs;
+      } else if (syncedFor === null) {
+        merged = mergePrefs(state.prefs, server, { firstSync: true });
+      } else {
+        merged = mergePrefs(state.prefs, server, { firstSync: false });
+      }
+
+      set(build(merged, state.catalog));
+      mergedFor = user;
+      const needsUpload = server
+        ? !samePrefs(merged, server) || merged.updatedAt !== server.updatedAt
+        : merged.rules.length > 0 || merged.presets.length > 0;
+      if (needsUpload) {
+        await pushNow();
+      } else {
+        syncedFor = user;
+        await persist();
+      }
+    })();
+    reconciling = run;
+    void run.finally(() => { if (reconciling === run) reconciling = null; });
+    return run;
+  };
+
   const setSyncUser = async (username: string | null, nextRemote: ContentFilterRemote | null = null) => {
     const user = username ? username.toLowerCase() : null;
-    const gen = ++syncGen;
     // Don't drop a change that was still waiting to upload for the old account.
     if (saveTimer) await pushNow();
+    const gen = ++syncGen;
+    mergedFor = null;
+    reconciling = null;
     remote = user ? nextRemote : null;
     set({ ...state, syncUser: user && remote ? user : null });
     if (!user || !remote) return;
-
-    await hydrate();
-    let server: ContentFilterPrefs | null;
-    try {
-      server = await remote.load();
-    } catch (err) {
-      onError(err);
-      return; // stay local-only for now; a later change will retry the upload
-    }
-    if (gen !== syncGen) return; // user switched while loading
-
-    let merged: ContentFilterPrefs;
-    if (!server) {
-      merged = state.prefs;
-    } else if (syncedFor === null) {
-      merged = mergePrefs(state.prefs, server, { firstSync: true });
-    } else if (syncedFor !== user) {
-      // Device previously synced a different account: take this account's own.
-      merged = server;
-    } else {
-      merged = mergePrefs(state.prefs, server, { firstSync: false });
-    }
-
-    set(build(merged, state.catalog));
-    const needsUpload = !server || !samePrefs(merged, server) || merged.updatedAt !== server.updatedAt;
-    if (needsUpload) {
-      await pushNow();
-    } else {
-      syncedFor = user;
-      await persist();
-    }
+    await reconcile(gen);
   };
 
   return {

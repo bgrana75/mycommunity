@@ -325,6 +325,8 @@ function createContentFilterStore(opts) {
   let saveTimer = null;
   let hydratePromise = null;
   let syncGen = 0;
+  let mergedFor = null;
+  let reconciling = null;
   const listeners = /* @__PURE__ */ new Set();
   const build = (prefs, catalog, patch = {}) => ({
     ...state,
@@ -363,7 +365,7 @@ function createContentFilterStore(opts) {
       clearTimeout(saveTimer);
       saveTimer = null;
     }
-    if (!remote || !state.syncUser) return;
+    if (!remote || !state.syncUser || mergedFor !== state.syncUser) return;
     const user = state.syncUser;
     try {
       const newer = await remote.save(state.prefs);
@@ -378,6 +380,10 @@ function createContentFilterStore(opts) {
   };
   const schedulePush = () => {
     if (!remote || !state.syncUser) return;
+    if (mergedFor !== state.syncUser) {
+      if (!reconciling) void reconcile(syncGen);
+      return;
+    }
     if (saveTimer) clearTimeout(saveTimer);
     saveTimer = setTimeout(() => {
       void pushNow();
@@ -419,40 +425,56 @@ function createContentFilterStore(opts) {
     }
     return hydratePromise;
   };
+  const reconcile = (gen) => {
+    const run = (async () => {
+      const user = state.syncUser;
+      const r = remote;
+      if (!user || !r) return;
+      await hydrate();
+      let server;
+      try {
+        server = await r.load();
+      } catch (err) {
+        onError(err);
+        return;
+      }
+      if (gen !== syncGen) return;
+      let merged;
+      if (syncedFor !== null && syncedFor !== user) {
+        merged = server ?? emptyPrefs();
+      } else if (!server) {
+        merged = state.prefs;
+      } else if (syncedFor === null) {
+        merged = mergePrefs(state.prefs, server, { firstSync: true });
+      } else {
+        merged = mergePrefs(state.prefs, server, { firstSync: false });
+      }
+      set(build(merged, state.catalog));
+      mergedFor = user;
+      const needsUpload = server ? !samePrefs(merged, server) || merged.updatedAt !== server.updatedAt : merged.rules.length > 0 || merged.presets.length > 0;
+      if (needsUpload) {
+        await pushNow();
+      } else {
+        syncedFor = user;
+        await persist();
+      }
+    })();
+    reconciling = run;
+    void run.finally(() => {
+      if (reconciling === run) reconciling = null;
+    });
+    return run;
+  };
   const setSyncUser = async (username, nextRemote = null) => {
     const user = username ? username.toLowerCase() : null;
-    const gen = ++syncGen;
     if (saveTimer) await pushNow();
+    const gen = ++syncGen;
+    mergedFor = null;
+    reconciling = null;
     remote = user ? nextRemote : null;
     set({ ...state, syncUser: user && remote ? user : null });
     if (!user || !remote) return;
-    await hydrate();
-    let server;
-    try {
-      server = await remote.load();
-    } catch (err) {
-      onError(err);
-      return;
-    }
-    if (gen !== syncGen) return;
-    let merged;
-    if (!server) {
-      merged = state.prefs;
-    } else if (syncedFor === null) {
-      merged = mergePrefs(state.prefs, server, { firstSync: true });
-    } else if (syncedFor !== user) {
-      merged = server;
-    } else {
-      merged = mergePrefs(state.prefs, server, { firstSync: false });
-    }
-    set(build(merged, state.catalog));
-    const needsUpload = !server || !samePrefs(merged, server) || merged.updatedAt !== server.updatedAt;
-    if (needsUpload) {
-      await pushNow();
-    } else {
-      syncedFor = user;
-      await persist();
-    }
+    await reconcile(gen);
   };
   return {
     getState: () => state,
