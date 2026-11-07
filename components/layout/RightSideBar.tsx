@@ -4,7 +4,8 @@ import { useState, useRef, useEffect, useCallback } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts, getCommunityInfo } from '@/lib/hive/client-functions';
 import { mutedAccountsManager } from '@/lib/hive/muted-accounts';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
+import { contentFilterStore } from '@/lib/contentFilter/store';
+import { useContentFilter } from '@/hooks/useContentFilter';
 import { useHiveUser } from '@/contexts/UserContext';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
 import SidebarEventsWidget from '@/components/hangouts/SidebarEventsWidget';
@@ -67,7 +68,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
 
   const tag = process.env.NEXT_PUBLIC_HIVE_SEARCH_TAG;
   const interestTagsKey = settings.interestTags.join(',');
-  const mutedTagsKey = settings.mutedTags.join(',');
+  const { key: mutedTagsKey } = useContentFilter();
 
   function postKey(post: Discussion): string {
     return `${post.author}/${post.permlink}`;
@@ -121,7 +122,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
         for (const post of posts) {
           const key = `${post.author}/${post.permlink}`;
           const isMuted = mutedSetRef.current.has((post.author || '').toLowerCase());
-          const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+          const isMutedTag = contentFilterStore.getState().filter(post);
           if (localSeen.has(key) || !post.author || post.parent_author || isMuted || isMutedTag) continue;
           if (!qualifiesAsLongRead(post, { now })) continue;
           localSeen.add(key);
@@ -210,7 +211,7 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
           include: (post) => {
             const isTopLevel = !post.parent_author;
             const isMuted = mutedSetRef.current.has((post.author || '').toLowerCase());
-            const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+            const isMutedTag = contentFilterStore.getState().filter(post);
             const isDuplicate = seenKeysRef.current.has(postKey(post));
             return isTopLevel && !isMuted && !isMutedTag && !isDuplicate;
           },
@@ -240,9 +241,8 @@ export default function RightSideBar({ engagedAuthors }: RightSideBarProps = {})
       isFetching.current = false;
       setIsLoading(false);
     }
-  // The settings.mutedTags array is tracked via mutedTagsKey — it gets a
-  // fresh reference on every settings hydration, which would recreate this
-  // callback (and re-trigger the fetch effect below) on unrelated mounts.
+  // The content filter is tracked via mutedTagsKey (a value-compared string),
+  // so only a real change to what's muted recreates this callback.
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [query, tag, mutedTagsKey]);
 

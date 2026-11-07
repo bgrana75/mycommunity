@@ -14,9 +14,19 @@ import type { ExtendedComment } from './useComments';
 const settingsState = vi.hoisted(() => ({ mutedTags: [] as string[] }));
 const personalMuteListeners = vi.hoisted(() => new Set<(author: string) => void>());
 
-vi.mock('./useUserSettings', () => ({
-  useUserSettings: () => ({ settings: { mutedTags: settingsState.mutedTags } }),
-}));
+vi.mock('@/hooks/useContentFilter', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  const tags = () => settingsState.mutedTags;
+  return {
+    useContentFilter: () => ({ filter: compileFilter(tags().map(tag => ({ kind: 'tag' as const, tag }))), key: tags().join(',') }),
+  };
+});
+vi.mock('@/lib/contentFilter/store', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  return {
+    contentFilterStore: { getState: () => ({ filter: compileFilter((settingsState.mutedTags).map(tag => ({ kind: 'tag' as const, tag }))) }) },
+  };
+});
 
 vi.mock('@/lib/hive/muted-accounts', () => ({
   mutedAccountsManager: {
