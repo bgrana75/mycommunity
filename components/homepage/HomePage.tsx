@@ -23,6 +23,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useDiscoveryCandidates } from '@/hooks/useDiscoveryCandidates';
 import { useTrendingFeed } from '@/hooks/useTrendingFeed';
 import { useUserSettings } from '@/hooks/useUserSettings';
+import { useContentFilter } from '@/hooks/useContentFilter';
 import { isDiscoveryEnabledFor, DISCOVERY_INTERLEAVE_EVERY_N } from '@/lib/discovery/config';
 import { homePaintedSnapCount, shouldPaintHomeFeedSeed, type PublicSnapPage } from '@/lib/hive/publicSnapPage';
 import { afterLcpPaint } from '@/lib/perf/afterLcpPaint';
@@ -140,6 +141,7 @@ export default function Home({ initialSnapPage = null }: { initialSnapPage?: Pub
 
   const { username: user, isLoggedIn } = useCurrentUser();
   const { settings } = useUserSettings();
+  const { filter: contentFilter } = useContentFilter();
 
   useEffect(() => {
     const loadCommunityInfo = async () => {
@@ -266,9 +268,9 @@ export default function Home({ initialSnapPage = null }: { initialSnapPage?: Pub
     enabled: ENABLE_BLENDED_FEED && activeFilter === 'all',
     initialPage: ENABLE_BLENDED_FEED ? initialSnapPage : null,
   });
-  const trendingFeed = useTrendingFeed({ enabled: isTrendingTab, extraQuery: personalMuteQuery, mutedTags: settings.mutedTags });
-  const forYouColdFeed = useTrendingFeed({ enabled: isForYouCold, endpoint: '/api/discovery/foryou-candidates', extraQuery: personalMuteQuery, mutedTags: settings.mutedTags });
-  const forYouWarmFeed = useTrendingFeed({ enabled: isForYouWarm, endpoint: '/api/discovery/foryou-warm', extraQuery: warmExtraQuery, mutedTags: settings.mutedTags });
+  const trendingFeed = useTrendingFeed({ enabled: isTrendingTab, extraQuery: personalMuteQuery, filter: contentFilter });
+  const forYouColdFeed = useTrendingFeed({ enabled: isForYouCold, endpoint: '/api/discovery/foryou-candidates', extraQuery: personalMuteQuery, filter: contentFilter });
+  const forYouWarmFeed = useTrendingFeed({ enabled: isForYouWarm, endpoint: '/api/discovery/foryou-warm', extraQuery: warmExtraQuery, filter: contentFilter });
   const activeFeedData = showBlendedForAll ? blendedFeed : isTrendingTab ? trendingFeed : isForYouWarm ? forYouWarmFeed : isForYouCold ? forYouColdFeed : snaps;
 
   // Applies the optimistic reply-count bumps from handleReply on top of
@@ -289,7 +291,7 @@ export default function Home({ initialSnapPage = null }: { initialSnapPage?: Pub
   // The dedicated 'trending' tab already *is* this same pool, so splicing it
   // into itself would just be confusing duplication.
   const discoveryEnabled = showTrendingTab && activeFilter === 'all';
-  const { candidates: discoveryItems } = useDiscoveryCandidates({ enabled: discoveryEnabled, username: user || undefined, mutedTags: settings.mutedTags });
+  const { candidates: discoveryItems } = useDiscoveryCandidates({ enabled: discoveryEnabled, username: user || undefined, filter: contentFilter });
 
   // First-page probe: if the blended source comes back empty, fall back to
   // snaps-only for this session. Scoped to the first page only — a sidecar

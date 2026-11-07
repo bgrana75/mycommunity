@@ -1,7 +1,9 @@
 'use client';
 import { useEffect, useMemo, useState } from 'react';
 import { ExtendedComment } from './useComments';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
+import type { ContentFilter } from '@snapie/content-filter';
+
+const NO_FILTER: ContentFilter = () => false;
 
 interface UseDiscoveryCandidatesProps {
     enabled: boolean;
@@ -12,10 +14,10 @@ interface UseDiscoveryCandidatesProps {
      *  pool (community mutes are already baked in server-side). Omit for a
      *  logged-out viewer, who only has community mutes to begin with. */
     username?: string;
-    /** Muted hashtags are local-only (localStorage), so — unlike account
-     *  mutes — they can never be baked into the shared server-cached pool.
-     *  Filtered client-side here instead. */
-    mutedTags?: string[];
+    /** The viewer's content filter (muted tags/apps, presets). It's personal,
+     *  so it can never be baked into the shared server-cached pool; applied
+     *  client-side here. Pass a stable reference (useContentFilter().filter). */
+    filter?: ContentFilter;
 }
 
 const DEFAULT_LIMIT = 10;
@@ -32,7 +34,7 @@ export function useDiscoveryCandidates({
     limit = DEFAULT_LIMIT,
     refetchIntervalMs = DEFAULT_REFETCH_INTERVAL_MS,
     username,
-    mutedTags = [],
+    filter = NO_FILTER,
 }: UseDiscoveryCandidatesProps) {
     const [rawCandidates, setRawCandidates] = useState<ExtendedComment[]>([]);
     const [isLoading, setIsLoading] = useState(false);
@@ -40,8 +42,8 @@ export function useDiscoveryCandidates({
     // A memo, not a fetch dependency — muting a tag re-filters the
     // already-fetched pool instantly instead of waiting for the next poll.
     const candidates = useMemo(
-        () => rawCandidates.filter(item => !hasMutedTag(item.json_metadata, mutedTags)),
-        [rawCandidates, mutedTags],
+        () => rawCandidates.filter(item => !filter(item)),
+        [rawCandidates, filter],
     );
 
     useEffect(() => {

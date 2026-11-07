@@ -1,8 +1,10 @@
 'use client';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ExtendedComment } from './useComments';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
+import type { ContentFilter } from '@snapie/content-filter';
 import { getPost } from '@/lib/hive/client-functions';
+
+const NO_FILTER: ContentFilter = () => false;
 
 interface UseTrendingFeedProps {
     enabled: boolean;
@@ -18,10 +20,10 @@ interface UseTrendingFeedProps {
      *  unless the actual params change — same requirement as `endpoint`,
      *  since it flows into the fetch-effect's dependency list. */
     extraQuery?: string;
-    /** Muted hashtags are local-only (localStorage), so — like
-     *  useDiscoveryCandidates — they can never be baked into the shared
-     *  server-cached pool this hook paginates through. Filtered client-side. */
-    mutedTags?: string[];
+    /** The viewer's content filter (muted tags/apps, presets). It's personal,
+     *  so it can never be baked into the shared server-cached pool; applied
+     *  client-side here. Pass a stable reference (useContentFilter().filter). */
+    filter?: ContentFilter;
 }
 
 const PAGE_SIZE = 10;
@@ -40,7 +42,7 @@ const DEFAULT_ENDPOINT = '/api/discovery/snap-candidates';
  * React StrictMode's dev-only double-mount blocked the surviving instance
  * from ever fetching while the orphaned instance's result got discarded.
  */
-export function useTrendingFeed({ enabled, endpoint = DEFAULT_ENDPOINT, extraQuery, mutedTags = [] }: UseTrendingFeedProps) {
+export function useTrendingFeed({ enabled, endpoint = DEFAULT_ENDPOINT, extraQuery, filter = NO_FILTER }: UseTrendingFeedProps) {
     const [rawComments, setRawComments] = useState<ExtendedComment[]>([]);
     const [isLoading, setIsLoading] = useState(false);
     const [hasMore, setHasMore] = useState(true);
@@ -49,8 +51,8 @@ export function useTrendingFeed({ enabled, endpoint = DEFAULT_ENDPOINT, extraQue
     // A memo, not a fetch dependency — muting a tag re-filters the
     // already-fetched pages instantly instead of waiting for the next fetch.
     const comments = useMemo(
-        () => rawComments.filter(item => !hasMutedTag(item.json_metadata, mutedTags)),
-        [rawComments, mutedTags],
+        () => rawComments.filter(item => !filter(item)),
+        [rawComments, filter],
     );
 
     const offsetRef = useRef(0);
