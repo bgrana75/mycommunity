@@ -3,9 +3,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import { ExtendedComment } from './useComments';
 import { getFollowing, getPost } from '@/lib/hive/client-functions';
 import { mutedAccountsManager } from '@/lib/hive/muted-accounts';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
+import { contentFilterStore } from '@/lib/contentFilter/store';
+import { useContentFilter } from '@/hooks/useContentFilter';
 import { usePatronStatus } from './usePatronStatus';
-import { useUserSettings } from './useUserSettings';
 import type { PublicSnapPage } from '@/lib/hive/publicSnapPage';
 
 interface lastContainerInfo {
@@ -32,12 +32,11 @@ interface UseSnapsProps {
 }
 
 export const useSnaps = ({ filterType = 'community', username, skip = false, initialPage = null }: UseSnapsProps = {}) => {
-  const { settings } = useUserSettings();
   // A stable, value-compared key (not the array reference) for the reset
   // effect below — same pattern as the blog feed's interestTagsKey, so
   // muting a tag in Settings refetches this feed immediately rather than
   // waiting for a manual refresh.
-  const mutedTagsKey = settings.mutedTags.join(',');
+  const { key: mutedTagsKey } = useContentFilter();
   // Public Latest page from the server. The first client render must use it
   // (hydration matches the HTML) and must not immediately refetch it. A
   // later username or mute change still goes through the reset below.
@@ -230,7 +229,7 @@ export const useSnaps = ({ filterType = 'community', username, skip = false, ini
 
         filteredComments = filteredComments
           .filter(c => !hiddenByMute(c.author))
-          .filter(c => !hasMutedTag(c.json_metadata, settings.mutedTags));
+          .filter(c => !contentFilterStore.getState().filter(c));
 
         allFilteredComments.push(...filteredComments);
 

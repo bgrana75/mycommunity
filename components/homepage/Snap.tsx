@@ -4,7 +4,9 @@ import { MoodBadgeIcon } from '@/components/shared/MoodBadgeIcon';
 import { useMoodBadges } from '@/hooks/useMoodBadges';
 import { Comment } from '@hiveio/dhive';
 import { ExtendedComment } from '@/hooks/useComments';
-import { FaRegComment, FaEdit, FaRetweet, FaBroadcastTower } from "react-icons/fa";
+import { FaRegComment, FaEdit, FaRetweet, FaBroadcastTower, FaRegEyeSlash } from "react-icons/fa";
+import dynamic from 'next/dynamic';
+import { suggestRules } from '@snapie/content-filter';
 import { FaXTwitter } from "react-icons/fa6";
 import { MdTranslate } from "react-icons/md";
 import { requestSnapCast, isRecentlyActive } from "@/lib/snapcast/intent";
@@ -78,10 +80,17 @@ function sameUrlList(a?: readonly string[], b?: readonly string[]): boolean {
     return true;
 }
 
+// Only fetched when someone opens it, so it adds nothing to the feed's first load.
+const HideLikeThisModal = dynamic(() => import('@/components/contentFilter/HideLikeThisModal'), { ssr: false });
+
 const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment, level = 0, priorityUrl = null, deferUrls, reserveMediaSpace = false, eagerMedia = false, imagePriority = false }: SnapProps) => {
     const commentDate = getPostDate(comment.created);
     const { username: user } = useCurrentUser();
     const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+    const [isHideModalOpen, setIsHideModalOpen] = useState(false);
+    // Only offer "hide like this" when the post has a specific app or tag to
+    // hide by; a plain snap from a general client has nothing useful to offer.
+    const canHideLikeThis = useMemo(() => suggestRules(comment).length > 0, [comment]);
     const [editedBody, setEditedBody] = useState(comment.body);
     const [isEditing, setIsEditing] = useState(false);
     const [optimisticDeltaHBD, setOptimisticDeltaHBD] = useState(0);
@@ -348,6 +357,17 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                                     <FaEdit size={12} />
                                 </button>
                             )}
+                            {user !== comment.author && canHideLikeThis && (
+                                <button
+                                    type="button"
+                                    className="snap-edit"
+                                    onClick={() => setIsHideModalOpen(true)}
+                                    aria-label="Hide posts like this"
+                                    title="Hide posts like this"
+                                >
+                                    <FaRegEyeSlash size={13} />
+                                </button>
+                            )}
                         </div>
 
                         {isNsfw && !nsfwRevealed ? (
@@ -497,6 +517,10 @@ const Snap = memo(({ comment, onOpen, setReply, setConversation, refreshComment,
                     </div>
                 </div>
             </article>
+
+            {isHideModalOpen && (
+                <HideLikeThisModal item={comment} isOpen onClose={() => setIsHideModalOpen(false)} />
+            )}
 
             {isEditModalOpen && (
             <Modal isOpen={isEditModalOpen} onClose={() => setIsEditModalOpen(false)} size="xl">

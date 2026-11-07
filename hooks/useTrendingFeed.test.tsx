@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useTrendingFeed } from './useTrendingFeed';
+import { compileFilter, type ContentFilter } from '@snapie/content-filter';
+
+const NONE: ContentFilter = () => false;
+const MUTE_SCROBBLE = compileFilter([{ kind: 'tag', tag: 'scrobblelife' }]);
 
 // Same gap as useDiscoveryCandidates: the Trending tab and the "For You"
 // cold/warm feeds all paginate through server pools that only filter muted
@@ -30,7 +34,7 @@ beforeEach(() => {
 
 describe('useTrendingFeed mute-tag filtering', () => {
   it('excludes a page item carrying a muted tag', async () => {
-    const { result } = renderHook(() => useTrendingFeed({ enabled: true, mutedTags: ['scrobblelife'] }));
+    const { result } = renderHook(() => useTrendingFeed({ enabled: true, filter: MUTE_SCROBBLE }));
 
     await waitFor(() => expect(result.current.hasFetchedOnce).toBe(true));
 
@@ -48,14 +52,14 @@ describe('useTrendingFeed mute-tag filtering', () => {
 
   it('re-filters already-fetched pages instantly when a tag is muted, without a new fetch', async () => {
     const { result, rerender } = renderHook(
-      ({ mutedTags }) => useTrendingFeed({ enabled: true, mutedTags }),
-      { initialProps: { mutedTags: [] as string[] } },
+      ({ filter }) => useTrendingFeed({ enabled: true, filter }),
+      { initialProps: { filter: NONE } },
     );
 
     await waitFor(() => expect(result.current.hasFetchedOnce).toBe(true));
     const fetchCallsAfterInitialLoad = (global.fetch as any).mock.calls.length;
 
-    rerender({ mutedTags: ['scrobblelife'] });
+    rerender({ filter: MUTE_SCROBBLE });
 
     expect(result.current.comments.map(c => c.permlink)).not.toContain('spammy');
     expect((global.fetch as any).mock.calls.length).toBe(fetchCallsAfterInitialLoad);

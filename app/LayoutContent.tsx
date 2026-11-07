@@ -13,6 +13,7 @@ import { useHangout } from '@/contexts/HangoutContext';
 import { useUserSettings } from '@/hooks/useUserSettings';
 import { useCurrentUser } from '@/hooks/useCurrentUser';
 import { useShowInterestPicker } from '@/hooks/useShowInterestPicker';
+import { useContentFilterSync } from '@/hooks/useContentFilter';
 import { isPointsEnabledFor } from '@/lib/points/config';
 import { AiohaSessionRestore } from '@/lib/aioha/facade-react-ui';
 
@@ -59,6 +60,8 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
   // Hive accounts, server-authoritative so it doesn't reappear on a new
   // device/browser once dismissed.
   const { shouldShow: showInterestPicker, dismiss: dismissInterestPicker } = useShowInterestPicker(currentUsername);
+  // Muted tags/apps: hydrate + sync across devices for the logged-in account.
+  useContentFilterSync(currentUsername);
   const baseGradient = settings.colorMode === 'light'
     ? 'radial(circle at 18% 8%, rgba(3, 105, 161, 0.08), transparent 34%), radial(circle at 78% 0%, rgba(3, 105, 161, 0.05), transparent 30%), linear(to-br, #ffffff, #f8fafc 48%, #f1f5f9)'
     : 'radial(circle at 18% 8%, rgba(28, 161, 241, 0.12), transparent 34%), radial(circle at 78% 0%, rgba(28, 161, 241, 0.07), transparent 30%), linear(to-br, #080f1e, #0d1525 48%, #070d1a)';
