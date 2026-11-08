@@ -13,7 +13,7 @@ import { isDiscoveryEnabledFor } from '@/lib/discovery/config';
 import { isPointsEnabledFor, ROULETTE_FEATURE_FLAG, ITEM_MARKET_FEATURE_FLAG } from '@/lib/points/config';
 import { usePointsSummary } from '@/hooks/usePointsSummary';
 import { INTEREST_TOPICS } from '@/lib/discovery/interestTopics';
-import MutedTagsInput from '@/components/settings/MutedTagsInput';
+import ContentFiltersSettings from '@/components/contentFilter/ContentFiltersSettings';
 
 const InterestPicker = dynamic(() => import('@/components/onboarding/InterestPicker'), { ssr: false });
 
@@ -330,7 +330,7 @@ export default function SettingsPage() {
             >
                 <Box px={6} py={4}>
                     <Text fontSize="xs" fontWeight="semibold" color="overlay.500" textTransform="uppercase" letterSpacing="0.08em">
-                        Muted Tags
+                        Content Filters
                     </Text>
                 </Box>
 
@@ -351,15 +351,15 @@ export default function SettingsPage() {
                         </Flex>
                         <Box flex={1}>
                             <Text color="text" fontWeight="medium" fontSize="sm" mb={1}>
-                                Hide by hashtag
+                                Hide game results, apps and hashtags
                             </Text>
                             <Text color="overlay.500" fontSize="xs">
-                                Any blog post, snap, or comment tagged with one of these — like #scrobblelife — is filtered out of your feeds.
+                                Applies to snaps, waves, comments and blog posts. When you&apos;re logged in, it follows you to every device.
                             </Text>
                         </Box>
                     </Flex>
 
-                    <MutedTagsInput />
+                    <ContentFiltersSettings />
                 </Box>
             </Box>
 

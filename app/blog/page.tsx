@@ -4,7 +4,8 @@ import { useState, useRef, useEffect } from 'react';
 import { Discussion } from '@hiveio/dhive';
 import { findPosts, findFeedPosts, searchPosts } from '@/lib/hive/client-functions';
 import { mutedAccountsManager } from '@/lib/hive/muted-accounts';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
+import { contentFilterStore } from '@/lib/contentFilter/store';
+import { useContentFilter } from '@/hooks/useContentFilter';
 import { useHiveUser } from '@/contexts/UserContext';
 import TopBar, { FeedSource } from '@/components/blog/TopBar';
 import PostInfiniteScroll from '@/components/blog/PostInfiniteScroll';
@@ -48,7 +49,7 @@ export default function Blog() {
     // feature appears (see lib/discovery/config.ts).
     const showForYouTab = isDiscoveryEnabledFor(username);
     const interestTagsKey = settings.interestTags.join(',');
-    const mutedTagsKey = settings.mutedTags.join(',');
+    const { key: mutedTagsKey } = useContentFilter();
     const isForYouCold = feedSource === 'foryou' && settings.interestTags.length === 0;
     const hasSetDefaultTab = useRef(false);
 
@@ -113,7 +114,7 @@ export default function Blog() {
                     const body = typeof post.body === 'string' ? post.body.trim() : '';
                     const isTopLevel = !post.parent_author;
                     const isMuted = mutedSetRef.current.has(post.author.toLowerCase());
-                    const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+                    const isMutedTag = contentFilterStore.getState().filter(post);
                     const author = post.author || '';
                     const permlink = post.permlink || '';
                     const dedupeKey = `${author}/${permlink}`;
@@ -165,7 +166,7 @@ export default function Blog() {
                 const data: { items: Discussion[]; hasMore: boolean } = await res.json();
                 const topLevelPosts = data.items.filter((post: Discussion) =>
                     !mutedSetRef.current.has(post.author.toLowerCase()) &&
-                    !hasMutedTag(post.json_metadata, settings.mutedTags) &&
+                    !contentFilterStore.getState().filter(post) &&
                     !seenKeysRef.current.has(postKey(post)),
                 );
                 topLevelPosts.forEach((post: Discussion) => seenKeysRef.current.add(postKey(post)));
@@ -193,7 +194,7 @@ export default function Blog() {
             const topLevelPosts = posts.filter((post: Discussion) => {
                 const isTopLevel = !post.parent_author;
                 const isMuted = mutedSetRef.current.has(post.author.toLowerCase());
-                const isMutedTag = hasMutedTag(post.json_metadata, settings.mutedTags);
+                const isMutedTag = contentFilterStore.getState().filter(post);
                 const isDuplicate = seenKeysRef.current.has(postKey(post));
                 return isTopLevel && !isMuted && !isMutedTag && !isDuplicate;
             });

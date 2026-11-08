@@ -3,15 +3,24 @@ import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useComments } from './useComments';
 
-// useUserSettings hydrates settings.mutedTags from localStorage in a
-// post-mount effect (see useUserSettings.ts) — the very first render sees
-// the pre-hydration default ([]). This mock lets each test control exactly
+// The content filter hydrates from localStorage after mount, so the very
+// first render sees an empty filter. This mock lets each test control exactly
 // what useComments sees on each render, to reproduce that mount-time
 // sequence deterministically rather than relying on real localStorage timing.
 let mockMutedTags: string[] = [];
-vi.mock('./useUserSettings', () => ({
-  useUserSettings: () => ({ settings: { mutedTags: mockMutedTags } }),
-}));
+vi.mock('@/hooks/useContentFilter', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  const tags = () => mockMutedTags;
+  return {
+    useContentFilter: () => ({ filter: compileFilter(tags().map(tag => ({ kind: 'tag' as const, tag }))), key: tags().join(',') }),
+  };
+});
+vi.mock('@/lib/contentFilter/store', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  return {
+    contentFilterStore: { getState: () => ({ filter: compileFilter((mockMutedTags).map(tag => ({ kind: 'tag' as const, tag }))) }) },
+  };
+});
 
 vi.mock('@/lib/hive/muted-accounts', () => ({
   mutedAccountsManager: { getMutedList: vi.fn(async () => new Set<string>()) },

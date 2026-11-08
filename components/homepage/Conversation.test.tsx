@@ -41,9 +41,19 @@ vi.mock('@/lib/hive/muted-accounts', () => ({ mutedAccountsManager: mutedAccount
 // let each test control what useComments sees, mirroring the hydration race
 // documented in useComments.test.tsx.
 let mockMutedTags: string[] = [];
-vi.mock('@/hooks/useUserSettings', () => ({
-  useUserSettings: () => ({ settings: { mutedTags: mockMutedTags } }),
-}));
+vi.mock('@/hooks/useContentFilter', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  const tags = () => mockMutedTags;
+  return {
+    useContentFilter: () => ({ filter: compileFilter(tags().map(tag => ({ kind: 'tag' as const, tag }))), key: tags().join(',') }),
+  };
+});
+vi.mock('@/lib/contentFilter/store', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  return {
+    contentFilterStore: { getState: () => ({ filter: compileFilter((mockMutedTags).map(tag => ({ kind: 'tag' as const, tag }))) }) },
+  };
+});
 
 const callMock = vi.fn();
 vi.mock('@/lib/hive/hiveclient', () => ({

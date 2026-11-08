@@ -2,8 +2,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { ExtendedComment } from './useComments';
 import { mutedAccountsManager } from '@/lib/hive/muted-accounts';
-import { hasMutedTag } from '@/lib/hive/mutedTags';
-import { useUserSettings } from './useUserSettings';
+import { contentFilterStore } from '@/lib/contentFilter/store';
+import { useContentFilter } from '@/hooks/useContentFilter';
 import { getPost } from '@/lib/hive/client-functions';
 import { withTimeout } from '@/lib/utils/withTimeout';
 import type { PublicSnapPage } from '@/lib/hive/publicSnapPage';
@@ -52,11 +52,10 @@ function toExtendedComment(item: FeedApiItem): ExtendedComment {
  * internal-docs/hive-activity-sidecar-feed.md for the server-side design.
  */
 export const useBlendedFeed = ({ username, enabled = true, initialPage = null }: UseBlendedFeedProps = {}) => {
-  const { settings } = useUserSettings();
-  // Same value-compared key as useSnaps. Settings hydrate from localStorage
-  // after mount (mutedTags starts []), and a mute added later must reset
+  // Same value-compared key as useSnaps. The filter hydrates from localStorage
+  // after mount (hiding nothing until then), and a mute added later must reset
   // Latest instead of leaving the first page unfiltered.
-  const mutedTagsKey = settings.mutedTags.join(',');
+  const { key: mutedTagsKey } = useContentFilter();
   // Public blended page from the server. The first client render must use
   // it (hydration matches the HTML) and must not immediately refetch it.
   const hasSeed = Boolean(initialPage && initialPage.comments.length > 0 && !username && mutedTagsKey === '');
@@ -186,7 +185,7 @@ export const useBlendedFeed = ({ username, enabled = true, initialPage = null }:
       const deduped = data.items.filter(item => !fetchedPermlinksRef.current.has(item.permlink));
       const items = deduped
         .filter(item => !mutedList.has(item.author.toLowerCase()))
-        .filter(item => !hasMutedTag(item.json_metadata, settings.mutedTags));
+        .filter(item => !contentFilterStore.getState().filter(item));
       if (items.length < deduped.length) sawMuteAttrition = true;
 
       for (const item of items) {

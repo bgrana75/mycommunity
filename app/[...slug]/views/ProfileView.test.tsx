@@ -56,6 +56,7 @@ describe('ProfileView', () => {
     loadSeed.mockResolvedValue(null);
     exists.mockResolvedValue(false);
     await expect(ProfileView({ username: 'nosuchuser' })).rejects.toThrow('NEXT_NOT_FOUND');
+    expect(exists).toHaveBeenCalledWith('nosuchuser');
   });
 
   it('still renders when seed timed out but the account exists', async () => {
@@ -64,6 +65,14 @@ describe('ProfileView', () => {
     loadSnaps.mockResolvedValue([]);
     expect(await ProfileView({ username: 'alice' })).toMatchObject({
       props: { username: 'alice', initialAccount: null, initialSnaps: [] },
+    });
+  });
+
+  it('still renders when existence cannot be confirmed', async () => {
+    loadSeed.mockResolvedValue(null);
+    exists.mockResolvedValue('unknown');
+    expect(await ProfileView({ username: 'alice' })).toMatchObject({
+      props: { username: 'alice', initialAccount: null },
     });
   });
 });

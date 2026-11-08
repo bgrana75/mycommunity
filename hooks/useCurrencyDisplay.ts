@@ -11,6 +11,11 @@ function formatUsd(amount: number): string {
   return `$${amount.toFixed(3)}`;
 }
 
+// When rates are unavailable the converter answers with the plain USD string.
+// Retry a few times so the display recovers once rates are back, without
+// every feed card polling the rate API indefinitely.
+const RETRY_DELAYS_MS = [15_000, 60_000];
+
 /**
  * Display a post's payout in the configured currency.
  *
@@ -21,7 +26,10 @@ function formatUsd(amount: number): string {
  */
 export function useCurrencyDisplay(post: any, optimisticDeltaHBD: number = 0): string {
   const targetCurrency = process.env.NEXT_PUBLIC_DISPLAY_CURRENCY?.trim() || '';
-  const syncDisplay = formatUsd(hbdDisplayAmount(post, optimisticDeltaHBD));
+  // Effects key on the number, not `post`: callers often pass a fresh post
+  // object every render, which would otherwise restart conversion forever.
+  const amount = hbdDisplayAmount(post, optimisticDeltaHBD);
+  const syncDisplay = formatUsd(amount);
   const [converted, setConverted] = useState<string | null>(null);
 
   useEffect(() => {
@@ -31,18 +39,25 @@ export function useCurrencyDisplay(post: any, optimisticDeltaHBD: number = 0): s
     }
 
     let cancelled = false;
+    let retryTimer: ReturnType<typeof setTimeout> | undefined;
     setConverted(null);
 
-    (async () => {
-      const amount = hbdDisplayAmount(post, optimisticDeltaHBD);
+    const attempt = async (retry: number) => {
       const result = await convertHBDToDisplayCurrency(amount, targetCurrency);
-      if (!cancelled) setConverted(result);
-    })();
+      if (cancelled) return;
+      setConverted(result);
+      const failed = result === formatUsd(amount) && targetCurrency.toUpperCase() !== 'USD';
+      if (failed && retry < RETRY_DELAYS_MS.length) {
+        retryTimer = setTimeout(() => attempt(retry + 1), RETRY_DELAYS_MS[retry]);
+      }
+    };
+    attempt(0);
 
     return () => {
       cancelled = true;
+      clearTimeout(retryTimer);
     };
-  }, [post, targetCurrency, optimisticDeltaHBD]);
+  }, [amount, targetCurrency]);
 
   if (!targetCurrency) return syncDisplay;
   return converted ?? syncDisplay;
