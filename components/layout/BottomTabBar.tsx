@@ -13,7 +13,9 @@ export default function BottomTabBar() {
   const { username, isLoggedIn } = useCurrentUser();
   const { openLoginModal } = useLoginModal();
   const hasUnclaimed = useUnclaimedRewards();
-  const walletHref = username ? `/@${username}/wallet` : '/wallet';
+  // Guests have no wallet route; href stays non-navigating so crawlers do not
+  // follow a soft/hard 404. Click still opens the login modal.
+  const walletHref = username ? `/@${username}/wallet` : '#';
 
   function handleHomeClick(e: React.MouseEvent) {
     if (pathname === '/') {
@@ -40,11 +42,12 @@ export default function BottomTabBar() {
     }
   }
 
-  // There is no wallet to open for a guest, so ask them to log in instead.
+  // Guests have no wallet. A signed-in user whose username has not resolved
+  // yet also has no route: leaving the click on href="#" only appends a hash.
   function handleWalletClick(e: React.MouseEvent) {
-    if (isLoggedIn) return;
+    if (username) return;
     e.preventDefault();
-    openLoginModal();
+    if (!isLoggedIn) openLoginModal();
   }
 
   // Hide on immersive pages
@@ -109,7 +112,14 @@ export default function BottomTabBar() {
         <Tab href="/shorts" icon={FiPlay} label="Shorts" active={isActive('/shorts')} />
 
         {/* Wallet */}
-        <Tab href={walletHref} icon={FiCreditCard} label="Wallet" active={isActive('/wallet')} dot={hasUnclaimed} onClick={handleWalletClick} />
+        <Tab
+          href={walletHref}
+          icon={FiCreditCard}
+          label="Wallet"
+          active={pathname.includes('/wallet')}
+          dot={hasUnclaimed}
+          onClick={handleWalletClick}
+        />
       </Flex>
     </Box>
   );

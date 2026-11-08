@@ -12,7 +12,7 @@ import { rewriteHtmlImageSrcs } from '@/lib/images/markdownImages';
 const snapieRendererOptions: Partial<HiveRendererOptions> = {
     // Use Snapie's internal link format
     usertagUrlFn: (account: string) => `/@${account}`,
-    hashtagUrlFn: (hashtag: string) => `/trending/${hashtag}`,
+    hashtagUrlFn: (hashtag: string) => `/explore/${hashtag}`,
     
     // IPFS gateways - 3Speak is default, with fallbacks
     // (SDK defaults to 3speak.tv with skatehive + cloudflare + ipfs.io fallbacks)

@@ -70,8 +70,18 @@ describe('BottomTabBar', () => {
 
   it('asks a guest to log in instead of linking to a wallet page', () => {
     renderBar();
-    fireEvent.click(screen.getByRole('link', { name: /Wallet/ }));
+    const wallet = screen.getByRole('link', { name: /Wallet/ });
+    expect(wallet.getAttribute('href')).toBe('#');
+    fireEvent.click(wallet);
     expect(mocks.openLoginModal).toHaveBeenCalledTimes(1);
+  });
+
+  it('does not follow # when a signed-in user has no username yet', () => {
+    mocks.isLoggedIn = true;
+    const wallet = renderBar().getByRole('link', { name: /Wallet/ });
+    expect(wallet.getAttribute('href')).toBe('#');
+    expect(fireEvent.click(wallet)).toBe(false);
+    expect(mocks.openLoginModal).not.toHaveBeenCalled();
   });
 
   it('lets a signed-in user compose and open their wallet', () => {

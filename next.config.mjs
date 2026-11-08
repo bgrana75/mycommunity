@@ -12,6 +12,17 @@ const facadeReactUi = path.join(projectDir, 'lib/aioha/facade-react-ui.tsx');
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+    // Hashtag links historically used /trending/<tag>; the real page lives
+    // under /explore/<tag>. A permanent redirect consolidates the URL for SEO.
+    async redirects() {
+        return [
+            {
+                source: '/trending/:tag',
+                destination: '/explore/:tag',
+                permanent: true,
+            },
+        ];
+    },
     experimental: {
         // instrumentation.ts loads by default. Home HTML holds framework
         // scripts unless SNAPIE_DEFER_FRAMEWORK_SCRIPTS=0. See
