@@ -1,8 +1,20 @@
+import { cache as requestCache } from 'react';
 import HiveClient from "./hiveclient";
 import { withTimeout } from '@/lib/utils/withTimeout';
 
 /** Long enough for a healthy node, short enough that a hung socket is not a 404. */
 const PAGE_LOOKUP_TIMEOUT_MS = 5000;
+
+/**
+ * get_content no longer answers a missing post with an empty object: hived
+ * raises an assert ("Post alice/p1 does not exist"). That is Hive saying the
+ * post is gone, unlike a timeout or a node error.
+ */
+export function isMissingPostError(error: unknown): boolean {
+  const info = (error as { jse_info?: { name?: unknown; extension?: { assertion_expression?: unknown } } } | null)?.jse_info;
+  const expression = info?.extension?.assertion_expression;
+  return info?.name === 'assert_exception' && typeof expression === 'string' && /^Post .+ does not exist$/.test(expression);
+}
 
 export type PostPageLookup =
   | { status: 'found'; post: { author: string } }
@@ -59,8 +71,14 @@ export function getPostForMetadata(author: string, permlink: string) {
  * Whether a post page should 404. `missing` only when get_content answers
  * with an empty post. A timeout or a node error is `unknown`: the page
  * renders and the client retries, instead of telling Google the post is gone.
+ *
+ * Wrapped in React `cache` so generateMetadata and the page share one
+ * get_content call per request.
  */
-export async function loadPostForPage(author: string, permlink: string): Promise<PostPageLookup> {
+export const loadPostForPage = requestCache(async function loadPostForPage(
+  author: string,
+  permlink: string,
+): Promise<PostPageLookup> {
   try {
     const post = await withTimeout(
       HiveClient.database.call('get_content', [author, permlink]),
@@ -68,10 +86,10 @@ export async function loadPostForPage(author: string, permlink: string): Promise
     );
     if (!post || !post.author) return { status: 'missing' };
     return { status: 'found', post };
-  } catch {
-    return { status: 'unknown' };
+  } catch (error) {
+    return isMissingPostError(error) ? { status: 'missing' } : { status: 'unknown' };
   }
-}
+});
 
 export function getProfileForMetadata(username: string) {
   return cachedLookup(`profile:${username}`, async () => {

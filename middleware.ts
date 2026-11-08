@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse, userAgent } from 'next/server';
+import { hiveAccountStatus, hivePostStatus, type HiveExistence } from '@/lib/http/crawlerNotFound';
 
 const ALLOWED_EXACT = [
   'https://snapie.io',
@@ -26,10 +27,44 @@ export const TOP_LEVEL_ROUTES = [
   'support', 'test-sanitize',
 ];
 
+const SUBPAGES = new Set(['wallet', 'notifications']);
+
+/** The Hive lookup a crawler request needs, or null for any other path. */
+function existenceCheck(pathname: string): (() => Promise<HiveExistence>) | null {
+  let parts: string[];
+  try {
+    parts = pathname.split('/').slice(1).map(decodeURIComponent);
+  } catch {
+    return null;
+  }
+  if (parts.at(-1) === '') parts.pop();
+  // /hive-123456/@author/permlink is the same post as /@author/permlink.
+  if (parts.length === 3 && /^hive-\d+$/.test(parts[0])) parts = parts.slice(1);
+  const [user, permlink] = parts;
+  if (!user?.startsWith('@')) return null;
+  const name = user.slice(1);
+  if (parts.length === 1) return () => hiveAccountStatus(name);
+  if (parts.length === 2 && !SUBPAGES.has(permlink)) return () => hivePostStatus(name, permlink);
+  return null;
+}
+
+function notFoundResponse(req: NextRequest) {
+  return NextResponse.rewrite(new URL('/_not-found', req.url), { status: 404 });
+}
+
+/**
+ * Crawlers get a real 404 for a post or account Hive says is missing (see
+ * lib/http/crawlerNotFound.ts). Visitors never wait on this lookup.
+ */
+async function crawlerExistenceGuard(req: NextRequest, check: () => Promise<HiveExistence>) {
+  if ((await check()) === 'missing') return notFoundResponse(req);
+  return NextResponse.next();
+}
+
 export function middleware(req: NextRequest) {
   const segments = req.nextUrl.pathname.split('/');
   if (segments.length === 2 && segments[1] && !/^[@_]|\./.test(segments[1]) && !TOP_LEVEL_ROUTES.includes(segments[1])) {
-    return NextResponse.rewrite(new URL('/_not-found', req.url), { status: 404 });
+    return notFoundResponse(req);
   }
 
   // Hive account names are lowercase, so /@SNAPIE is the same page as /@snapie.
@@ -39,6 +74,11 @@ export function middleware(req: NextRequest) {
     const url = req.nextUrl.clone();
     url.pathname = ['', user.toLowerCase(), ...rest].join('/');
     return NextResponse.redirect(url, 308);
+  }
+
+  if (req.method === 'GET' || req.method === 'HEAD') {
+    const check = existenceCheck(req.nextUrl.pathname);
+    if (check && userAgent(req).isBot) return crawlerExistenceGuard(req, check);
   }
 
   const origin = req.headers.get('origin') ?? '';
@@ -80,5 +120,9 @@ export const config = {
     '/api/upload-image',
     // Only /@names containing an uppercase letter, so other pages skip middleware.
     '/:user(@[^/]*[A-Z][^/]*)/:path*',
+    // Profiles and posts, for the crawler 404 check. Visitors pass straight through.
+    '/:user(@[^/]+)',
+    '/:user(@[^/]+)/:permlink([^/]+)',
+    '/:community(hive-\\d+)/:user(@[^/]+)/:permlink([^/]+)',
   ],
 };
