@@ -32,6 +32,24 @@ describe('loadPostForPage', () => {
     await expect(loadPostForPage('nosuch', 'gone')).resolves.toEqual({ status: 'missing' });
   });
 
+  // Shape of the RPCError dhive throws today for /@nosuchuser/nosuchpost.
+  function hivedAssert(expression: string) {
+    return Object.assign(new Error(' category=hivemind'), {
+      name: 'RPCError',
+      jse_info: { code: 10, name: 'assert_exception', message: 'Assert Exception', extension: { assertion_expression: expression } },
+    });
+  }
+
+  it('is missing when hived asserts that the post does not exist', async () => {
+    call.mockRejectedValue(hivedAssert('Post nosuch/gone does not exist'));
+    await expect(loadPostForPage('nosuch', 'gone')).resolves.toEqual({ status: 'missing' });
+  });
+
+  it('is unknown for any other hived assert', async () => {
+    call.mockRejectedValue(hivedAssert('permlink cannot be blank'));
+    await expect(loadPostForPage('alice', 'blank')).resolves.toEqual({ status: 'unknown' });
+  });
+
   it('is unknown when the node errors', async () => {
     call.mockRejectedValue(new Error('fetch failed'));
     await expect(loadPostForPage('alice', 'p1')).resolves.toEqual({ status: 'unknown' });

@@ -1,7 +1,10 @@
+import { cache } from 'react';
 import HiveClient from '@/lib/hive/hiveclient';
 import { withTimeout } from '@/lib/utils/withTimeout';
 
 const SEED_TIMEOUT_MS = 2000;
+/** A hung node must not hold the page; it reads as 'unknown', never a 404. */
+const EXISTS_TIMEOUT_MS = 5000;
 
 export interface ProfileSeedAccount {
     name: string;
@@ -30,16 +33,19 @@ export async function loadProfileSeed(username: string): Promise<{
 /**
  * True when Hive has an account, false when it does not, 'unknown' when the
  * node is unreachable. Used to hard-404 missing profiles without 404ing on a
- * slow seed timeout for a real account.
+ * slow seed timeout for a real account. Wrapped in React `cache` so
+ * generateMetadata and the page share one lookup per request.
  */
-export async function accountExists(username: string): Promise<boolean | 'unknown'> {
+export const accountExists = cache(async function accountExists(
+    username: string,
+): Promise<boolean | 'unknown'> {
     try {
-        const accounts = await HiveClient.database.getAccounts([username]);
+        const accounts = await withTimeout(HiveClient.database.getAccounts([username]), EXISTS_TIMEOUT_MS);
         return Boolean(Array.isArray(accounts) && accounts[0]);
     } catch {
         return 'unknown';
     }
-}
+});
 
 async function lookup(username: string) {
     const [accounts, profile] = await Promise.all([
