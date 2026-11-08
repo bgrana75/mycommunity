@@ -1,7 +1,8 @@
-import { describe, expect, it, vi, beforeEach } from 'vitest';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const loadSeed = vi.fn();
 const exists = vi.fn();
+const loadSnaps = vi.fn();
 
 vi.mock('next/navigation', () => ({
   notFound: () => {
@@ -14,9 +15,13 @@ vi.mock('@/lib/hive/profileSeed', () => ({
   accountExists: (...args: unknown[]) => exists(...args),
 }));
 
+vi.mock('@/lib/hive/profileSnapSeed', () => ({
+  loadProfileSnapSeed: (...args: unknown[]) => loadSnaps(...args),
+}));
+
 vi.mock('@/components/profile/ProfilePage', () => ({
-  default: function ProfilePage() {
-    return null;
+  default: function ProfilePage(props: unknown) {
+    return props;
   },
 }));
 
@@ -25,12 +30,25 @@ import ProfileView from './ProfileView';
 beforeEach(() => {
   loadSeed.mockReset();
   exists.mockReset();
+  loadSnaps.mockReset();
+  loadSnaps.mockResolvedValue([]);
 });
 
 describe('ProfileView', () => {
-  it('renders when the profile seed loads', async () => {
+  it('passes header seed and snap seed into ProfilePage', async () => {
+    const snaps = [{ author: 'alice', permlink: 's1', body: 'hi', bodyHtml: '<p>hi</p>' }];
     loadSeed.mockResolvedValue({ account: { name: 'alice' }, profile: { name: 'alice' } });
-    expect(await ProfileView({ username: 'alice' })).toBeTruthy();
+    loadSnaps.mockResolvedValue(snaps);
+
+    const element = await ProfileView({ username: 'alice' });
+    expect(element).toMatchObject({
+      props: {
+        username: 'alice',
+        initialAccount: { name: 'alice' },
+        initialProfile: { name: 'alice' },
+        initialSnaps: snaps,
+      },
+    });
     expect(exists).not.toHaveBeenCalled();
   });
 
@@ -44,12 +62,17 @@ describe('ProfileView', () => {
   it('still renders when seed timed out but the account exists', async () => {
     loadSeed.mockResolvedValue(null);
     exists.mockResolvedValue(true);
-    expect(await ProfileView({ username: 'alice' })).toBeTruthy();
+    loadSnaps.mockResolvedValue([]);
+    expect(await ProfileView({ username: 'alice' })).toMatchObject({
+      props: { username: 'alice', initialAccount: null, initialSnaps: [] },
+    });
   });
 
   it('still renders when existence cannot be confirmed', async () => {
     loadSeed.mockResolvedValue(null);
     exists.mockResolvedValue('unknown');
-    expect(await ProfileView({ username: 'alice' })).toBeTruthy();
+    expect(await ProfileView({ username: 'alice' })).toMatchObject({
+      props: { username: 'alice', initialAccount: null },
+    });
   });
 });

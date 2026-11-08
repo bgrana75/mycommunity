@@ -7,25 +7,33 @@ const PAGE_SIZE = 10;   // snaps to collect before yielding a page
 const FETCH_LIMIT = 20; // comments to request per API call
 const MAX_ITERATIONS = 20; // safety cap to avoid infinite loops when a user has few snaps
 
-export function useProfileSnaps(username: string) {
-  const [snaps, setSnaps] = useState<ExtendedComment[]>([]);
+export function useProfileSnaps(username: string, initialComments: ExtendedComment[] = []) {
+  const [snaps, setSnaps] = useState<ExtendedComment[]>(initialComments);
   const [isLoading, setIsLoading] = useState(false);
   const [hasMore, setHasMore] = useState(true);
+  // Seeded profiles start at page 0 so we do not immediately re-fetch the
+  // first HTML page; loadNextPage increments from there. Unseeded profiles
+  // flip to 1 in the username effect below.
   const [page, setPage] = useState(0);
 
-  const cursorRef = useRef('');
+  const cursorRef = useRef(initialComments.at(-1)?.permlink ?? '');
   const exhaustedRef = useRef(false);
   const fetchingRef = useRef(false);
   const versionRef = useRef(0); // incremented on refresh to invalidate in-flight requests
 
   // Reset everything when the target user changes
   useEffect(() => {
-    cursorRef.current = '';
+    const seeded = initialComments.length > 0;
+    cursorRef.current = seeded ? (initialComments.at(-1)?.permlink ?? '') : '';
     exhaustedRef.current = false;
     fetchingRef.current = false;
-    setSnaps([]);
+    setSnaps(seeded ? initialComments : []);
     setHasMore(true);
-    setPage(1);
+    // Seeded: wait for scroll. Unseeded: fetch page 1 immediately.
+    setPage(seeded ? 0 : 1);
+    // initialComments is the server seed for this username; re-read when the
+    // profile route changes, not on every parent render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [username]);
 
   // Fetch a page of snaps whenever `page` increments
