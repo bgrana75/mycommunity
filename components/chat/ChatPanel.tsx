@@ -737,6 +737,35 @@ function ConversationRow({ conv, isActive, onClick }: { conv: Conversation; isAc
   );
 }
 
+/**
+ * Rows already on screen to keep while the conversations call is pending or
+ * failed: DMs, every group, and public channels the fresh channel list still
+ * has (they carry lastMessage and unread counts that Channel data lacks).
+ * Groups are never in that list (/api/chat/channels returns channels only),
+ * so only the conversations call can drop them.
+ */
+function keptConversations(list: Conversation[], channels: Channel[] | null): Conversation[] {
+  const live = new Set((channels ?? []).map(ch => ch._id));
+  return list.filter(c => c.type !== 'channel' || !c.isPublic || live.has(c._id));
+}
+
+/** Public rows currently shown, so a missing channel response can keep them. */
+function channelsFromConversations(list: Conversation[]): Channel[] {
+  return list
+    .filter(c => c.isPublic && c.type !== 'dm')
+    .map(c => ({
+      _id: c._id,
+      name: c.name,
+      description: c.description,
+      type: c.type,
+      conversationKind: c.type === 'group' ? 'group' : 'channel',
+      isPublic: true,
+      owner: c.owner,
+      members: c.members || [],
+      memberCount: c.memberCount ?? 0,
+    }));
+}
+
 export default function ChatPanel({
   isOpen,
   onClose,
@@ -750,11 +779,22 @@ export default function ChatPanel({
   const { username: user } = useCurrentUser();
   const isMobile = useBreakpointValue({ base: true, md: false });
   const isTablet = useBreakpointValue({ base: false, md: true, lg: false }) ?? false;
+  // Same cutoff as the fixed mobile header and bottom tab bar (`sm` = 480px).
+  // Below that, the sheet used to cover both, so there was no way out except
+  // a 24px icon.
+  const isPhone = useBreakpointValue({ base: true, sm: false });
 
   const [authState, setAuthState] = useState<'idle' | 'connecting' | 'done' | 'error'>('idle');
   const [authError, setAuthError] = useState<string>('');
   const [channels, setChannels] = useState<Channel[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
+  // The list starts empty, so "no rows" cannot mean "nothing to show" until a
+  // load has actually finished. Without this the panel printed "No
+  // conversations yet" while the request was still in flight, and forever
+  // after a failed one (both calls used to be `.catch(() => [])`).
+  const [listLoad, setListLoad] = useState<{ status: 'loading' | 'ready' | 'error'; notice: string }>({ status: 'loading', notice: '' });
+  const [listReloadNonce, setListReloadNonce] = useState(0);
+  const listLoadSeqRef = useRef(0);
   const [activeConversationId, setActiveConversationId] = useState<string>(
     process.env.NEXT_PUBLIC_CHAT_DEFAULT_CHANNEL || 'general'
   );
@@ -932,12 +972,16 @@ export default function ChatPanel({
 
   const reloadConversations = useCallback(async () => {
     if (!isOpen || !isAuthed) return;
+    // Background refresh: a failed call keeps what is on screen. Treating a
+    // transient error as "no conversations" used to wipe every DM from the
+    // list until the next successful poll.
     const [pubChannels, convs] = await Promise.all([
-      chatService.getChannels().catch(() => [] as Channel[]),
-      chatService.getConversations().catch(() => [] as Conversation[]),
+      chatService.getChannels().catch(() => null),
+      chatService.getConversations().catch(() => null),
     ]);
-    setChannels(pubChannels);
-    setConversations(mergeConversations(convs, pubChannels));
+    if (pubChannels) setChannels(pubChannels);
+    if (!pubChannels && !convs) return;
+    setConversations(prev => mergeConversations(convs ?? prev, pubChannels ?? []));
   }, [isAuthed, isOpen, mergeConversations]);
 
   const reloadPreferences = useCallback(async () => {
@@ -950,17 +994,82 @@ export default function ChatPanel({
   }, [isAuthed]);
 
   // ── Load conversations/channels on open ────────────────────────────────
+  // Public channels and the signed-in user's conversations are independent:
+  // each is applied the moment it lands, so a slow or failing authed call can
+  // never hide #General. A result that has not arrived (or failed) stays
+  // null and the rows already on screen are kept, so reopening or Retry
+  // cannot flash the list down to channels-only. A newer load supersedes an
+  // older one, so a late response from a previous isAuthed value cannot
+  // overwrite fresh state.
   useEffect(() => {
     if (!isOpen) return;
-    Promise.all([
-      chatService.getChannels().catch(() => [] as Channel[]),
-      isAuthed ? chatService.getConversations().catch(() => [] as Conversation[]) : Promise.resolve([] as Conversation[]),
-    ]).then(([pubChannels, convs]) => {
-      setChannels(pubChannels);
-      setConversations(mergeConversations(convs, pubChannels));
+    const seq = ++listLoadSeqRef.current;
+    const superseded = () => listLoadSeqRef.current !== seq;
+    let pubChannels: Channel[] | null = null;
+    let convs: Conversation[] | null = null;
+    const apply = () => {
+      if (pubChannels != null) setChannels(pubChannels);
+      if (pubChannels == null && convs == null) return;
+      setConversations(prev => mergeConversations(
+        convs ?? keptConversations(prev, pubChannels),
+        pubChannels ?? channelsFromConversations(prev),
+      ));
+    };
+
+    setListLoad(prev => ({ status: 'loading', notice: prev.notice }));
+    if (!isAuthed) {
+      // Drop the previous account's rows; only public channels remain.
+      convs = [];
+      apply();
+    }
+
+    const channelsLoad = chatService.getChannels().then(
+      result => {
+        if (superseded()) return null;
+        pubChannels = result;
+        apply();
+        return null;
+      },
+      (err: unknown) => (superseded() ? null : err),
+    );
+    const convsLoad = isAuthed
+      ? chatService.getConversations().then(
+        result => {
+          if (superseded()) return null;
+          convs = result;
+          apply();
+          return null;
+        },
+        (err: unknown) => (superseded() ? null : err),
+      )
+      : Promise.resolve(null);
+
+    Promise.all([channelsLoad, convsLoad]).then(([channelsErr, convsErr]) => {
+      if (superseded()) return;
+      if (channelsErr && convsErr) {
+        setListLoad({ status: 'error', notice: 'Could not load conversations.' });
+      } else if (channelsErr) {
+        setListLoad({ status: 'error', notice: 'Could not load public channels.' });
+      } else if (convsErr) {
+        const expired = convsErr instanceof Error && convsErr.message === 'CHAT_UNAUTHORIZED';
+        setListLoad({
+          status: 'error',
+          notice: expired
+            ? 'Your chat session expired. Reconnect to see your DMs and groups.'
+            : 'Could not load your DMs and groups.',
+        });
+      } else {
+        setListLoad({ status: 'ready', notice: '' });
+      }
     });
+
     if (isAuthed) reloadPreferences();
-  }, [isOpen, isAuthed, mergeConversations, reloadPreferences]);
+    return () => {
+      // Closing or re-running invalidates this load; a stale `loading` would
+      // otherwise stick if the panel reopens before it settles.
+      if (listLoadSeqRef.current === seq) listLoadSeqRef.current++;
+    };
+  }, [isOpen, isAuthed, mergeConversations, reloadPreferences, listReloadNonce]);
 
   useEffect(() => {
     if (!conversations.length) return;
@@ -984,6 +1093,10 @@ export default function ChatPanel({
       setFirstItemIndex(CHAT_LIST_INDEX_ORIGIN);
       setMessages([]);
       setConversations([]);
+      // logout() only changes isAuthed when the old token was still live. If
+      // it had already expired nothing else re-runs the load effect, and the
+      // list stayed empty until the panel was closed and reopened.
+      setListReloadNonce(n => n + 1);
     }
   }, [user]);
 
@@ -1717,6 +1830,10 @@ export default function ChatPanel({
   const panelBottom = isPopoutWindow ? '0' : (isMobile ? '0' : '0');
   const panelRight = isPopoutWindow ? '0' : (isMobile ? '0' : '16px');
   const borderRadius = isPopoutWindow ? '0' : (isMobile ? '20px 20px 0 0' : '16px 16px 0 0');
+  // Phone: sit between the fixed header and the tab bar, inside the safe area,
+  // so both stay tappable and the close control is never under the notch.
+  const phoneTop = 'calc(56px + env(safe-area-inset-top))';
+  const phoneBottom = 'calc(60px + env(safe-area-inset-bottom))';
   const isDesktopSplit = !isMobile && !isTablet;
   const isTabletLayout = isTablet;
   const showList = isMobile ? mobileView === 'list' : true;
@@ -1783,8 +1900,8 @@ export default function ChatPanel({
 
   return (
     <>
-      {/* Mobile backdrop */}
-      {isMobile && (
+      {/* Tablet sheet backdrop. Phones leave the header and tab bar uncovered. */}
+      {isMobile && !isPhone && (
         <Box
           position="fixed" inset="0" zIndex={1399}
           bg="blackAlpha.600"
@@ -1794,19 +1911,22 @@ export default function ChatPanel({
       )}
 
       <Box
+        data-chat-mobile-shell={isPhone ? 'true' : undefined}
         position="fixed"
-        bottom={panelBottom}
-        right={panelRight}
-        w={panelW}
-        h={panelH}
-        maxH={isPopoutWindow ? '100vh' : (isMobile ? '85vh' : 'calc(100vh - 24px)')}
-        zIndex={1400}
+        top={isPhone ? phoneTop : undefined}
+        bottom={isPhone ? phoneBottom : panelBottom}
+        left={isPhone ? 0 : undefined}
+        right={isPhone ? 0 : panelRight}
+        w={isPhone ? 'auto' : panelW}
+        h={isPhone ? 'auto' : panelH}
+        maxH={isPhone ? 'none' : (isPopoutWindow ? '100vh' : (isMobile ? '85vh' : 'calc(100vh - 24px)'))}
+        zIndex={isPhone ? 997 : 1400}
         display="flex"
         flexDirection="column"
         cursor={isResizing ? 'nwse-resize' : 'default'}
         bg="surface"
         backdropFilter="blur(16px)"
-        borderRadius={borderRadius}
+        borderRadius={isPhone ? '16px' : borderRadius}
         border="1px solid"
         borderColor="overlay.100"
         borderBottom={isPopoutWindow ? '1px solid' : 'none'}
@@ -1855,18 +1975,38 @@ export default function ChatPanel({
           borderColor="overlay.100"
           flexShrink={0}
         >
-          <HStack spacing={2}>
+          <HStack spacing={2} minW={0}>
+            {isPhone && (
+              <Button
+                aria-label="Close chat"
+                leftIcon={<FiArrowLeft />}
+                size="sm"
+                variant="ghost"
+                color="text"
+                fontWeight="700"
+                flexShrink={0}
+                minH="44px"
+                minW="44px"
+                px={2}
+                onClick={onClose}
+              >
+                Close
+              </Button>
+            )}
             {isMobile && mobileView === 'thread' && (
               <IconButton
                 aria-label="Back to conversations"
                 icon={<FiArrowLeft />}
-                size="xs"
+                size={isPhone ? 'sm' : 'xs'}
                 variant="ghost"
                 color="overlay.700"
+                minW={isPhone ? '44px' : undefined}
+                minH={isPhone ? '44px' : undefined}
+                flexShrink={0}
                 onClick={() => setMobileView('list')}
               />
             )}
-            <Text fontSize="sm" fontWeight="700" color="text" letterSpacing="0.02em">
+            <Text fontSize="sm" fontWeight="700" color="text" letterSpacing="0.02em" noOfLines={1}>
               {showList && !showThread ? 'Conversations' : (activeConversation?.type === 'channel' ? `#${activeConversation?.name}` : activeConversation?.name || 'Chat')}
             </Text>
             {showThread && activeConversation?.type === 'dm' && (
@@ -1979,15 +2119,19 @@ export default function ChatPanel({
                 </Button>
               </Tooltip>
             )}
-            <IconButton
-              aria-label="Close chat"
-              icon={<FiX />}
-              size="xs"
-              variant="ghost"
-              color="overlay.500"
-              _hover={{ color: 'white', bg: 'overlay.100' }}
-              onClick={onClose}
-            />
+            {!isPhone && (
+              <IconButton
+                aria-label="Close chat"
+                icon={<FiX />}
+                size={isMobile ? 'md' : 'xs'}
+                variant="ghost"
+                color={isMobile ? 'text' : 'overlay.500'}
+                minW={isMobile ? '44px' : undefined}
+                minH={isMobile ? '44px' : undefined}
+                _hover={{ color: 'white', bg: 'overlay.100' }}
+                onClick={onClose}
+              />
+            )}
           </HStack>
         </Flex>
 
@@ -2095,9 +2239,23 @@ export default function ChatPanel({
             {!!panelError && (
               <Text fontSize="xs" color="red.300" px={1}>{panelError}</Text>
             )}
+            {!!listLoad.notice && listLoad.status !== 'loading' && (
+              <Flex align="center" justify="space-between" gap={2} px={2} py={1} borderRadius="8px" bg="overlay.50" role="alert">
+                <Text fontSize="xs" color="red.300">{listLoad.notice}</Text>
+                <Button size="xs" variant="ghost" colorScheme="blue" onClick={() => setListReloadNonce(n => n + 1)}>
+                  Retry
+                </Button>
+              </Flex>
+            )}
             {conversations.length === 0 ? (
               <Flex flex="1" align="center" justify="center" py={6}>
-                <Text fontSize="xs" color="overlay.500">No conversations yet</Text>
+                {listLoad.status === 'loading' ? (
+                  <Spinner color="blue.300" size="sm" aria-label="Loading conversations" />
+                ) : (
+                  <Text fontSize="xs" color="overlay.500">
+                    {listLoad.status === 'error' ? 'Conversations unavailable' : 'No conversations yet'}
+                  </Text>
+                )}
               </Flex>
             ) : (
               conversations.map(conv => (
@@ -2359,7 +2517,7 @@ export default function ChatPanel({
                 gap={2}
                 align="center"
                 flexShrink={0}
-                pb={isTabletLayout ? 'calc(8px + env(safe-area-inset-bottom))' : 'calc(12px + env(safe-area-inset-bottom))'}
+                pb={isPhone ? '12px' : (isTabletLayout ? 'calc(8px + env(safe-area-inset-bottom))' : 'calc(12px + env(safe-area-inset-bottom))')}
                 direction="column"
               >
                 {confirmBlockUser && (

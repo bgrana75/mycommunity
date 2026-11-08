@@ -1,0 +1,59 @@
+{
+  "name": "@snapie/content-filter",
+  "version": "0.1.0",
+  "description": "Hide Hive content by app, tag, or app+tag (e.g. game results), with presets and cross-device sync. Shared by snapie.io and HiveSnaps.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    },
+    "./react": {
+      "types": "./dist/react.d.ts",
+      "import": "./dist/react.mjs",
+      "require": "./dist/react.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "keywords": [
+    "hive",
+    "blockchain",
+    "filter",
+    "mute",
+    "snaps"
+  ],
+  "author": "Mantequilla-Soft",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Mantequilla-Soft/snapie-io"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "peerDependencies": {
+    "react": ">=18.0.0"
+  },
+  "peerDependenciesMeta": {
+    "react": {
+      "optional": true
+    }
+  },
+  "devDependencies": {
+    "@types/react": "19.3.0",
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0",
+    "vitest": "^4.1.9"
+  }
+}

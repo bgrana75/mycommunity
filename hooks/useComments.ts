@@ -3,8 +3,8 @@ import HiveClient from "@/lib/hive/hiveclient"
 import { useCallback, useEffect, useRef, useState } from "react"
 import { Comment } from "@hiveio/dhive"
 import { mutedAccountsManager } from "@/lib/hive/muted-accounts"
-import { hasMutedTag } from "@/lib/hive/mutedTags"
-import { useUserSettings } from "./useUserSettings"
+import { contentFilterStore } from "@/lib/contentFilter/store";
+import { useContentFilter } from "@/hooks/useContentFilter";
 
 interface ActiveVote {
     percent: number;
@@ -93,19 +93,14 @@ export function useComments(
     recursive: boolean = false,
     username?: string
 ) {
-    const { settings } = useUserSettings()
-    // A .join(',') key, not the raw array — settings.mutedTags gets a fresh
-    // array reference every time the shared settings store re-hydrates (once
-    // per useUserSettings() consumer mounted anywhere on the page), which
-    // would otherwise recreate fetchAndUpdateComments and re-trigger the
-    // fetch effect below on every one of those unrelated mounts.
-    const mutedTagsKey = settings.mutedTags.join(',');
+    // A value-compared string key, not the filter itself, so only a real
+    // change to what's muted re-triggers the fetch effect below.
+    const { key: mutedTagsKey } = useContentFilter();
     const [comments, setComments] = useState<Comment[]>([])
     const [isLoading, setIsLoading] = useState(true)
     const [error, setError] = useState<string | null>(null)
-    // Mount fires a fetch with settings.mutedTags still at its pre-hydration
-    // default ([]) — see useUserSettings, whose real localStorage read only
-    // lands via a post-mount effect. That triggers a second, correctly-
+    // Mount fires a fetch before the content filter has hydrated from
+    // localStorage (it hides nothing until then). That triggers a second, correctly-
     // filtered fetch once mutedTagsKey changes, but without a staleness
     // guard the first (unfiltered) call could resolve *after* the second and
     // clobber its result with unmuted-tag content. Same generation-counter
@@ -132,7 +127,7 @@ export function useComments(
             const filterMuted = (comments: ExtendedComment[]): ExtendedComment[] => {
                 return comments
                     .filter((c) => !mutedList.has(c.author.toLowerCase()))
-                    .filter((c) => !hasMutedTag(c.json_metadata, settings.mutedTags))
+                    .filter((c) => !contentFilterStore.getState().filter(c))
                     .map((c) => {
                         if (c.replies && c.replies.length > 0) {
                             return { ...c, replies: filterMuted(c.replies as ExtendedComment[]) };
@@ -159,6 +154,9 @@ export function useComments(
             console.error(err);
             if (showLoader) setIsLoading(false);
         }
+    // mutedTagsKey isn't read inside (the filter is read from the store at
+    // call time) but must stay: a mute change has to refetch and re-filter.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [author, permlink, recursive, username, mutedTagsKey]);
 
     useEffect(() => {

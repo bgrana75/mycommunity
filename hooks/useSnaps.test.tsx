@@ -11,9 +11,19 @@ vi.mock('./usePatronStatus', () => ({
   usePatronStatus: () => ({ byAccount: new Set<string>(), getTier: () => null, isLoading: false }),
 }));
 
-vi.mock('./useUserSettings', () => ({
-  useUserSettings: () => ({ settings: { mutedTags: [] as string[] } }),
-}));
+vi.mock('@/hooks/useContentFilter', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  const tags = () => ([] as string[]);
+  return {
+    useContentFilter: () => ({ filter: compileFilter(tags().map(tag => ({ kind: 'tag' as const, tag }))), key: tags().join(',') }),
+  };
+});
+vi.mock('@/lib/contentFilter/store', async () => {
+  const { compileFilter } = await import('@snapie/content-filter');
+  return {
+    contentFilterStore: { getState: () => ({ filter: compileFilter((([] as string[])).map(tag => ({ kind: 'tag' as const, tag }))) }) },
+  };
+});
 
 const personalMuteListeners = vi.hoisted(() => new Set<(author: string) => void>());
 

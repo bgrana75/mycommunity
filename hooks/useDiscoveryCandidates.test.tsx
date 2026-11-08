@@ -2,6 +2,10 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { renderHook, waitFor } from '@testing-library/react';
 import { useDiscoveryCandidates } from './useDiscoveryCandidates';
+import { compileFilter, type ContentFilter } from '@snapie/content-filter';
+
+const NONE: ContentFilter = () => false;
+const MUTE_SCROBBLE = compileFilter([{ kind: 'tag', tag: 'scrobblelife' }]);
 
 // The server-side discovery pools (lib/discovery/snapTrending.ts etc.) only
 // ever filter by muted ACCOUNTS — muted tags are pure localStorage and can
@@ -25,7 +29,7 @@ beforeEach(() => {
 
 describe('useDiscoveryCandidates mute-tag filtering', () => {
   it('excludes a candidate carrying a muted tag', async () => {
-    const { result } = renderHook(() => useDiscoveryCandidates({ enabled: true, mutedTags: ['scrobblelife'] }));
+    const { result } = renderHook(() => useDiscoveryCandidates({ enabled: true, filter: MUTE_SCROBBLE }));
 
     await waitFor(() => expect(result.current.candidates.length).toBeGreaterThan(0));
 
@@ -43,14 +47,14 @@ describe('useDiscoveryCandidates mute-tag filtering', () => {
 
   it('re-filters an already-fetched pool instantly when a tag is muted, without a new fetch', async () => {
     const { result, rerender } = renderHook(
-      ({ mutedTags }) => useDiscoveryCandidates({ enabled: true, mutedTags }),
-      { initialProps: { mutedTags: [] as string[] } },
+      ({ filter }) => useDiscoveryCandidates({ enabled: true, filter }),
+      { initialProps: { filter: NONE } },
     );
 
     await waitFor(() => expect(result.current.candidates.length).toBe(3));
     const fetchCallsAfterInitialLoad = (global.fetch as any).mock.calls.length;
 
-    rerender({ mutedTags: ['scrobblelife'] });
+    rerender({ filter: MUTE_SCROBBLE });
 
     expect(result.current.candidates.map(c => c.permlink)).not.toContain('spammy');
     expect((global.fetch as any).mock.calls.length).toBe(fetchCallsAfterInitialLoad); // no extra network call

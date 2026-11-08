@@ -53,17 +53,25 @@ describe('GET /api/image-proxy', () => {
         expect(statuses[60]).toBe(429);
     });
 
-    it('shares one "unknown" bucket when cf-connecting-ip is missing, whatever x-forwarded-for says', async () => {
+    // Direct-to-nginx traffic (www.snapie.io today) has no cf-connecting-ip.
+    const direct = (xff: string) =>
+        GET(new NextRequest(new URL(rateLimitedUrl, 'http://127.0.0.1:3310'), { headers: { 'x-forwarded-for': xff } }));
+
+    it('without Cloudflare, keys on the nginx-appended hop so a spoofed prefix cannot mint buckets', async () => {
         vi.mocked(fetchProxiedImage).mockResolvedValue({ body: JPEG, contentType: 'image/jpeg' });
         const statuses: number[] = [];
         for (let i = 0; i < 61; i++) {
-            const res = await GET(new NextRequest(new URL(rateLimitedUrl, 'http://127.0.0.1:3310'), {
-                headers: { 'x-forwarded-for': `198.51.100.${i}` },
-            }));
-            statuses.push(res.status);
+            statuses.push((await direct(`198.51.100.${i}, 192.0.2.60`)).status);
         }
         expect(statuses.slice(0, 60).every((s) => s === 200)).toBe(true);
         expect(statuses[60]).toBe(429);
+    });
+
+    it('one direct visitor exhausting the limit does not block another (#335)', async () => {
+        vi.mocked(fetchProxiedImage).mockResolvedValue({ body: JPEG, contentType: 'image/jpeg' });
+        for (let i = 0; i < 60; i++) await direct('192.0.2.70');
+        expect((await direct('192.0.2.70')).status).toBe(429);
+        expect((await direct('192.0.2.71')).status).toBe(200);
     });
 
     it('serves image bytes and marks a Hive-cache fallback', async () => {

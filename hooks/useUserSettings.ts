@@ -22,9 +22,9 @@ export interface UserSettings {
      *  brand-new visitor, who gets marked caught-up silently rather than shown
      *  the whole history. */
     lastSeenChangelogId: string | null;
-    /** Hashtags (lowercase, no leading #) the user never wants to see —
-     *  any blog post, snap, or comment tagged with one of these is filtered
-     *  out of feeds. See lib/hive/mutedTags.ts for where this is applied. */
+    /** @deprecated Legacy hashtag mutes. Only read once, to migrate into the
+     *  content filter (lib/contentFilter/store.ts, @snapie/content-filter),
+     *  which now owns muting and syncs it across devices. Not written anymore. */
     mutedTags: string[];
     /** Weight (0-100, percent) of the last vote the user cast, across every
      *  vote slider in the app (Snap cards, post/comment detail, Shorts) —
