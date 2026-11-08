@@ -5,6 +5,33 @@
  */
 
 import HiveClient from '@/lib/hive/hiveclient';
+import { withTimeout } from '@/lib/utils/withTimeout';
+
+const COMMUNITY_ROLE_TIMEOUT_MS = 5000;
+
+/**
+ * Community-role mute, which applies to every visitor including crawlers.
+ * `unknown` when the role list cannot be loaded, so a page can leave the
+ * post body out of the HTML instead of publishing a muted author.
+ */
+export async function isCommunityRoleMuted(account: string): Promise<boolean | 'unknown'> {
+  const community = process.env.NEXT_PUBLIC_HIVE_COMMUNITY_TAG;
+  if (!community || !account) return false;
+  try {
+    const result = await withTimeout(
+      HiveClient.call('bridge', 'list_community_roles', { community, limit: 1000 }),
+      COMMUNITY_ROLE_TIMEOUT_MS,
+    );
+    if (!Array.isArray(result)) return 'unknown';
+    const name = account.toLowerCase();
+    return result.some(
+      (row: unknown) =>
+        Array.isArray(row) && String(row[0]).toLowerCase() === name && row[1] === 'muted',
+    );
+  } catch {
+    return 'unknown';
+  }
+}
 
 const STORAGE_KEY_PREFIX = 'hive_muted_accounts';
 /** Personal mutes that succeeded locally but may not be in Hive's follow
