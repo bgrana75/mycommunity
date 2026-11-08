@@ -1,4 +1,13 @@
 import HiveClient from "./hiveclient";
+import { withTimeout } from '@/lib/utils/withTimeout';
+
+/** Long enough for a healthy node, short enough that a hung socket is not a 404. */
+const PAGE_LOOKUP_TIMEOUT_MS = 5000;
+
+export type PostPageLookup =
+  | { status: 'found'; post: { author: string } }
+  | { status: 'missing' }
+  | { status: 'unknown' };
 
 // Link-preview crawlers hit the same few URLs repeatedly, and a slow Hive node
 // used to turn one of those hits into a generic "Snapie" card that the crawler
@@ -44,6 +53,24 @@ export function getPostForMetadata(author: string, permlink: string) {
       return null;
     }
   });
+}
+
+/**
+ * Whether a post page should 404. `missing` only when get_content answers
+ * with an empty post. A timeout or a node error is `unknown`: the page
+ * renders and the client retries, instead of telling Google the post is gone.
+ */
+export async function loadPostForPage(author: string, permlink: string): Promise<PostPageLookup> {
+  try {
+    const post = await withTimeout(
+      HiveClient.database.call('get_content', [author, permlink]),
+      PAGE_LOOKUP_TIMEOUT_MS,
+    );
+    if (!post || !post.author) return { status: 'missing' };
+    return { status: 'found', post };
+  } catch {
+    return { status: 'unknown' };
+  }
 }
 
 export function getProfileForMetadata(username: string) {

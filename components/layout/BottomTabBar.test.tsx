@@ -76,6 +76,14 @@ describe('BottomTabBar', () => {
     expect(mocks.openLoginModal).toHaveBeenCalledTimes(1);
   });
 
+  it('does not follow # when a signed-in user has no username yet', () => {
+    mocks.isLoggedIn = true;
+    const wallet = renderBar().getByRole('link', { name: /Wallet/ });
+    expect(wallet.getAttribute('href')).toBe('#');
+    expect(fireEvent.click(wallet)).toBe(false);
+    expect(mocks.openLoginModal).not.toHaveBeenCalled();
+  });
+
   it('lets a signed-in user compose and open their wallet', () => {
     mocks.isLoggedIn = true;
     mocks.username = 'alice';

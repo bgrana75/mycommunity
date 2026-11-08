@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({
 }));
 
 vi.mock('@/lib/hive/metadata-functions', () => ({
-  getPostForMetadata: (...args: unknown[]) => mocks.getPost(...args),
+  loadPostForPage: (...args: unknown[]) => mocks.getPost(...args),
 }));
 
 vi.mock('@/components/blog/PostPage', () => ({
@@ -26,14 +26,20 @@ beforeEach(() => {
 
 describe('PostView', () => {
   it('renders the post page when Hive returns content', async () => {
-    mocks.getPost.mockResolvedValue({ author: 'alice', permlink: 'p1', title: 'Hi', body: 'x' });
+    mocks.getPost.mockResolvedValue({ status: 'found', post: { author: 'alice', permlink: 'p1', title: 'Hi', body: 'x' } });
     const element = await PostView({ author: 'alice', permlink: 'p1' });
     expect(element).toBeTruthy();
     expect(mocks.getPost).toHaveBeenCalledWith('alice', 'p1');
   });
 
-  it('returns a real 404 when the post does not exist', async () => {
-    mocks.getPost.mockResolvedValue(null);
+  it('returns a real 404 when Hive answers that the post is empty', async () => {
+    mocks.getPost.mockResolvedValue({ status: 'missing' });
     await expect(PostView({ author: 'nosuch', permlink: 'missing' })).rejects.toThrow('NEXT_NOT_FOUND');
+  });
+
+  it('renders the page when the node times out or errors, so a live post is not 404d', async () => {
+    mocks.getPost.mockResolvedValue({ status: 'unknown' });
+    const element = await PostView({ author: 'alice', permlink: 'p1' });
+    expect(element).toBeTruthy();
   });
 });

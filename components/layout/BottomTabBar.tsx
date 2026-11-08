@@ -42,11 +42,12 @@ export default function BottomTabBar() {
     }
   }
 
-  // There is no wallet to open for a guest, so ask them to log in instead.
+  // Guests have no wallet. A signed-in user whose username has not resolved
+  // yet also has no route: leaving the click on href="#" only appends a hash.
   function handleWalletClick(e: React.MouseEvent) {
-    if (isLoggedIn) return;
+    if (username) return;
     e.preventDefault();
-    openLoginModal();
+    if (!isLoggedIn) openLoginModal();
   }
 
   // Hide on immersive pages
