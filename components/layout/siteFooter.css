@@ -1,0 +1,23 @@
+/* Unobtrusive end-of-scroll footer. Lives in document flow inside
+   #app-scroll-container so it never covers the composer or BottomTabBar. */
+.site-footer {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 1rem 1rem 1.25rem;
+  font-size: 0.8125rem;
+  line-height: 1.4;
+  opacity: 0.65;
+  color: var(--chakra-colors-text, inherit);
+}
+
+.site-footer a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.site-footer a:hover,
+.site-footer a:focus-visible {
+  opacity: 1;
+}
