@@ -2,6 +2,7 @@ import { Suspense } from 'react';
 import { ColorModeScript } from '@chakra-ui/react';
 import { Providers } from './providers';
 import LayoutContent from './LayoutContent';
+import SiteFooter from '@/components/layout/SiteFooter';
 import type { Metadata, Viewport } from 'next';
 import './sidebarSlot.css';
 import '@/components/homepage/feedChrome.css';
@@ -61,7 +62,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <ColorModeScript initialColorMode="dark" />
         <Providers>
           <Suspense fallback={null}>
-            <LayoutContent>{children}</LayoutContent>
+            <LayoutContent footer={<SiteFooter />}>{children}</LayoutContent>
           </Suspense>
         </Providers>
       </body>

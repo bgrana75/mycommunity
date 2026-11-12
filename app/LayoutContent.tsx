@@ -27,7 +27,14 @@ const WhatsNewModal = dynamic(() => import('@/components/whatsnew/WhatsNewModal'
 const PointsToaster = dynamic(() => import('@/components/points/PointsToaster'), { ssr: false });
 const DebugConsole = dynamic(() => import('@/components/debug/DebugConsole'), { ssr: false });
 
-export default function LayoutContent({ children }: { children: React.ReactNode }) {
+export default function LayoutContent({
+  children,
+  footer,
+}: {
+  children: React.ReactNode;
+  /** Server-rendered site footer (passed from root layout for SSR HTML). */
+  footer?: React.ReactNode;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const isPhone = usePhoneLayout();
@@ -274,6 +281,9 @@ export default function LayoutContent({ children }: { children: React.ReactNode 
             <EmancipationBanner />
             {!isChatPopoutMode && children}
             <NeedsWalletHandler />
+            {/* Hive.io SEO backlink — in scroll flow so it never covers the
+                composer, chat, or BottomTabBar. Hidden in embed/popout/shorts. */}
+            {!isEmbedMode && !isChatPopoutMode && !isShortsPage && footer}
             {/* A real element, not padding-bottom on the scroll container —
                 some browsers don't extend an overflow:auto element's
                 scrollHeight to include its own trailing padding, so a page

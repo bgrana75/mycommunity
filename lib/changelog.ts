@@ -25,6 +25,14 @@ export interface ChangelogEntry {
 // only things a user would actually notice belong here.
 export const CHANGELOG: ChangelogEntry[] = [
   {
+    id: '2026-11-11',
+    date: '2026-11-11',
+    title: 'Powered by Hive',
+    items: [
+      { type: 'improvement', text: 'A small "Powered by Hive" link now sits at the bottom of every page, linking out to hive.io.' },
+    ],
+  },
+  {
     id: '2026-11-02',
     date: '2026-11-02',
     title: 'Phone chat',

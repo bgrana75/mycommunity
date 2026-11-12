@@ -171,6 +171,28 @@ describe('chat shell', () => {
     expect(nav.back).not.toHaveBeenCalled();
   });
 
+  it('shows the Hive footer on normal pages and hides it on shorts', () => {
+    nav.pathname = '/';
+    const view = render(
+      <ChakraProvider>
+        <LayoutContent footer={<a href="https://hive.io">Powered by Hive</a>}>
+          <h1>Home</h1>
+        </LayoutContent>
+      </ChakraProvider>,
+    );
+    expect(screen.getByRole('link', { name: 'Powered by Hive' })).toBeTruthy();
+
+    nav.pathname = '/shorts';
+    view.rerender(
+      <ChakraProvider>
+        <LayoutContent footer={<a href="https://hive.io">Powered by Hive</a>}>
+          <h1>Shorts</h1>
+        </LayoutContent>
+      </ChakraProvider>,
+    );
+    expect(screen.queryByRole('link', { name: 'Powered by Hive' })).toBeNull();
+  });
+
   it('sends Close home when browser back returns to a direct /chat visit', async () => {
     phone.matches = true;
     nav.pathname = '/chat';
